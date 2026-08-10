@@ -1,0 +1,323 @@
+{
+  "schema_version": "2.1",
+  "framework_version": "2.8.0",
+  "state": "LIVE_QA_PASSED",
+  "outcome": "DEPLOYED_NOT_PUBLISHED",
+  "release": {
+    "id": "vantage-1.0.0",
+    "product": "Vantage",
+    "version": "1.0.0",
+    "type": "major",
+    "date": "2026-08-10"
+  },
+  "routing": {
+    "implementation_route": "R2 SENIOR",
+    "release_phase": "R3 RELEASE",
+    "intent": "PRODUCTION_BOUND",
+    "evidence_level": "L3 STATEFUL_SECURITY",
+    "reason": "New public endpoint, new persistent data, new identity configuration and new DNS, so the full release route applies rather than the maintenance route.",
+    "emergency_reason": null
+  },
+  "applicability": {
+    "business_rules": true,
+    "ui_or_content": true,
+    "data_migration": false,
+    "identity": true,
+    "secrets_or_sensitive_data": false,
+    "infrastructure_lifecycle": true,
+    "external_gate": false,
+    "incident": false
+  },
+  "target": {
+    "repository": "phamid/vantage",
+    "branch": "main",
+    "host": "nas1.insta.host",
+    "application": "vantage",
+    "public_endpoint": "https://vantage.insta.host",
+    "deployment_profile": "release-evidence/deployment-profile.json",
+    "current_version": "none (first release)"
+  },
+  "code": {
+    "release_commit": "c01fbed090274a8b9629e68bd1b7dfe68f112b69",
+    "changed_files": [
+      "CHANGELOG.md",
+      "README.md",
+      "RELEASE_NOTES.md",
+      "package.json",
+      "release-evidence/cleanup-manifest.json",
+      "release-evidence/deployment-profile.json",
+      "release-evidence/pre-freeze-contract-matrix.json",
+      "release-evidence/verdicts.json",
+      "scripts/verify-invariants.mjs",
+      "server/db.js",
+      "server/engine.js",
+      "server/http.js",
+      "server/index.js",
+      "server/seed-frameworks.js",
+      "server/seed.js",
+      "tests/api.test.mjs",
+      "tests/http.test.mjs",
+      "web/dist/assets/index-B5FcdNDk.js",
+      "web/dist/assets/index-DUmTulj3.css",
+      "web/dist/index.html",
+      "web/index.html",
+      "web/package-lock.json",
+      "web/package.json",
+      "web/src/App.jsx",
+      "web/src/api.js",
+      "web/src/index.css",
+      "web/src/main.jsx",
+      "web/src/pages/AuditDetail.jsx",
+      "web/src/pages/Audits.jsx",
+      "web/src/pages/ControlDetail.jsx",
+      "web/src/pages/Controls.jsx",
+      "web/src/pages/Dashboard.jsx",
+      "web/src/pages/Devices.jsx",
+      "web/src/pages/FrameworkDetail.jsx",
+      "web/src/pages/Frameworks.jsx",
+      "web/src/pages/Integrations.jsx",
+      "web/src/pages/Inventory.jsx",
+      "web/src/pages/Login.jsx",
+      "web/src/pages/Monitoring.jsx",
+      "web/src/pages/Personnel.jsx",
+      "web/src/pages/Policies.jsx",
+      "web/src/pages/PolicyDetail.jsx",
+      "web/src/pages/QuestionnaireDetail.jsx",
+      "web/src/pages/Questionnaires.jsx",
+      "web/src/pages/Risks.jsx",
+      "web/src/pages/Settings.jsx",
+      "web/src/pages/TestDetail.jsx",
+      "web/src/pages/TrustAdmin.jsx",
+      "web/src/pages/TrustCenter.jsx",
+      "web/src/pages/Vendors.jsx",
+      "web/src/ui.jsx",
+      "web/vite.config.js"
+    ],
+    "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+    "migration_image": null,
+    "source_digest": "sha256:f20750151c9cc06a0451502b9c980f0ad48e81d59efee64889f2c36c13f04782",
+    "configuration_digest": "sha256:e23fbd35cf069eb9bbb5f61edd5e74d5cb9fe64fb4d22550f971644d24cf6beb",
+    "source_artifact": {
+      "definition": "The release commit tree as staged to /mnt/TailsPool/vantage/releases/<sha>, verified by a per-file SHA-256 manifest compared hash-sorted between the local worktree and nas1 (48 files).",
+      "exclusions": [
+        ".git",
+        "node_modules",
+        "tests",
+        "release-evidence",
+        ".DS_Store"
+      ]
+    }
+  },
+  "gates": {
+    "engineering": {
+      "verdict": "APPROVE",
+      "reviewer": "Principal Software Engineer (independent agent)",
+      "at": "2026-08-10T18:38:00+10:00",
+      "release_commit": "c01fbed090274a8b9629e68bd1b7dfe68f112b69",
+      "evidence": "release-evidence/verdicts.json"
+    },
+    "qa": {
+      "verdict": "PASS",
+      "reviewer": "Senior QA and Test Lead (independent agent)",
+      "at": "2026-08-10T18:43:00+10:00",
+      "release_commit": "c01fbed090274a8b9629e68bd1b7dfe68f112b69",
+      "evidence": "release-evidence/verdicts.json"
+    },
+    "deploy": {
+      "verdict": "GO_DEPLOY",
+      "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
+      "at": "2026-08-10T18:44:00+10:00",
+      "release_commit": "c01fbed090274a8b9629e68bd1b7dfe68f112b69",
+      "evidence": "release-evidence/verdicts.json; five deployment conditions recorded and all satisfied"
+    },
+    "live_qa": {
+      "verdict": "PASS_LIVE",
+      "reviewer": "Live QA Lead (independent agent)",
+      "at": "2026-08-10T19:15:00+10:00",
+      "release_commit": "c01fbed090274a8b9629e68bd1b7dfe68f112b69",
+      "evidence": "release-evidence/verdicts.json"
+    },
+    "publish": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "c01fbed090274a8b9629e68bd1b7dfe68f112b69",
+      "evidence": ""
+    }
+  },
+  "deployment": {
+    "started_at": "2026-08-10T18:45:00+10:00",
+    "completed_at": "2026-08-10T18:52:00+10:00",
+    "job_ids": [
+      "8774 app.image.pull SUCCESS",
+      "8896 app.create SUCCESS"
+    ],
+    "migration_result": "not applicable - the application creates and seeds its schema idempotently on first boot and takes no action when data already exists",
+    "stability_policy": "SHORT",
+    "stability_result": "Container running from a single start at 2026-08-10T08:51:24Z with no restarts observed through live QA"
+  },
+  "runtime": {
+    "configured_identity": "compose image node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03; /app ro from releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69; /data rw; PORT=30002; VANTAGE_DB=/data/vantage.db; rendered config digest sha256:e23fbd35cf069eb9bbb5f61edd5e74d5cb9fe64fb4d22550f971644d24cf6beb",
+    "active_identity": "app.get_instance reports state RUNNING, 1 container running, image node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03, /app mode ro, /data mode rw, host port 30002 published; /healthz reports version 1.0.0, release_sha c01fbed090274a8b9629e68bd1b7dfe68f112b69, source_digest sha256:f20750151c9cc06a0451502b9c980f0ad48e81d59efee64889f2c36c13f04782, node v24.19.0",
+    "health": "origin /healthz 200: status ok, version 1.0.0, release_sha c01fbed09027..., node v24.19.0",
+    "readiness": "origin /readyz 200 ready=true; database quick_check=ok, schema_seeded 7 frameworks/49 tests/6 users, monitoring_engine scanning, database_writable write-and-read-back succeeded, frontend_build present",
+    "logs": "No errors. Startup banner only; no restarts."
+  },
+  "validation": {
+    "pre_deploy_summary": "PASS",
+    "contract_matrix": "PASS",
+    "review_consolidation": "PASS",
+    "functional_smoke": "PASS",
+    "asset_graph": "PASS",
+    "assigned_user_journey": "PASS",
+    "restart_or_reboot": "PASS",
+    "data_reconciliation": "not_applicable",
+    "secret_artifact_sweep": "PASS",
+    "invariant_contracts": "PASS",
+    "dependency_live_probe": "PASS",
+    "identity_contract": "PASS",
+    "release_base_alignment": "PASS",
+    "production_platform_build": "NOT_APPLICABLE",
+    "public_edge_verification": "PASS",
+    "cleanup_manifest": "PASS",
+    "restart_or_reboot_evidence": "The application was created and started fresh in this release and has run from a single start with no restarts, governed by restart: unless-stopped. Seed idempotency across restart was verified independently by pre-deployment QA: a remediation survived a restart against the same database with no reseed.",
+    "identity_contract_evidence": "Configured and active image digest, /app read-only and /data read-write mount modes, release revision label and source digest all verified against the compose specification after deployment. The service has no secret delivery path: it holds, mounts and reads no secret material. Administrative permissions for the Cloudflare credential were probed live before implementation.",
+    "release_base_alignment_evidence": "releasectl check-base PASS; first release with nothing previously deployed, publication ref origin/main contained HEAD at each gate.",
+    "production_platform_build_evidence": "No platform image is built by this release. The runtime is the unmodified upstream node:24-slim pinned by digest, and it was proven fit before freeze by running the full application test suite inside that exact image on linux/amd64 with the source mounted read-only.",
+    "invariant_contracts_evidence": "PASS - 5/5 via node scripts/verify-invariants.mjs, each proven able to fail",
+    "dependency_live_probe_evidence": "PASS - registry digest, node:sqlite runtime, midclt, Cloudflare credential, tunnel ingress and DNS each probed live with a distinguishing negative control",
+    "secret_artifact_sweep_evidence": "PASS - the service holds no secrets, mounts none and reads none; git grep for credential patterns over the release tree returned nothing; compose contains no secret keys",
+    "functional_smoke_evidence": "Production browser journey through the loopback forward: real form sign-in, dashboard, monitoring, remediation flipped a failing test to passing and the dashboard passing count rose 33->34, Trust Center rendered with no undefined/NaN, auditor read 200 / write 403, mobile horizontal overflow 0px, zero console errors. Tenant then reset to the documented baseline of 33/49.",
+    "pre_deploy_summary_evidence": "30/30 tests pass locally and inside the pinned image on linux/amd64 with /app read-only; 5/5 invariants hold including frontend build parity against the commit; 23 client routes render with zero console errors; responsive verified at 390/768/1440."
+  },
+  "assurance": {
+    "architecture_delta": "PASS",
+    "workflow_health": "PASS",
+    "security_posture": "PASS",
+    "test_traceability": "PASS",
+    "observability_baseline": "PASS",
+    "exceptions": [
+      {
+        "owner": "Head of Security (release manager acting)",
+        "reason": "Seeded demonstration accounts share a documented password that is displayed on the login page, so application authentication provides no defence in depth on its own.",
+        "expires_at": "2026-11-10",
+        "compensating_control": "Cloudflare Access gates every path with Entra SSO or one-time PIN restricted to the mytechie.com.au email domain; the data is entirely fictional; sign-in is throttled to 10 failures per account per 15 minutes; the password is no longer pre-filled."
+      },
+      {
+        "owner": "Principal Platform SRE and Release Engineer",
+        "reason": "The release credential lacks the Cloudflare Access Service Tokens permission, so an authenticated smoke test through the public edge using a service token was unavailable.",
+        "expires_at": "2026-11-10",
+        "compensating_control": "Public verification proved every path returns the Access redirect with a distinguishing negative control, and the authenticated journey was exercised in a real browser against the production origin through a loopback forward that was terminated afterwards."
+      },
+      {
+        "owner": "Head of Security (release manager acting)",
+        "reason": "The Trust Center document access-request endpoint is unauthenticated and unthrottled, so it could be spammed.",
+        "expires_at": "2026-11-10",
+        "compensating_control": "Cloudflare Access fronts the path, so no anonymous internet caller can reach it; the endpoint validates all fields and writes only a request row."
+      }
+    ],
+    "architecture_delta_evidence": "Express removed in favour of a zero-dependency node:http router so the release can be bind-mounted read-only into a stock image with no install step; web/dist committed so the artifact equals the commit; health and readiness endpoints added for origin monitoring.",
+    "workflow_health_evidence": "30 automated tests plus 5 executable invariants run from the repository; each new regression test was proven to fail without its fix.",
+    "security_posture_evidence": "Two review lanes returned REVISE and were remediated: role enforcement, header-only sessions, sign-in throttling, reduced public disclosure, remediation column allow-list, whole-segment auth guard and consistent path normalisation. Both lanes then returned APPROVE.",
+    "test_traceability_evidence": "Every review finding carries a named regression test: SEC-1 role model, SEC-2 query-string token, SEC-3 throttling, SEC-4 public disclosure, ENG-L2 guard segmentation, ENG-M1 readiness write probe.",
+    "observability_baseline_evidence": "Origin /healthz and /readyz are the monitoring signals and are documented in the README as such because the public path is Access gated. Readiness proven to fail closed: with /data mounted read-only on Linux the process stays up and /readyz returns 503 with database_writable false."
+  },
+  "recovery": {
+    "pre_release_snapshot": "TailsPool/vantage@pre-1.0.0",
+    "post_release_snapshot": "TailsPool/vantage@post-1.0.0",
+    "last_known_good": "none - first release; rollback is withdrawal rather than reversion",
+    "rollback_command": "python3 scripts/publishctl.py rollback --confirm  (DNS, then ingress, then Access) followed by ssh nas1 \"midclt call -j app.stop vantage && midclt call -j app.delete vantage\" and optionally midclt call zfs.rollback TailsPool/vantage@pre-1.0.0",
+    "rollback_limitations": "Rollback removes the service rather than reverting to a previous version, because none exists. The rollback path was confirmed reachable over the same transport before any mutation, and publishctl refuses to publish routing unless the Access policy matches intent."
+  },
+  "publication": {
+    "repository_uses_github": true,
+    "tag": "v1.0.0",
+    "github_release": "PENDING",
+    "release_notes": "RELEASE_NOTES.md"
+  },
+  "incident": null,
+  "latency": {
+    "baseline_started_at": "2026-08-10T17:45:00+10:00",
+    "implementation_started_at": "2026-08-10T17:52:00+10:00",
+    "code_frozen_at": "2026-08-10T18:20:00+10:00",
+    "engineering_completed_at": "2026-08-10T18:38:00+10:00",
+    "qa_completed_at": "2026-08-10T18:43:00+10:00",
+    "deploy_started_at": "2026-08-10T18:45:00+10:00",
+    "deploy_completed_at": "2026-08-10T18:52:00+10:00",
+    "live_qa_completed_at": "2026-08-10T19:15:00+10:00",
+    "published_at": "",
+    "corrective_iterations": 2,
+    "approval_retries": 0,
+    "external_wait_minutes": 0,
+    "avoidable_delays": [
+      "Docker on macOS could not share the /tmp worktree path, costing one iteration before the repository checkout was used for the Linux read-only readiness proof."
+    ],
+    "process_improvements": [],
+    "learning_record": "release-evidence/learning.json"
+  },
+  "state_history": [
+    {
+      "from": "DRAFT",
+      "to": "BASELINED",
+      "at": "2026-08-10T17:50:00+10:00",
+      "actor": "release-manager",
+      "reason": "Access position, transport, target, port and capacity resolved; learning cadence checked"
+    },
+    {
+      "from": "BASELINED",
+      "to": "IMPLEMENTING",
+      "at": "2026-08-10T17:52:00+10:00",
+      "actor": "release-manager",
+      "reason": "Production hardening: zero-dependency HTTP layer, health and readiness, read-only mount fix"
+    },
+    {
+      "from": "IMPLEMENTING",
+      "to": "CODE_FROZEN",
+      "at": "2026-08-10T18:20:00+10:00",
+      "actor": "release-manager",
+      "reason": "Owned file set staged, freeze gate passed with tests and invariants"
+    },
+    {
+      "from": "CODE_FROZEN",
+      "to": "ENGINEERING_APPROVED",
+      "at": "2026-08-10T18:38:00+10:00",
+      "actor": "Principal Software Engineer (independent agent)",
+      "reason": "APPROVE after one REVISE round covering roles, sessions, readiness and crash safety"
+    },
+    {
+      "from": "ENGINEERING_APPROVED",
+      "to": "QA_PASSED",
+      "at": "2026-08-10T18:43:00+10:00",
+      "actor": "Senior QA and Test Lead (independent agent)",
+      "reason": "PASS: 30/30 tests, 5/5 invariants, role model and journeys verified"
+    },
+    {
+      "from": "QA_PASSED",
+      "to": "GO_DEPLOY",
+      "at": "2026-08-10T18:44:00+10:00",
+      "actor": "Principal Platform SRE and Release Engineer (independent agent)",
+      "reason": "GO_DEPLOY with five conditions, all satisfied before and during deployment"
+    },
+    {
+      "from": "GO_DEPLOY",
+      "to": "DEPLOYING",
+      "at": "2026-08-10T18:45:00+10:00",
+      "actor": "release-manager",
+      "reason": "Snapshot taken, source staged and digest-matched, app.create issued"
+    },
+    {
+      "from": "DEPLOYING",
+      "to": "DEPLOYED",
+      "at": "2026-08-10T18:52:00+10:00",
+      "actor": "release-manager",
+      "reason": "Job 8896 SUCCESS; runtime identity, health and readiness verified on the origin"
+    },
+    {
+      "from": "DEPLOYED",
+      "to": "LIVE_QA_PASSED",
+      "at": "2026-08-10T19:15:00+10:00",
+      "actor": "Live QA Lead (independent agent)",
+      "reason": "PASS_LIVE against production including the public identity gate"
+    }
+  ]
+}

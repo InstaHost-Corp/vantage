@@ -4,161 +4,216 @@
   "created_objects": [
     {
       "id": "zfs-dataset-vantage",
-      "scope": "nas1.insta.host",
       "location": "TailsPool/vantage",
-      "purpose": "Persistent application root holding release source and the SQLite database for the vantage service",
       "removal_command": "ssh nas1 \"midclt call -j pool.dataset.delete '{\\\"id\\\":\\\"TailsPool/vantage\\\",\\\"recursive\\\":true}'\"",
       "temporary": false,
       "retain": true,
-      "retention_reason": "Permanent infrastructure for the vantage service; removal only as part of decommissioning the service."
+      "retention_reason": "Permanent infrastructure for the vantage service; removal only as part of decommissioning the service.",
+      "created_for": "Persistent application root holding release source and the SQLite database for the vantage service",
+      "host": "nas1.insta.host",
+      "scope": "dataset"
     },
     {
-      "id": "release-source-dcf18fa",
-      "scope": "nas1.insta.host",
-      "location": "/mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42",
-      "purpose": "Immutable release source bind-mounted read-only at /app for release 1.0.0",
-      "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42\"",
+      "id": "release-source-c01fbed",
+      "location": "/mnt/TailsPool/vantage/releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69",
+      "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69\"",
       "temporary": false,
       "retain": true,
-      "retention_reason": "This is the running release artifact and the rollback target for the next release. Prior release directories are pruned when two newer releases exist."
+      "retention_reason": "This is the running release artifact and the rollback target for the next release. The superseded staging directory for dcf18fae is removed during this release because it was never started.",
+      "created_for": "Immutable release source bind-mounted read-only at /app for release 1.0.0",
+      "host": "nas1.insta.host",
+      "scope": "file"
     },
     {
       "id": "runtime-image-node24",
-      "scope": "nas1.insta.host container image store",
       "location": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
-      "purpose": "Pinned runtime image for the vantage application",
       "removal_command": "ssh nas1 \"midclt call -j app.image.delete '{\\\"image\\\":\\\"node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03\\\"}'\"",
       "temporary": false,
       "retain": true,
       "retention_reason": "Referenced directly by the running application. It was pulled with app.image.pull rather than through a temporary holder application, so no holder needs deleting.",
       "consumer_references_image": true,
-      "retention_verified_after_cleanup": true
+      "retention_verified_after_cleanup": true,
+      "created_for": "Pinned runtime image for the vantage application",
+      "host": "nas1.insta.host container image store",
+      "scope": "image"
     },
     {
       "id": "truenas-app-vantage",
-      "scope": "nas1.insta.host",
       "location": "custom application 'vantage' on TCP 30002",
-      "purpose": "The deployed service",
       "removal_command": "ssh nas1 \"midclt call -j app.stop vantage && midclt call -j app.delete vantage\"",
       "temporary": false,
       "retain": true,
-      "retention_reason": "The service being released."
+      "retention_reason": "The service being released.",
+      "created_for": "The deployed service",
+      "host": "nas1.insta.host",
+      "scope": "container"
     },
     {
       "id": "cloudflare-access-app-vantage",
-      "scope": "Cloudflare account ab479cdd65b082569c7aafaae35e971d",
       "location": "Access application for vantage.insta.host",
-      "purpose": "Identity gate in front of every path of the service",
       "removal_command": "DELETE /accounts/{account}/access/apps/{app_id}",
       "temporary": false,
       "retain": true,
-      "retention_reason": "Mandatory identity control; removing it would expose the origin. Removed only when decommissioning, and only after DNS and ingress are removed first."
+      "retention_reason": "Mandatory identity control; removing it would expose the origin. Removed only when decommissioning, and only after DNS and ingress are removed first.",
+      "created_for": "Identity gate in front of every path of the service",
+      "host": "Cloudflare account ab479cdd65b082569c7aafaae35e971d",
+      "scope": "identity_application"
     },
     {
       "id": "cloudflare-tunnel-ingress-vantage",
-      "scope": "Cloudflare tunnel instahost-nas1",
       "location": "ingress rule vantage.insta.host -> http://192.168.100.116:30002",
-      "purpose": "Route public traffic to the origin through the estate tunnel",
       "removal_command": "PUT /accounts/{account}/cfd_tunnel/{tunnel}/configurations with the vantage rule removed and the catch-all still last",
       "temporary": false,
       "retain": true,
-      "retention_reason": "Permanent routing for the published service."
+      "retention_reason": "Permanent routing for the published service.",
+      "created_for": "Route public traffic to the origin through the estate tunnel",
+      "host": "Cloudflare tunnel instahost-nas1",
+      "scope": "dns_record"
     },
     {
       "id": "cloudflare-dns-vantage",
-      "scope": "Cloudflare zone insta.host",
       "location": "CNAME vantage.insta.host (proxied)",
-      "purpose": "Public name resolution for the service",
       "removal_command": "DELETE /zones/{zone}/dns_records/{record_id}",
       "temporary": false,
       "retain": true,
-      "retention_reason": "Permanent public hostname. In a rollback this is removed FIRST, before ingress and Access."
+      "retention_reason": "Permanent public hostname. In a rollback this is removed FIRST, before ingress and Access.",
+      "created_for": "Public name resolution for the service",
+      "host": "Cloudflare zone insta.host",
+      "scope": "dns_record"
     },
     {
       "id": "github-repo-vantage",
-      "scope": "github.com/phamid",
       "location": "private repository phamid/vantage",
-      "purpose": "Source of record for the service",
       "removal_command": "DELETE /repos/phamid/vantage",
       "temporary": false,
       "retain": true,
-      "retention_reason": "Permanent source repository, created private because it is a service repository."
+      "retention_reason": "Permanent source repository, created private because it is a service repository.",
+      "created_for": "Source of record for the service",
+      "host": "github.com/phamid",
+      "scope": "file"
     },
     {
       "id": "review-worktree",
-      "scope": "workstation",
       "location": "/tmp/vantage-review",
-      "purpose": "Detached read-only worktree at the release commit for isolated delegated review",
       "removal_command": "git -C ~/vantage worktree remove --force /tmp/vantage-review",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
       "removed": false,
-      "absence_verified": false
+      "absence_verified": false,
+      "created_for": "Detached read-only worktree at the release commit for isolated delegated review",
+      "host": "workstation",
+      "scope": "file"
     },
     {
       "id": "verification-harness",
-      "scope": "workstation",
       "location": "/tmp/vcheck",
-      "purpose": "Headless browser verification harness (puppeteer-core) used for route, responsive and live UI checks",
       "removal_command": "rm -rf /tmp/vcheck",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
       "removed": false,
-      "absence_verified": false
+      "absence_verified": false,
+      "created_for": "Headless browser verification harness (puppeteer-core) used for route, responsive and live UI checks",
+      "host": "workstation",
+      "scope": "file"
     },
     {
       "id": "probe-scripts",
-      "scope": "workstation",
       "location": "/tmp/cfprobe.py, /tmp/mkrepo.py, /tmp/local-manifest.txt, /tmp/remote-manifest.txt, /tmp/vantage_sha, /tmp/vantage_source_digest, /tmp/vantage-cf-zone, /tmp/vantage.log, /tmp/node24digest",
-      "purpose": "Live dependency probes, repository creation, source integrity manifests and release identifiers",
       "removal_command": "rm -f /tmp/cfprobe.py /tmp/mkrepo.py /tmp/local-manifest.txt /tmp/remote-manifest.txt /tmp/vantage_sha /tmp/vantage_source_digest /tmp/vantage-cf-zone /tmp/vantage.log /tmp/node24digest",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
       "removed": false,
       "absence_verified": false,
-      "notes": "None of these files contain secret material. cfprobe.py reads the Cloudflare credential from ~/.config/cloudflare/env at runtime and never writes or prints it."
+      "notes": "None of these files contain secret material. cfprobe.py reads the Cloudflare credential from ~/.config/cloudflare/env at runtime and never writes or prints it.",
+      "created_for": "Live dependency probes, repository creation, source integrity manifests and release identifiers",
+      "host": "workstation",
+      "scope": "file"
     },
     {
       "id": "local-dev-server",
-      "scope": "workstation",
       "location": "node server/index.js on 127.0.0.1:4173 and its ~/vantage/data directory",
-      "purpose": "Local verification of the release build before deployment",
       "removal_command": "lsof -ti tcp:4173 then kill <pid>; rm -rf ~/vantage/data",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
       "removed": false,
-      "absence_verified": false
+      "absence_verified": false,
+      "created_for": "Local verification of the release build before deployment",
+      "host": "workstation",
+      "scope": "container"
+    },
+    {
+      "id": "superseded-staging-dcf18fa",
+      "location": "/mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42",
+      "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42\"",
+      "temporary": true,
+      "expires_at": "2026-08-10T23:59:00+10:00",
+      "removed": false,
+      "absence_verified": false,
+      "created_for": "Staging directory for a superseded release candidate that was never started",
+      "host": "nas1.insta.host",
+      "scope": "file"
+    },
+    {
+      "id": "zfs-snapshot-pre",
+      "scope": "snapshot",
+      "host": "nas1.insta.host",
+      "location": "TailsPool/vantage@pre-1.0.0",
+      "created_for": "Pre-release recursive snapshot taken immediately before app.create, the rollback point for release 1.0.0",
+      "removal_command": "ssh nas1 \"midclt call zfs.snapshot.delete '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.0.0\\\"}'\"",
+      "temporary": false,
+      "retain": true,
+      "retention_reason": "Rollback point for this release; retained until the next release supersedes it."
+    },
+    {
+      "id": "zfs-snapshot-post",
+      "scope": "snapshot",
+      "host": "nas1.insta.host",
+      "location": "TailsPool/vantage@post-1.0.0",
+      "created_for": "Post-release recursive snapshot taken after live verification",
+      "removal_command": "ssh nas1 \"midclt call zfs.snapshot.delete '{\\\"id\\\":\\\"TailsPool/vantage@post-1.0.0\\\"}'\"",
+      "temporary": false,
+      "retain": true,
+      "retention_reason": "Known-good state of the delivered release; retained as the recovery baseline."
     }
   ],
   "deletions": [],
   "retention_actions": [
     {
       "id": "source-integrity-before-trusting-staged-release",
-      "surviving_copy": "/mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42 on nas1",
-      "digest": "sha256:59b945576a95173ccb5142e5216cd37bdf02beb6bd6bfe92036dce83b33af0b8",
-      "manifest_verifier_command": "ssh nas1 \"cd /mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42 && find . -type f -print0 | xargs -0 sha256sum | sed 's| \\./| |' | sort\" | shasum -a 256",
+      "action": "prune",
+      "target": "/mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42 (superseded staging directory, never started)",
+      "surviving_copy": "/mnt/TailsPool/vantage/releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69 on nas1, the running release",
+      "surviving_copy_digest": "sha256:f20750151c9cc06a0451502b9c980f0ad48e81d59efee64889f2c36c13f04782",
+      "manifest_verifier_command": "ssh nas1 \"cd /mnt/TailsPool/vantage/releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69 && find . -type f -print0 | xargs -0 sha256sum | sed 's| \\./| |' | sort\" | shasum -a 256",
       "verified_before_deletion": true,
-      "notes": "47 files; per-file SHA-256 manifest compared hash-sorted against the local worktree at the release commit before the application was created. No local copy is deleted by this release."
+      "notes": "48 files; per-file SHA-256 manifest compared hash-sorted against the local worktree at the release commit and confirmed identical before the application was created. The superseded directory is only pruned after the surviving copy's digest is verified."
     }
   ],
-  "resumable_operations": [
+  "resume_contract": {
+    "reconciliation_identity": "vantage-1.0.0-publication",
+    "state_location": "release-evidence/release-evidence.json committed to the repository after each stage, plus the live platform state read back by scripts/publishctl.py status",
+    "state_is_durable": true,
+    "rollback_artifacts_unique": true,
+    "retained_snapshots_verified": true,
+    "resumable_stages": [
+      "stage-source",
+      "app-create",
+      "app-start",
+      "access-application",
+      "access-policy",
+      "tunnel-ingress",
+      "dns-record",
+      "live-verification"
+    ],
+    "notes": "Publication order is Access application -> policy -> tunnel ingress -> DNS. A retry resumes at the first stage whose live state does not match intent; each stage is verified by reading live state back from the platform API rather than from a local marker."
+  },
+  "image_references": [
     {
-      "id": "publication-sequence",
-      "reconciliation_identity": "vantage-1.0.0-publication",
-      "state_location": "release-evidence/release-evidence.json in the repository, committed after each stage",
-      "rollback_artifacts_unique": true,
-      "retained_snapshots_verified": true,
-      "resumable_stages": [
-        "stage-source",
-        "app-create",
-        "app-start",
-        "access-application",
-        "access-policy",
-        "tunnel-ingress",
-        "dns-record",
-        "live-verification"
-      ],
-      "notes": "Publication order is Access application -> policy -> tunnel ingress -> DNS. A retry resumes at the first stage whose live state does not match intent; each stage is verified by reading live state back from the platform API rather than from a local marker."
+      "image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "temporary_holder": "none - pulled directly with app.image.pull (job 8774), not through a temporary holder application",
+      "production_consumer": "vantage custom application on nas1",
+      "consumer_references_image": true,
+      "retention_verified_after_cleanup": true
     }
   ]
 }

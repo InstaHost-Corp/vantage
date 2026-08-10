@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "release_id": "vantage-1.0.0",
+  "hosts": [
+    {
+      "hostname": "vantage.insta.host",
+      "serves": ["static_asset", "api"],
+      "statement": "Every path on vantage.insta.host, including the SPA client routes, content-hashed static assets, the health endpoint and the public Trust Center API, is fronted by Cloudflare Access and answers 302 to the identity provider until the visitor authenticates. No content is served anonymously.",
+      "dns": {
+        "intended_exposure": "gated",
+        "authorities": [
+          {
+            "kind": "authoritative",
+            "resolver": "edna.ns.cloudflare.com / pete.ns.cloudflare.com",
+            "observed_result": "CNAME vantage.insta.host -> 40cd9ce8-5c37-4b72-afe4-698c57cd8b65.cfargotunnel.com, proxied=true, created by this release"
+          },
+          {
+            "kind": "public",
+            "resolver": "1.1.1.1",
+            "observed_result": "172.67.159.176, 104.21.14.146 - Cloudflare proxy addresses only. The origin 192.168.100.116 is never published, and every path requires Access authentication before the origin is reached, so the name resolves publicly while the service remains gated."
+          },
+          {
+            "kind": "public",
+            "resolver": "8.8.8.8",
+            "observed_result": "172.67.159.176, 104.21.14.146 - agrees with 1.1.1.1, so public resolvers have converged"
+          },
+          {
+            "kind": "public",
+            "resolver": "9.9.9.9",
+            "observed_result": "172.67.159.176, 104.21.14.146 - agrees with the other public resolvers"
+          },
+          {
+            "kind": "operator_client",
+            "resolver": "workstation default resolver",
+            "observed_result": "172.67.159.176, 104.21.14.146 - no stale negative cache on the operator client"
+          },
+          {
+            "kind": "private",
+            "resolver": "none - the estate publishes no private zone for insta.host",
+            "observed_result": "No private authority can answer for this name; nas1 reaches the service on its own loopback and no split-horizon record exists"
+          },
+          {
+            "kind": "container",
+            "resolver": "docker embedded DNS on network ix-vantage_default",
+            "observed_result": "Resolves only the compose service name 'vantage' inside the bridge network 172.16.41.0/24; it cannot and does not answer for vantage.insta.host"
+          },
+          {
+            "kind": "directory",
+            "resolver": "none - no Active Directory zone serves insta.host",
+            "observed_result": "Not applicable to this estate; no directory resolver can answer for the name"
+          }
+        ]
+      },
+      "certificate": {
+        "source": "Cloudflare universal certificate, issued by Google Trust Services CN=WE1",
+        "covering_name": "*.insta.host",
+        "verify_result": "SSL certificate verify ok; curl reports host vantage.insta.host matched the certificate's *.insta.host",
+        "note": "vantage.insta.host adds exactly one label to insta.host, so it falls inside the single-label scope of the wildcard."
+      },
+      "probes": [
+        { "kind": "page", "path": "/", "path_namespace": "/", "observed_status": "302", "observed_origin": "cloudflare-access", "note": "Location: https://fancy-waterfall-e0ae.cloudflareaccess.com/cdn-cgi/access/login/vantage.insta.host" },
+        { "kind": "page", "path": "/trust", "path_namespace": "/", "observed_status": "302", "observed_origin": "cloudflare-access", "note": "The Trust Center client route is gated like every other path" },
+        { "kind": "static_asset", "path": "/assets/index-B5FcdNDk.js", "path_namespace": "/", "observed_status": "302", "observed_origin": "cloudflare-access", "note": "Nested content-hashed asset does not fall through to another origin; it is gated" },
+        { "kind": "api", "path": "/api/public/trust", "path_namespace": "/", "observed_status": "302", "observed_origin": "cloudflare-access", "note": "Even the application's own anonymous endpoint is gated at the edge" },
+        { "kind": "api", "path": "/api/dashboard", "path_namespace": "/", "observed_status": "302", "observed_origin": "cloudflare-access", "note": "Protected API gated at the edge before the application sees it" },
+        { "kind": "api", "path": "/healthz", "path_namespace": "/", "observed_status": "302", "observed_origin": "cloudflare-access", "note": "Health is gated publicly, which is why monitoring is pointed at the origin instead" },
+        { "kind": "negative_control", "path": "https://books.insta.host/", "path_namespace": "/", "observed_status": "200", "observed_origin": "books.insta.host origin via the same tunnel", "note": "A different estate service outside the vantage namespace answers 200 through the same edge and the same DNS authority, proving the 302 observed on every vantage path is this application's Access policy rather than a blanket edge or DNS behaviour." }
+      ],
+      "artifacts": [
+        {
+          "name": "SPA application bundle",
+          "source_page": "https://vantage.insta.host/",
+          "literal_href": "/assets/index-B5FcdNDk.js",
+          "requested_unmodified": true,
+          "observed_status": "302",
+          "cache_strategy": "version_keyed",
+          "cache_justification": "Vite emits content-hashed filenames referenced from index.html, so every asset URL changes when the bytes change and no purge is required. Assets under /assets/ are served immutable and index.html with a short max-age.",
+          "verification_command": "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/assets/index-B5FcdNDk.js"
+        }
+      ]
+    }
+  ]
+}

@@ -141,6 +141,15 @@ fail without the fix:
   exists. The SQLite database lives on a persistent volume at
   `/mnt/TailsPool/vantage/data`.
 
+### Deployment
+
+Deployed 2026-08-10 to `https://vantage.insta.host` (nas1, TCP 30002) at commit
+`c01fbed090274a8b9629e68bd1b7dfe68f112b69`, image
+`node:24-slim@sha256:3638d9a6…`, jobs `8774` and `8896` both successful.
+Snapshots `pre-1.0.0` and `post-1.0.0` retained. Origin health and readiness
+green; every public path returns the Cloudflare Access redirect. Live QA
+`PASS_LIVE`.
+
 ### Operator actions
 
 - None beyond deployment. Health and readiness must be monitored on the origin

@@ -145,22 +145,32 @@ deployment before any mutation was made.
 
 ## Deployment evidence
 
-_Completed after deployment._
-
 | Item | Value |
 |---|---|
-| Release commit | `PENDING` |
-| Tag | `PENDING` |
-| Source archive digest | `PENDING` |
-| Staged source digest (post-transfer) | `PENDING` |
-| Image digest (configured / active) | `PENDING` |
-| Deployment job IDs | `PENDING` |
-| Runtime identity (UID/GID, revision) | `PENDING` |
-| Pre-release snapshot | `PENDING` |
-| Post-release snapshot | `PENDING` |
-| Origin health / readiness | `PENDING` |
-| Public edge verification | `PENDING` |
-| Pre-deployment QA verdict | `PENDING` |
-| `GO_DEPLOY` | `PENDING` |
-| Live QA verdict | `PENDING` |
-| `GO_PUBLISH` | `PENDING` |
+| Release commit | `c01fbed090274a8b9629e68bd1b7dfe68f112b69` |
+| Tag | `v1.0.0` |
+| Repository | `phamid/vantage` (private) |
+| Source artifact | release commit tree excluding `.git`, `node_modules`, `tests`, `release-evidence` — 48 files |
+| Staged source digest (post-transfer, hash-sorted manifest) | `sha256:f20750151c9cc06a0451502b9c980f0ad48e81d59efee64889f2c36c13f04782` |
+| Rendered configuration digest | `sha256:e23fbd35cf069eb9bbb5f61edd5e74d5cb9fe64fb4d22550f971644d24cf6beb` |
+| Image (configured and active) | `node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03` |
+| Deployment jobs | `8774 app.image.pull SUCCESS`, `8896 app.create SUCCESS` — no failed job |
+| Runtime identity | state `RUNNING`, 1 container; `/app` **ro** from the release directory, `/data` **rw**; host port 30002 |
+| Migration result | not applicable — schema created and seeded idempotently on first boot |
+| Pre-release snapshot | `TailsPool/vantage@pre-1.0.0` |
+| Post-release snapshot | `TailsPool/vantage@post-1.0.0` |
+| Origin health | `/healthz` 200 — version 1.0.0, release_sha `c01fbed0…`, node v24.19.0 |
+| Origin readiness | `/readyz` 200 — database, schema, monitoring engine, writable volume and frontend build all ok |
+| Readiness fails closed | proven on Linux: with `/data` mounted read-only the process stays up and `/readyz` returns **503** with `database_writable: false` |
+| Public edge | every path (`/`, `/trust`, `/healthz`, `/api/public/trust`, `/api/dashboard`, `/assets/…`) returns **302** to Cloudflare Access; negative control `books.insta.host` returns 200 |
+| Certificate | `*.insta.host` (Google Trust Services CN=WE1), one-label depth, verify ok |
+| DNS | proxied CNAME to the estate tunnel; converged across 1.1.1.1, 8.8.8.8, 9.9.9.9 and the client resolver; origin address never published |
+| Identity policy | Access application with Entra SSO + one-time PIN, allowing the `mytechie.com.au` email domain; verified live against intent |
+| Pre-deployment QA | **PASS** |
+| `GO_DEPLOY` | **GO_DEPLOY** with five conditions, all satisfied |
+| Live QA | **PASS_LIVE** |
+| `GO_PUBLISH` | recorded in `release-evidence/verdicts.json` |
+
+Full machine-readable evidence: `release-evidence/release-evidence.json`,
+`edge-verification.json`, `cleanup-manifest.json`, `verdicts.json`,
+`pre-freeze-contract-matrix.json` and `deployment-profile.json`.
