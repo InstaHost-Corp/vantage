@@ -98,11 +98,12 @@
       "removal_command": "git -C ~/vantage worktree remove --force /tmp/vantage-review",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
-      "removed": false,
-      "absence_verified": false,
+      "removed": true,
+      "absence_verified": true,
       "created_for": "Detached read-only worktree at the release commit for isolated delegated review",
       "host": "workstation",
-      "scope": "file"
+      "scope": "file",
+      "absence_evidence": "git worktree remove --force succeeded; git worktree list shows only the main checkout and the path does not exist"
     },
     {
       "id": "verification-harness",
@@ -110,11 +111,12 @@
       "removal_command": "rm -rf /tmp/vcheck",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
-      "removed": false,
-      "absence_verified": false,
+      "removed": true,
+      "absence_verified": true,
       "created_for": "Headless browser verification harness (puppeteer-core) used for route, responsive and live UI checks",
       "host": "workstation",
-      "scope": "file"
+      "scope": "file",
+      "absence_evidence": "rm -rf /tmp/vcheck; path confirmed absent"
     },
     {
       "id": "probe-scripts",
@@ -122,12 +124,13 @@
       "removal_command": "rm -f /tmp/cfprobe.py /tmp/mkrepo.py /tmp/local-manifest.txt /tmp/remote-manifest.txt /tmp/vantage_sha /tmp/vantage_source_digest /tmp/vantage-cf-zone /tmp/vantage.log /tmp/node24digest",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
-      "removed": false,
-      "absence_verified": false,
+      "removed": true,
+      "absence_verified": true,
       "notes": "None of these files contain secret material. cfprobe.py reads the Cloudflare credential from ~/.config/cloudflare/env at runtime and never writes or prints it.",
       "created_for": "Live dependency probes, repository creation, source integrity manifests and release identifiers",
       "host": "workstation",
-      "scope": "file"
+      "scope": "file",
+      "absence_evidence": "rm -f of each probe and manifest file; every path confirmed absent"
     },
     {
       "id": "local-dev-server",
@@ -135,11 +138,12 @@
       "removal_command": "lsof -ti tcp:4173 then kill <pid>; rm -rf ~/vantage/data",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
-      "removed": false,
-      "absence_verified": false,
+      "removed": true,
+      "absence_verified": true,
       "created_for": "Local verification of the release build before deployment",
       "host": "workstation",
-      "scope": "container"
+      "scope": "container",
+      "absence_evidence": "process on 127.0.0.1:4173 stopped by numeric PID and ~/vantage/data removed; lsof reports the port closed"
     },
     {
       "id": "superseded-staging-dcf18fa",
@@ -147,11 +151,12 @@
       "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/dcf18fae522d79cb6df0b187526e215425c04e42\"",
       "temporary": true,
       "expires_at": "2026-08-10T23:59:00+10:00",
-      "removed": false,
-      "absence_verified": false,
+      "removed": true,
+      "absence_verified": true,
       "created_for": "Staging directory for a superseded release candidate that was never started",
       "host": "nas1.insta.host",
-      "scope": "file"
+      "scope": "file",
+      "absence_evidence": "rm -rf on nas1 after verifying the surviving release directory digest; test -d confirms absence"
     },
     {
       "id": "zfs-snapshot-pre",
@@ -214,6 +219,15 @@
       "production_consumer": "vantage custom application on nas1",
       "consumer_references_image": true,
       "retention_verified_after_cleanup": true
+    }
+  ],
+  "temporary_forwards": [
+    {
+      "id": "origin-loopback-forward",
+      "description": "ssh -L 18443:127.0.0.1:30002 used for origin verification and the production browser journey",
+      "removed": true,
+      "absence_verified": true,
+      "absence_evidence": "terminated by numeric PID; lsof reports 18443 closed"
     }
   ]
 }
