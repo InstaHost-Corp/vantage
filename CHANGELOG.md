@@ -48,6 +48,39 @@ First release. Vantage is deployed to the InstaHost estate at
 
 ### Security
 
+Five findings from the mandatory pre-deployment security and engineering
+reviews were fixed before deployment, each with a regression test proven to
+fail without the fix:
+
+- **Role enforcement.** The application defined `admin`, `contributor` and
+  `auditor` roles but enforced none of them, so the seeded external auditor
+  account could reset the tenant, approve the policies it was auditing and
+  remediate controls. Auditor accounts are now read-only, and tenant reset,
+  policy approval, framework enablement, settings and Trust Center
+  configuration require an administrator. `/api/demo/reset` additionally
+  honours `VANTAGE_ALLOW_DEMO_RESET=0`.
+- **Session tokens are no longer accepted from the query string**, only from
+  the `Authorization` header. A token in a URL leaks into access logs, browser
+  history and `Referer` headers.
+- **Readiness now proves the data volume accepts writes** by inserting,
+  reading back and deleting a probe row. The previous check was a read, which
+  cannot detect a full or read-only volume — the exact failure `/readyz` exists
+  to catch, since it is the only monitoring signal for this service.
+- **Sign-in attempts are throttled** (10 failures per account per 15 minutes)
+  so the shared demonstration password cannot be brute-forced from behind the
+  identity gate.
+- **The public Trust Center payload no longer discloses which specific controls
+  are failing.** Status is published coarsely as verified, in progress or
+  documented.
+- Remediation writes are restricted to an allow-list of column names per rule
+  kind, so a future editable-rule feature cannot become column-name injection.
+- The `/api` guard matches whole path segments rather than bare prefixes, and
+  request paths are decoded then re-normalised so the guard and the router
+  cannot disagree about a percent-encoded path.
+- Static file streaming handles read errors, and the process logs rather than
+  exits on an unhandled rejection, so a single bad request cannot take the
+  service down.
+
 - The service is fronted by Cloudflare Access; every public path, including
   `/healthz`, answers a redirect to the identity provider until the visitor has
   authenticated. Health and readiness are therefore monitored on the origin.

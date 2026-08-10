@@ -198,3 +198,76 @@ test('passwords are stored salted and are not recoverable from the hash', async 
   assert.equal(verifyPassword('vantage123', 'not-a-stored-hash'), false);
   assert.equal(verifyPassword('vantage123', undefined), false);
 });
+
+/* ---- Regression coverage for the pre-deployment review findings ---- */
+
+test('SEC-2: a session token in the query string is not accepted', async () => {
+  const login = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: 'ada@northwind.io', password: 'vantage123' }) }).then((r) => r.json());
+  const viaHeader = await fetch(`${BASE}/api/me`, { headers: { authorization: `Bearer ${login.token}` } });
+  assert.equal(viaHeader.status, 200, 'the header must still work');
+  const viaQuery = await fetch(`${BASE}/api/me?token=${login.token}`);
+  assert.equal(viaQuery.status, 401, 'a token in the URL must be refused');
+});
+
+test('SEC-1: an auditor has read-only access and cannot mutate the workspace', async () => {
+  const login = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: 'auditor@keeling-cpa.com', password: 'vantage123' }) }).then((r) => r.json());
+  assert.equal(login.user.role, 'auditor');
+  const as = (path, options = {}) => fetch(`${BASE}${path}`, {
+    ...options, headers: { 'content-type': 'application/json', authorization: `Bearer ${login.token}` },
+  });
+  assert.equal((await as('/api/dashboard')).status, 200, 'auditors must still read evidence');
+  for (const [path, options] of [
+    ['/api/demo/reset', { method: 'POST' }],
+    ['/api/tests/aws-iam-mfa/remediate', { method: 'POST', body: '{}' }],
+    ['/api/policies/business-continuity-plan/approve', { method: 'POST' }],
+    ['/api/frameworks/soc2/toggle', { method: 'POST' }],
+    ['/api/settings', { method: 'PATCH', body: JSON.stringify({ company: { name: 'x' } }) }],
+  ]) {
+    assert.equal((await as(path, options)).status, 403, `auditor must be refused ${path}`);
+  }
+  assert.equal((await as('/api/auth/logout', { method: 'POST' })).status, 200, 'auditors must be able to sign out');
+});
+
+test('SEC-1/ENG-M2: only an administrator may reset the tenant or approve policy', async () => {
+  const login = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: 'priya@northwind.io', password: 'vantage123' }) }).then((r) => r.json());
+  assert.equal(login.user.role, 'contributor');
+  const as = (path, options = {}) => fetch(`${BASE}${path}`, {
+    ...options, headers: { 'content-type': 'application/json', authorization: `Bearer ${login.token}` },
+  });
+  assert.equal((await as('/api/demo/reset', { method: 'POST' })).status, 403);
+  assert.equal((await as('/api/policies/business-continuity-plan/approve', { method: 'POST' })).status, 403);
+  // A contributor may still perform day-to-day remediation.
+  assert.equal((await as('/api/tests/aws-rds-backups/remediate', { method: 'POST', body: '{}' })).status, 200);
+});
+
+test('ENG-L2: the api guard matches whole path segments, not bare prefixes', async () => {
+  assert.equal((await fetch(`${BASE}/api/publicX`)).status, 401);
+  assert.equal((await fetch(`${BASE}/api/authX`)).status, 401);
+  assert.equal((await fetch(`${BASE}/api/public/trust`)).status, 200);
+});
+
+test('ENG-M1: readiness proves the data volume accepts writes', async () => {
+  const body = await fetch(`${BASE}/readyz`).then((r) => r.json());
+  assert.equal(body.checks.database_writable.ok, true);
+  assert.match(body.checks.database_writable.detail, /insert, read back and delete/);
+  assert.match(body.checks.database.detail, /quick_check=ok/);
+});
+
+test('SEC-4: the public trust payload does not disclose which controls are failing', async () => {
+  const body = await fetch(`${BASE}/api/public/trust`).then((r) => r.json());
+  const statuses = new Set(body.control_groups.flatMap((g) => g.items.map((i) => i.status)));
+  assert.ok(!statuses.has('failing'), `public payload leaked raw status: ${[...statuses]}`);
+  for (const status of statuses) assert.ok(['verified', 'in_progress', 'documented'].includes(status), `unexpected public status ${status}`);
+});
+
+test('SEC-3: repeated failed sign-ins are throttled', async () => {
+  let sawThrottle = false;
+  for (let i = 0; i < 14; i++) {
+    const res = await fetch(`${BASE}/api/auth/login`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'throttle-probe@northwind.io', password: `wrong-${i}` }),
+    });
+    if (res.status === 429) { sawThrottle = true; break; }
+  }
+  assert.ok(sawThrottle, 'brute force against one account must eventually be refused');
+});

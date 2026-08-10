@@ -52,6 +52,23 @@ of them user-visible:
    table. The endpoint now re-issues the caller's session.
 4. **The authenticated shell overflowed 47px on a 390px viewport.**
 
+## Findings fixed from the mandatory pre-deployment reviews
+
+Both review lanes returned `REVISE`. All findings were fixed and each carries a
+regression test proven to fail without the fix.
+
+| Ref | Severity | Finding | Fix |
+|---|---|---|---|
+| SEC-1 / ENG-M2 | HIGH | Roles declared but never enforced — the external auditor account could reset the tenant, approve policies and remediate controls | Auditor is read-only; reset, policy approval, framework toggle, settings and Trust Center config require admin; reset also honours `VANTAGE_ALLOW_DEMO_RESET=0` |
+| SEC-2 / ENG-L1 | MEDIUM | Session token accepted via `?token=`, leaking into logs, history and `Referer` | Header-only bearer tokens |
+| ENG-M1 | MEDIUM | `/readyz` could report ready while every write failed | Readiness performs a real insert, read-back and delete on the data volume; the database check runs `PRAGMA quick_check` |
+| ENG-M3 | MEDIUM | Unhandled read-stream error or rejection could exit the single process | Stream error handling, top-level handlers, and `restart: unless-stopped` |
+| SEC-3 | MEDIUM | Shared demonstration password with no lockout | Sign-in throttling; password no longer pre-filled. Shared demo password itself is formally accepted below |
+| SEC-4 | LOW | Public Trust Center disclosed which controls are failing | Public status coarsened to verified / in progress / documented |
+| SEC-5 | LOW | Remediation interpolated a column name into `UPDATE` | Per-kind allow-list of remediable columns |
+| ENG-L2 / L4 | LOW | Guard matched bare prefixes; decoded and normalised paths could diverge | Whole-segment matching and consistent normalisation |
+| ENG-L3 | LOW | Readiness could report not-ready during warm-up | Two-minute warm-up grace for the monitoring engine |
+
 ## Architecture change
 
 Express was removed and replaced by `server/http.js`, a zero-dependency

@@ -1,0 +1,12 @@
+[
+  {
+    "lane": "senior_review",
+    "reviewer": "Senior Security and Privacy Lead (security-review agent, claude-opus-4.8)",
+    "verdict": "REVISE"
+  },
+  {
+    "lane": "senior_review",
+    "reviewer": "Principal Software Engineer (rubber-duck agent, claude-opus-4.8)",
+    "verdict": "REVISE"
+  }
+]

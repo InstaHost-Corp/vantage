@@ -43,7 +43,9 @@ app.get('/readyz', (req, res) => {
   const record = (name, ok, detail) => { checks[name] = { ok, detail }; if (!ok) ready = false; };
 
   try {
-    record('database', true, DB_PATH);
+    // A real query, not an assertion: proves the database file is open and readable.
+    const integrity = get('PRAGMA quick_check');
+    record('database', Object.values(integrity || {})[0] === 'ok', `${DB_PATH} quick_check=${Object.values(integrity || {})[0]}`);
   } catch (err) {
     record('database', false, String(err.message));
   }
@@ -53,13 +55,24 @@ app.get('/readyz', (req, res) => {
     const users = get('SELECT COUNT(*) AS n FROM users').n;
     record('schema_seeded', frameworks > 0 && tests > 0 && users > 0, `${frameworks} frameworks, ${tests} tests, ${users} users`);
     const scan = get('SELECT MAX(last_run) AS t FROM tests').t;
-    record('monitoring_engine', !!scan, scan ? `last scan ${scan}` : 'no scan recorded');
+    // During the first two minutes after boot a missing scan is warm-up, not a
+    // fault; after that it means the engine is genuinely not running.
+    const warmingUp = process.uptime() < 120;
+    record('monitoring_engine', !!scan || warmingUp,
+      scan ? `last scan ${scan}` : warmingUp ? 'warming up, no scan yet' : 'no scan recorded');
   } catch (err) {
     record('schema_seeded', false, String(err.message));
   }
   try {
-    const writable = get("SELECT COUNT(*) AS n FROM sessions").n >= 0;
-    record('database_writable', writable, 'session table readable');
+    // Prove the data volume actually accepts writes. A read cannot detect a
+    // full or remounted-read-only volume, which is the failure this deployment
+    // most needs to catch because /readyz is the only monitoring signal.
+    const probe = `readiness_probe_${Date.now()}`;
+    db.exec(`CREATE TABLE IF NOT EXISTS readiness_probe (id INTEGER PRIMARY KEY, marker TEXT NOT NULL)`);
+    run('INSERT INTO readiness_probe (marker) VALUES (?)', probe);
+    const stored = get('SELECT marker FROM readiness_probe WHERE marker = ?', probe);
+    run('DELETE FROM readiness_probe WHERE marker = ?', probe);
+    record('database_writable', stored?.marker === probe, 'insert, read back and delete succeeded on the data volume');
   } catch (err) {
     record('database_writable', false, String(err.message));
   }
@@ -73,8 +86,10 @@ app.get('/readyz', (req, res) => {
 const SESSION_DAYS = 14;
 
 function currentUser(req) {
+  // Bearer header only. A token in the query string leaks into access logs,
+  // browser history and Referer headers, and the client never used it.
   const header = req.get('authorization') || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : req.query.token;
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return null;
   const session = get('SELECT * FROM sessions WHERE token = ?', token);
   if (!session || new Date(session.expires_at) < new Date()) return null;
@@ -88,12 +103,54 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Administrative operations that change the shape of the workspace itself.
+function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'This action requires an administrator role' });
+  }
+  next();
+}
+
+// External auditors receive read-only access to the whole workspace. They must
+// never be able to approve a policy, remediate a control or reset the tenant
+// whose evidence they are auditing.
+function enforceReadOnlyRoles(req, res, next) {
+  if (req.method === 'GET' || req.method === 'HEAD') return next();
+  if (req.user?.role === 'auditor' && req.path !== '/auth/logout') {
+    return res.status(403).json({ error: 'Auditor accounts have read-only access' });
+  }
+  next();
+}
+
+// Simple in-memory backoff so a shared demonstration password cannot be
+// brute-forced from behind the identity gate.
+const loginAttempts = new Map();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+
+function loginThrottle(key) {
+  const now = Date.now();
+  const entry = loginAttempts.get(key);
+  if (!entry || now - entry.first > LOGIN_WINDOW_MS) {
+    loginAttempts.set(key, { first: now, count: 1 });
+    return { blocked: false };
+  }
+  entry.count += 1;
+  return { blocked: entry.count > LOGIN_MAX_ATTEMPTS, retry_after_seconds: Math.ceil((entry.first + LOGIN_WINDOW_MS - now) / 1000) };
+}
+
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body || {};
+  const throttleKey = String(email || '').toLowerCase().trim() || 'anonymous';
+  const throttle = loginThrottle(throttleKey);
+  if (throttle.blocked) {
+    return res.status(429).json({ error: 'Too many sign-in attempts. Try again later.', retry_after_seconds: throttle.retry_after_seconds });
+  }
   const user = get('SELECT * FROM users WHERE email = ?', String(email || '').toLowerCase().trim());
   if (!user || !verifyPassword(String(password || ''), user.password_hash)) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
+  loginAttempts.delete(throttleKey);
   const token = randomUUID();
   run('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
     token, user.id, new Date(Date.now() + SESSION_DAYS * 86400000).toISOString());
@@ -119,9 +176,16 @@ app.get('/api/public/trust', (req, res) => {
     const r = frameworkReadiness(f.id);
     return { slug: f.slug, name: f.name, short_name: f.short_name, color: f.color, category: f.category, readiness: r.readiness, audit_status: f.audit_status };
   });
+  // Published posture is deliberately coarse. A public page must not hand a
+  // reader a live map of which specific controls are currently failing.
+  const publicStatus = (status) => {
+    if (status === 'passing') return 'verified';
+    if (status === 'failing') return 'in_progress';
+    return 'documented';
+  };
   const controls = all('SELECT * FROM controls ORDER BY code').map((c) => ({
     code: c.code, name: c.name, category: c.category, description: c.description,
-    status: statuses.get(c.id)?.status || 'no_tests',
+    status: publicStatus(statuses.get(c.id)?.status || 'no_tests'),
   }));
   const posture = overallPosture();
   const grouped = {};
@@ -145,7 +209,12 @@ app.post('/api/public/trust/request', (req, res) => {
   res.json({ ok: true, message: 'Request received. You will receive an email once it is approved.' });
 });
 
-app.use('/api', (req, res, next) => (req.path.startsWith('/public') || req.path.startsWith('/auth')) ? next() : requireAuth(req, res, next));
+const isPublicApiPath = (path) => ['/public', '/auth'].some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+
+app.use('/api', (req, res, next) => {
+  if (isPublicApiPath(req.path)) return next();
+  return requireAuth(req, res, (err) => (err ? next(err) : enforceReadOnlyRoles(req, res, next)));
+});
 
 /* -------------------------------------------------------------- dashboard */
 
@@ -235,7 +304,7 @@ app.get('/api/frameworks/:slug', (req, res) => {
   });
 });
 
-app.post('/api/frameworks/:slug/toggle', (req, res) => {
+app.post('/api/frameworks/:slug/toggle', requireAdmin, (req, res) => {
   const f = get('SELECT * FROM frameworks WHERE slug = ?', req.params.slug);
   if (!f) return res.status(404).json({ error: 'Framework not found' });
   run('UPDATE frameworks SET enabled = ? WHERE id = ?', f.enabled ? 0 : 1, f.id);
@@ -368,10 +437,22 @@ function desiredValue(rule) {
   }
 }
 
+// Column names cannot be parameterised, so every field a remediation may write
+// is allow-listed per rule kind rather than trusted from the stored rule.
+const REMEDIABLE_FIELDS = {
+  device: ['encrypted', 'screen_lock', 'antivirus', 'os_up_to_date', 'last_checkin'],
+  personnel: ['security_training', 'background_check', 'offboarded_access_removed'],
+  vendor: ['security_review_status', 'last_reviewed', 'soc2', 'iso27001'],
+};
+
 app.post('/api/tests/:slug/remediate', (req, res) => {
   const t = get('SELECT * FROM tests WHERE slug = ?', req.params.slug);
   if (!t) return res.status(404).json({ error: 'Test not found' });
   const rule = JSON.parse(t.rule);
+  const allowed = REMEDIABLE_FIELDS[rule.kind];
+  if (allowed && !allowed.includes(rule.field)) {
+    return res.status(400).json({ error: `Field '${rule.field}' is not remediable for ${rule.kind}` });
+  }
   const entityId = req.body?.entity_id;
   const target = desiredValue(rule);
   const fixed = [];
@@ -510,7 +591,7 @@ app.get('/api/policies/:slug', (req, res) => {
   });
 });
 
-app.post('/api/policies/:slug/approve', (req, res) => {
+app.post('/api/policies/:slug/approve', requireAdmin, (req, res) => {
   const p = get('SELECT * FROM policies WHERE slug = ?', req.params.slug);
   if (!p) return res.status(404).json({ error: 'Policy not found' });
   const version = p.status === 'approved' ? `${(parseFloat(p.version) + 0.1).toFixed(1)}` : '1.0';
@@ -785,14 +866,14 @@ app.get('/api/trust', (req, res) => {
   });
 });
 
-app.patch('/api/trust', (req, res) => {
+app.patch('/api/trust', requireAdmin, (req, res) => {
   const current = setting('trust_center');
   setSetting('trust_center', { ...current, ...req.body });
   logActivity('trust_center', req.user.name, 'Updated Trust Center settings');
   res.json({ ok: true, settings: setting('trust_center') });
 });
 
-app.patch('/api/trust/documents/:id', (req, res) => {
+app.patch('/api/trust/documents/:id', requireAdmin, (req, res) => {
   const d = get('SELECT * FROM trust_documents WHERE id = ?', Number(req.params.id));
   if (!d) return res.status(404).json({ error: 'Document not found' });
   if (req.body?.gated !== undefined) run('UPDATE trust_documents SET gated = ? WHERE id = ?', req.body.gated ? 1 : 0, d.id);
@@ -814,13 +895,16 @@ app.get('/api/activity', (req, res) => res.json(all('SELECT * FROM activity ORDE
 app.get('/api/users', (req, res) => res.json(all('SELECT id, name, email, role, title FROM users ORDER BY name')));
 
 app.get('/api/settings', (req, res) => res.json({ company: setting('company'), trust_center: setting('trust_center') }));
-app.patch('/api/settings', (req, res) => {
+app.patch('/api/settings', requireAdmin, (req, res) => {
   if (req.body?.company) setSetting('company', { ...setting('company'), ...req.body.company });
   if (req.body?.trust_center) setSetting('trust_center', { ...setting('trust_center'), ...req.body.trust_center });
   res.json({ company: setting('company'), trust_center: setting('trust_center') });
 });
 
-app.post('/api/demo/reset', (req, res) => {
+app.post('/api/demo/reset', requireAdmin, (req, res) => {
+  if (process.env.VANTAGE_ALLOW_DEMO_RESET === '0') {
+    return res.status(403).json({ error: 'Demo reset is disabled in this environment' });
+  }
   const { email, name } = req.user;
   seed({ force: true });
   // Seeding recreates users and clears sessions, so re-issue a token for the caller.
@@ -849,6 +933,16 @@ const INTERVAL_MINUTES = Number(process.env.VANTAGE_SCAN_MINUTES || 60);
 setInterval(() => {
   try { runTests({ actor: 'Vantage Agent' }); } catch (err) { console.error('scan failed', err); }
 }, INTERVAL_MINUTES * 60000).unref?.();
+
+// The service runs as a single bare node process under the container's
+// restart policy. Log and keep serving rather than exiting on an async fault
+// that does not compromise process state.
+process.on('unhandledRejection', (reason) => {
+  console.error('[vantage] unhandled rejection:', reason?.stack || reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[vantage] uncaught exception:', err?.stack || err);
+});
 
 const PORT = Number(process.env.PORT || 4173);
 const HOST = process.env.HOST || '0.0.0.0';

@@ -51,7 +51,17 @@ export function compilePath(path) {
 
 function decorateRequest(req) {
   const url = new URL(req.url, 'http://localhost');
-  req.pathname = decodeURIComponent(url.pathname);
+  // Decode first, then re-normalize, so a percent-encoded traversal cannot make
+  // the mounted guard and the route matcher disagree about the path.
+  let pathname;
+  try {
+    pathname = decodeURIComponent(url.pathname);
+  } catch {
+    pathname = url.pathname;
+  }
+  pathname = normalize(pathname).replace(/\\/g, '/');
+  if (!pathname.startsWith('/')) pathname = `/${pathname}`;
+  req.pathname = pathname;
   req.path = req.pathname;
   req.query = Object.fromEntries(url.searchParams.entries());
   req.params = {};
@@ -110,7 +120,14 @@ function sendFile(req, res, file, { cacheControl } = {}) {
   res.setHeader('last-modified', stat.mtime.toUTCString());
   if (cacheControl) res.setHeader('cache-control', cacheControl);
   if (req.method === 'HEAD') return res.end();
-  return createReadStream(file).pipe(res);
+  const stream = createReadStream(file);
+  stream.on('error', (err) => {
+    console.error(`[vantage] failed streaming ${file}:`, err?.message || err);
+    if (!res.headersSent) res.statusCode = 500;
+    res.end();
+  });
+  res.on('close', () => stream.destroy());
+  return stream.pipe(res);
 }
 
 // express.json() equivalent.
