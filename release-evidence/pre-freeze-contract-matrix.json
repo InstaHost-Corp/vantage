@@ -1,0 +1,335 @@
+{
+  "schema_version": "1.2",
+  "release_id": "vantage-1.0.0",
+  "invariant_review": "declared",
+  "invariant_review_justification": "The release publishes derived compliance values (framework readiness percentages, per-test pass/fail counters) and a generated artifact (web/dist) that is committed and served directly. Each has a repository-owned command that recomputes it from its authoritative source and compares.",
+  "contracts": [
+    {
+      "id": "runtime-image-digest",
+      "category": "other",
+      "authoritative_source": "Docker Hub registry-1.docker.io library/node manifest for tag 24-slim",
+      "version": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "reject_conditions": [
+        "Registry returns a digest different from the pinned value at deploy time",
+        "Image cannot be pre-pulled onto nas1 before app.create",
+        "Compose references a floating tag rather than the pinned digest"
+      ],
+      "validation_command": "curl -sI -H 'Authorization: Bearer <registry-token>' -H 'Accept: application/vnd.oci.image.index.v1+json' https://registry-1.docker.io/v2/library/node/manifests/24-slim | grep -i docker-content-digest",
+      "result": "PASS",
+      "evidence": "HTTP/2 200 with docker-content-digest sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "live_probe": {
+        "command": "curl -sI .../manifests/24-slim  (valid)  vs  .../manifests/22-slim-does-not-exist-xyz  (invalid)",
+        "observed_at": "2026-08-10T07:30:00+10:00",
+        "observed_semantics": "Valid tag answers HTTP 200 and carries a docker-content-digest header; the header is the immutable image identity used in compose.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "library/node manifest for the nonexistent tag 22-slim-does-not-exist-xyz",
+          "observed_result": "HTTP/2 404 with no docker-content-digest header, unambiguously different from the 200+digest answer for a real tag",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "node-sqlite-runtime",
+      "category": "other",
+      "authoritative_source": "node:sqlite DatabaseSync API inside the pinned runtime image",
+      "version": "Node v24.19.0 (stable node:sqlite, no flag, no ExperimentalWarning)",
+      "reject_conditions": [
+        "require('node:sqlite') throws or needs --experimental-sqlite in the pinned image",
+        "The application test suite does not pass inside the pinned image on linux/amd64",
+        "The image emits an ExperimentalWarning for SQLite, indicating an unstable API contract"
+      ],
+      "validation_command": "docker run --rm --platform linux/amd64 -v \"$PWD\":/app:ro -w /app node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 node --test tests/http.test.mjs tests/api.test.mjs",
+      "result": "PASS",
+      "evidence": "node v24.19.0; DatabaseSync=function with no warning; 22/22 tests pass inside the pinned image on linux/amd64 with the source mounted read-only, which is the production shape.",
+      "live_probe": {
+        "command": "docker run --rm node:24-slim@sha256:3638... node -e \"require('node:sqlite')\" plus the full suite under a read-only mount",
+        "observed_at": "2026-08-10T07:38:00+10:00",
+        "observed_semantics": "node:sqlite is available unflagged and stable on Node 24; the server boots, seeds and serves with /app mounted read-only.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "The same probe against node:22-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436",
+          "observed_result": "Node v22.23.2 also exposes DatabaseSync but prints 'ExperimentalWarning: SQLite is an experimental feature and might change at any time'. The probe therefore distinguishes a stable runtime from an experimental one, and node 22 was rejected as the base image because of it.",
+          "distinguishes_success": true
+        }
+      },
+      "fixture": {
+        "path": "tests/api.test.mjs",
+        "no_more_permissive_than_probe": true,
+        "parity_command": "docker run --rm --platform linux/amd64 -v \"$PWD\":/app:ro -w /app node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 node --test tests/api.test.mjs"
+      }
+    },
+    {
+      "id": "truenas-midclt-api",
+      "category": "other",
+      "authoritative_source": "TrueNAS SCALE middleware on nas1 via midclt over the ssh alias",
+      "version": "TrueNAS SCALE, kernel 6.12.33-production+truenas",
+      "reject_conditions": [
+        "midclt is unreachable over the recorded transport",
+        "app.create or app.start returns a failed job",
+        "pool.dataset.query cannot distinguish an existing dataset from a nonexistent one"
+      ],
+      "validation_command": "ssh -o ConnectTimeout=25 -o BatchMode=yes nas1 \"midclt call pool.dataset.query '[[\\\"name\\\",\\\"=\\\",\\\"TailsPool\\\"]]'\"",
+      "result": "PASS",
+      "evidence": "nas1.insta.host reachable over the estate LAN; TailsPool returns one dataset row with parsed available/used properties.",
+      "live_probe": {
+        "command": "midclt call pool.dataset.query for TailsPool (valid) and for TailsPool/definitely-not-a-dataset-xyz (invalid)",
+        "observed_at": "2026-08-10T07:33:00+10:00",
+        "observed_semantics": "A matching query returns a one-element array carrying available/used; the API is therefore usable as the capacity authority.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "pool.dataset.query for TailsPool/definitely-not-a-dataset-xyz",
+          "observed_result": "Empty array [] versus a one-element array for the real dataset, so presence and absence are distinguishable",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "cloudflare-api-credential",
+      "category": "identity",
+      "authoritative_source": "Cloudflare API /user/tokens/verify for account ab479cdd65b082569c7aafaae35e971d",
+      "version": "Cloudflare API v4",
+      "reject_conditions": [
+        "Token status is not active",
+        "Token lacks Access application, policy, tunnel configuration or DNS edit permission",
+        "Credential must be typed by an operator rather than read from the approved store"
+      ],
+      "validation_command": "python3 /tmp/cfprobe.py  (reads ~/.config/cloudflare/env, never prints the token)",
+      "result": "PASS",
+      "evidence": "http=200 success=True status=active; credential sourced from ~/.config/cloudflare/env and never echoed.",
+      "live_probe": {
+        "command": "GET /user/tokens/verify with the real credential, then with a deliberately invalid one",
+        "observed_at": "2026-08-10T07:41:00+10:00",
+        "observed_semantics": "A valid token returns HTTP 200 with success=true and status=active.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "Authorization: Bearer definitely-not-a-valid-token-000",
+          "observed_result": "HTTP 400 with success=false and error code 6003, clearly different from the 200/active answer",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "cloudflare-tunnel-ingress",
+      "category": "network",
+      "authoritative_source": "Cloudflare tunnel instahost-nas1 configuration (40cd9ce8-5c37-4b72-afe4-698c57cd8b65)",
+      "version": "43 ingress rules observed pre-release",
+      "reject_conditions": [
+        "An ingress rule for vantage.insta.host already exists and points elsewhere",
+        "The catch-all rule is not last after the update",
+        "Ingress is added before the Access application and policy exist"
+      ],
+      "validation_command": "GET /accounts/{account}/cfd_tunnel/{tunnel}/configurations and assert the vantage rule precedes the catch-all",
+      "result": "PASS",
+      "evidence": "43 existing rules, no vantage.insta.host rule present, so the hostname is free to claim.",
+      "live_probe": {
+        "command": "GET tunnel configurations for the real tunnel, then for 00000000-0000-0000-0000-000000000000",
+        "observed_at": "2026-08-10T07:41:00+10:00",
+        "observed_semantics": "Returns config.ingress as an ordered array ending in a catch-all; order is significant and the catch-all must remain last.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "cfd_tunnel/00000000-0000-0000-0000-000000000000/configurations",
+          "observed_result": "HTTP 404 success=false error 1055, distinct from the 200 + ingress array for the real tunnel",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "cloudflare-dns-record",
+      "category": "network",
+      "authoritative_source": "Cloudflare DNS for zone insta.host",
+      "version": "Cloudflare API v4 zone record set",
+      "reject_conditions": [
+        "vantage.insta.host already resolves to something else",
+        "DNS is created before the Access application, policy and tunnel ingress exist",
+        "The record is not proxied through Cloudflare"
+      ],
+      "validation_command": "GET /zones/{zone}/dns_records?name=vantage.insta.host",
+      "result": "PASS",
+      "evidence": "vantage.insta.host currently has 0 records, so the name is unclaimed.",
+      "live_probe": {
+        "command": "GET dns_records for books.insta.host (known-existing) and nonexistent-probe-xyz.insta.host (known-absent)",
+        "observed_at": "2026-08-10T07:45:00+10:00",
+        "observed_semantics": "An existing name returns exactly one CNAME record; an absent name returns an empty result array.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "nonexistent-probe-xyz.insta.host",
+          "observed_result": "0 records versus 1 CNAME for books.insta.host. An earlier attempt used the unclaimed target hostname as the positive case, which returned 0 records for both inputs and could not distinguish success; the probe was re-run against a known-existing record to make it meaningful.",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "port-allocation",
+      "category": "bounded_resource",
+      "authoritative_source": "midclt call app.used_ports on nas1",
+      "version": "live allocation table read 2026-08-10T07:20:00+10:00",
+      "reject_conditions": [
+        "Port 30002 appears in app.used_ports at deploy time",
+        "The port is outside the estate range 30000-32000",
+        "Allocation is asserted from repository configuration rather than the platform API"
+      ],
+      "validation_command": "ssh nas1 \"midclt call app.used_ports\" | python3 -c 'import sys,json; assert 30002 not in [p[\"port\"] if isinstance(p,dict) else p for p in json.load(sys.stdin)]'",
+      "result": "PASS",
+      "evidence": "Observed in-range allocations 30000,30001,30013,30014,30024,30045,30051,30055-30079,30109,31028,31100-31102. 30002 is the lowest free port.",
+      "resource": {
+        "kind": "port_allocation",
+        "unit": "ports",
+        "observed_available": 1969,
+        "requested": 1,
+        "platform_limit": 2001,
+        "safety_limit_percent": 75,
+        "limit_source": "midclt call app.used_ports against the estate range 30000-32000",
+        "recheck_at_deploy": true
+      },
+      "live_probe": {
+        "command": "midclt call app.used_ports",
+        "observed_at": "2026-08-10T07:20:00+10:00",
+        "observed_semantics": "Returns the platform's own list of ports already bound by applications; this is the allocation authority, not a generic socket probe.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "Assert that a known-occupied port (30000, held by an existing estate app) is reported as used",
+          "observed_result": "30000 is present in the returned list while 30002 is absent, so the table distinguishes occupied from free",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "dataset-storage",
+      "category": "bounded_resource",
+      "authoritative_source": "midclt call pool.dataset.query TailsPool available property",
+      "version": "live ZFS property read 2026-08-10T07:33:00+10:00",
+      "reject_conditions": [
+        "Available space at deploy is below the requested size plus the safety margin",
+        "Capacity is asserted from repository configuration rather than live ZFS properties",
+        "Pool usage would exceed 75 percent of capacity after the release"
+      ],
+      "validation_command": "ssh nas1 \"midclt call pool.dataset.query '[[\\\"name\\\",\\\"=\\\",\\\"TailsPool\\\"]]' '{\\\"extra\\\":{\\\"properties\\\":[\\\"available\\\"]}}'\"",
+      "result": "PASS",
+      "evidence": "571475603376 bytes (532 GiB) available against a request of roughly 6 MB of release source plus a small SQLite database.",
+      "resource": {
+        "kind": "storage",
+        "unit": "bytes",
+        "observed_available": 571475603376,
+        "requested": 26214400,
+        "platform_limit": 571475603376,
+        "safety_limit_percent": 75,
+        "limit_source": "ZFS available property on TailsPool read live through the TrueNAS middleware",
+        "recheck_at_deploy": true
+      },
+      "live_probe": {
+        "command": "midclt call pool.dataset.query for TailsPool with the available property",
+        "observed_at": "2026-08-10T07:33:00+10:00",
+        "observed_semantics": "Returns parsed byte counts for available and used directly from ZFS.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "The same query for TailsPool/definitely-not-a-dataset-xyz",
+          "observed_result": "Empty array rather than a row with byte counts, so a missing dataset cannot be mistaken for a healthy one",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "runtime-identity",
+      "category": "identity",
+      "authoritative_source": "Compose specification and the running container reported by app.get_instance",
+      "version": "vantage 1.0.0",
+      "reject_conditions": [
+        "Deployed image digest differs from the pinned digest",
+        "RELEASE_SHA reported by /healthz differs from the deployed commit",
+        "The application source mount is writable rather than read-only",
+        "The release carries any secret, since the service has no external dependency requiring one"
+      ],
+      "validation_command": "ssh nas1 \"curl -s http://127.0.0.1:30002/healthz\" and midclt call app.get_instance vantage",
+      "result": "PASS",
+      "evidence": "Identity surface proven wired to deployment inputs before freeze: booting with APP_VERSION/RELEASE_SHA/SOURCE_DIGEST set made /healthz report exactly those values (version 9.9.9, release_sha test000..., source_digest sha256:test in tests/api.test.mjs), and booting without RELEASE_SHA reported 'unversioned'. The deployed values are revalidated against the real commit and image digest at step 7 of the deployment.",
+      "live_probe": {
+        "command": "GET /healthz on the origin after deployment",
+        "observed_at": "2026-08-10T07:48:00+10:00",
+        "observed_semantics": "Pre-deployment dry run on the workstation returned status ok with version, release_sha and source_digest sourced from the environment, proving the identity surface is wired to the deployment rather than hardcoded.",
+        "ran_against_production_dependency": false,
+        "negative_control": {
+          "input": "Start the server without RELEASE_SHA set",
+          "observed_result": "/healthz reports release_sha 'unversioned' rather than a commit SHA, so an unlabelled deployment is detectable rather than silently passing",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "invariant-runtime-dependency-free",
+      "category": "invariant",
+      "authoritative_source": "package.json dependencies and the import statements in server/*.js",
+      "version": "vantage 1.0.0",
+      "reject_conditions": [
+        "package.json declares any runtime dependency",
+        "A server module imports a bare specifier that is not a node: builtin"
+      ],
+      "validation_command": "node scripts/verify-invariants.mjs --skip-build",
+      "result": "PASS",
+      "evidence": "PASS runtime_dependency_free. Proven able to fail: re-adding express to dependencies produced FAIL declared=[express].",
+      "invariant": {
+        "authoritative_source": "server/*.js import statements",
+        "derived_representation": "package.json dependencies map, and the deployment assumption that no npm install runs on the host",
+        "recompute_command": "node scripts/verify-invariants.mjs --skip-build",
+        "compares_to_authoritative_source": true
+      }
+    },
+    {
+      "id": "invariant-frontend-build-parity",
+      "category": "invariant",
+      "authoritative_source": "web/src at the release commit",
+      "version": "vantage 1.0.0",
+      "reject_conditions": [
+        "Rebuilding web/dist from web/src produces different bytes than the committed dist",
+        "web/dist is missing from the release commit"
+      ],
+      "validation_command": "node scripts/verify-invariants.mjs",
+      "result": "PASS",
+      "evidence": "Rebuild leaves git status for web/dist clean, so the committed artifact is reproducible from the committed source.",
+      "invariant": {
+        "authoritative_source": "web/src compiled by vite",
+        "derived_representation": "web/dist committed to the repository and bind-mounted read-only into the container",
+        "recompute_command": "node scripts/verify-invariants.mjs",
+        "compares_to_authoritative_source": true
+      }
+    },
+    {
+      "id": "invariant-framework-readiness",
+      "category": "invariant",
+      "authoritative_source": "controls, tests, control_requirements and requirements tables",
+      "version": "vantage 1.0.0",
+      "reject_conditions": [
+        "A published framework readiness percentage differs from an independent recomputation",
+        "A framework's mapped control count differs from the mapping tables"
+      ],
+      "validation_command": "node scripts/verify-invariants.mjs --skip-build",
+      "result": "PASS",
+      "evidence": "All 7 frameworks agree with independent recomputation from the mapping tables.",
+      "invariant": {
+        "authoritative_source": "control_requirements joined to requirements, with per-control test status",
+        "derived_representation": "readiness percentage published on the dashboard, framework pages and the public Trust Center",
+        "recompute_command": "node scripts/verify-invariants.mjs --skip-build",
+        "compares_to_authoritative_source": true
+      }
+    },
+    {
+      "id": "invariant-test-counters",
+      "category": "invariant",
+      "authoritative_source": "test_entities rows written by the monitoring engine",
+      "version": "vantage 1.0.0",
+      "reject_conditions": [
+        "A test's stored passing_count or failing_count differs from its recorded entities",
+        "A test references a control that does not exist"
+      ],
+      "validation_command": "node scripts/verify-invariants.mjs --skip-build",
+      "result": "PASS",
+      "evidence": "49 tests agree with their recorded entities; every test maps to an existing control.",
+      "invariant": {
+        "authoritative_source": "test_entities table",
+        "derived_representation": "tests.passing_count and tests.failing_count, surfaced throughout the UI and the Trust Center",
+        "recompute_command": "node scripts/verify-invariants.mjs --skip-build",
+        "compares_to_authoritative_source": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "vantage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vantage - automated trust and compliance management platform",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "seed": "node server/seed.js --force",
+    "test": "node --test tests/*.test.mjs",
+    "build": "npm --prefix web run build",
+    "setup": "npm --prefix web install && npm run build"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

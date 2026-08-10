@@ -1,0 +1,88 @@
+{
+  "schema_version": "2.0",
+  "service": "vantage",
+  "repository": "vantage",
+  "target": {
+    "host": "nas1.insta.host",
+    "address": "192.168.100.116",
+    "ssh_identity": "operator-managed (~/.ssh/copilot-northsydney)",
+    "ssh_transport": "estate LAN direct via ssh alias 'nas1'; alias also carries ProxyCommand cloudflared access ssh --hostname ssh-nas1.insta.host for off-LAN use",
+    "access_position": "on estate LAN (workstation 192.168.128.194)",
+    "application": "vantage",
+    "public_endpoint": "https://vantage.insta.host",
+    "runtime": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 with release source bind-mounted read-only",
+    "ingress": "Cloudflare tunnel instahost-nas1 (40cd9ce8-5c37-4b72-afe4-698c57cd8b65) -> http://192.168.100.116:30002, fronted by Cloudflare Access",
+    "source_path": "/mnt/TailsPool/vantage/releases/<commit-sha>",
+    "data_paths": [
+      "/mnt/TailsPool/vantage/data"
+    ],
+    "port": 30002
+  },
+  "infrastructure_lifecycle": "create",
+  "version_sources": [
+    "package.json",
+    "CHANGELOG.md",
+    "RELEASE_NOTES.md",
+    "compose APP_VERSION environment variable"
+  ],
+  "commands": {
+    "baseline": [
+      "ifconfig | grep 'inet ' | grep -v 127.0.0.1",
+      "ssh -o ConnectTimeout=25 -o BatchMode=yes nas1 'hostname'",
+      "python3 scripts/releasectl.py check-repository --phase baseline ."
+    ],
+    "contracts": [
+      "python3 scripts/contractctl.py release-evidence/pre-freeze-contract-matrix.json"
+    ],
+    "validate": [
+      "node --test tests/http.test.mjs tests/api.test.mjs",
+      "node scripts/verify-invariants.mjs",
+      "npm --prefix web run build",
+      "docker run --rm --platform linux/amd64 -v \"$PWD\":/app:ro -w /app node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 node --test tests/http.test.mjs tests/api.test.mjs"
+    ],
+    "build": [
+      "npm --prefix web run build"
+    ],
+    "snapshot": [
+      "ssh nas1 \"midclt call zfs.snapshot.create '{\\\"dataset\\\":\\\"TailsPool/vantage\\\",\\\"name\\\":\\\"pre-<version>\\\",\\\"recursive\\\":true}'\""
+    ],
+    "migrate": [
+      "none - the application creates and seeds its own SQLite schema idempotently on boot"
+    ],
+    "deploy": [
+      "rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' --exclude 'release-evidence' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/",
+      "ssh nas1 \"midclt call -j app.image.pull '{\\\"image\\\":\\\"node:24-slim@sha256:3638...\\\"}'\"",
+      "ssh nas1 \"midclt call -j app.create <payload>\"",
+      "ssh nas1 \"midclt call -j app.start vantage\""
+    ],
+    "health": [
+      "ssh nas1 'curl -s http://127.0.0.1:30002/healthz'"
+    ],
+    "readiness": [
+      "ssh nas1 'curl -s http://127.0.0.1:30002/readyz'"
+    ],
+    "smoke": [
+      "ssh nas1 'curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:30002/api/public/trust'",
+      "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/  (expect 302 to Cloudflare Access)",
+      "node /tmp/vcheck/check.mjs with BASE pointed at a loopback forward"
+    ],
+    "restart": [
+      "ssh nas1 'midclt call -j app.redeploy vantage'"
+    ],
+    "rollback": [
+      "ssh nas1 \"midclt call -j app.stop vantage\"",
+      "ssh nas1 \"midclt call -j app.update <payload pinning the previous release directory>\"",
+      "ssh nas1 \"midclt call zfs.rollback '{\\\"id\\\":\\\"TailsPool/vantage@pre-<version>\\\"}'\"",
+      "first release: rollback is app.delete plus Cloudflare DNS/ingress/Access removal in reverse publication order"
+    ]
+  },
+  "policies": {
+    "minimum_evidence_level": "L1 OPERATIONAL",
+    "stability_policy": "SHORT",
+    "dependency_advisory_threshold": "high",
+    "requires_restart": true,
+    "github_release": true,
+    "truenas_capacity_safety_percent": 75,
+    "secret_scan_command": "git grep -nE '(api[_-]?key|secret|password|token)[\"'\\'' ]*[:=]' -- ':!release-evidence' ':!web/dist' ':!*.md'"
+  }
+}

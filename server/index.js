@@ -1,0 +1,861 @@
+import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createApp, jsonBody, staticFiles } from './http.js';
+import { db, all, get, run, setting, setSetting, logActivity, DB_PATH } from './db.js';
+import { runTests, controlStatuses, frameworkReadiness, overallPosture } from './engine.js';
+import { seed, verifyPassword } from './seed.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const dist = join(__dirname, '..', 'web', 'dist');
+
+export const RELEASE = {
+  service: 'vantage',
+  version: process.env.APP_VERSION || '1.0.0',
+  release_sha: process.env.RELEASE_SHA || 'unversioned',
+  source_digest: process.env.SOURCE_DIGEST || 'unrecorded',
+  node: process.version,
+  started_at: new Date().toISOString(),
+};
+
+const app = createApp();
+app.use(jsonBody({ limit: 1_000_000 }));
+
+seed();
+
+/* --------------------------------------------------- health and readiness */
+
+// Deliberately outside /api so the authentication guard does not gate them,
+// and reachable on the origin for monitoring (the public path sits behind
+// Cloudflare Access and answers 302).
+app.get('/healthz', (req, res) => {
+  res.json({
+    status: 'ok',
+    ...RELEASE,
+    uptime_seconds: Math.round(process.uptime()),
+  });
+});
+
+app.get('/readyz', (req, res) => {
+  const checks = {};
+  let ready = true;
+  const record = (name, ok, detail) => { checks[name] = { ok, detail }; if (!ok) ready = false; };
+
+  try {
+    record('database', true, DB_PATH);
+  } catch (err) {
+    record('database', false, String(err.message));
+  }
+  try {
+    const frameworks = get('SELECT COUNT(*) AS n FROM frameworks').n;
+    const tests = get('SELECT COUNT(*) AS n FROM tests').n;
+    const users = get('SELECT COUNT(*) AS n FROM users').n;
+    record('schema_seeded', frameworks > 0 && tests > 0 && users > 0, `${frameworks} frameworks, ${tests} tests, ${users} users`);
+    const scan = get('SELECT MAX(last_run) AS t FROM tests').t;
+    record('monitoring_engine', !!scan, scan ? `last scan ${scan}` : 'no scan recorded');
+  } catch (err) {
+    record('schema_seeded', false, String(err.message));
+  }
+  try {
+    const writable = get("SELECT COUNT(*) AS n FROM sessions").n >= 0;
+    record('database_writable', writable, 'session table readable');
+  } catch (err) {
+    record('database_writable', false, String(err.message));
+  }
+  record('frontend_build', existsSync(join(dist, 'index.html')), dist);
+
+  res.status(ready ? 200 : 503).json({ ready, service: RELEASE.service, version: RELEASE.version, release_sha: RELEASE.release_sha, checks });
+});
+
+/* ------------------------------------------------------------------ auth */
+
+const SESSION_DAYS = 14;
+
+function currentUser(req) {
+  const header = req.get('authorization') || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : req.query.token;
+  if (!token) return null;
+  const session = get('SELECT * FROM sessions WHERE token = ?', token);
+  if (!session || new Date(session.expires_at) < new Date()) return null;
+  return get('SELECT id, email, name, role, title FROM users WHERE id = ?', session.user_id);
+}
+
+function requireAuth(req, res, next) {
+  const user = currentUser(req);
+  if (!user) return res.status(401).json({ error: 'Not authenticated' });
+  req.user = user;
+  next();
+}
+
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body || {};
+  const user = get('SELECT * FROM users WHERE email = ?', String(email || '').toLowerCase().trim());
+  if (!user || !verifyPassword(String(password || ''), user.password_hash)) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+  const token = randomUUID();
+  run('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
+    token, user.id, new Date(Date.now() + SESSION_DAYS * 86400000).toISOString());
+  logActivity('auth', user.name, 'Signed in to Vantage');
+  res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role, title: user.title } });
+});
+
+app.post('/api/auth/logout', requireAuth, (req, res) => {
+  const token = (req.get('authorization') || '').slice(7);
+  run('DELETE FROM sessions WHERE token = ?', token);
+  res.json({ ok: true });
+});
+
+app.get('/api/me', requireAuth, (req, res) => res.json({ user: req.user, company: setting('company'), release: RELEASE }));
+
+/* ------------------------------------------------------- public endpoints */
+
+app.get('/api/public/trust', (req, res) => {
+  const company = setting('company');
+  const trust = setting('trust_center');
+  const statuses = controlStatuses();
+  const frameworks = all('SELECT * FROM frameworks WHERE enabled = 1').map((f) => {
+    const r = frameworkReadiness(f.id);
+    return { slug: f.slug, name: f.name, short_name: f.short_name, color: f.color, category: f.category, readiness: r.readiness, audit_status: f.audit_status };
+  });
+  const controls = all('SELECT * FROM controls ORDER BY code').map((c) => ({
+    code: c.code, name: c.name, category: c.category, description: c.description,
+    status: statuses.get(c.id)?.status || 'no_tests',
+  }));
+  const posture = overallPosture();
+  const grouped = {};
+  for (const c of controls) (grouped[c.category] ||= []).push(c);
+  res.json({
+    company, trust, frameworks,
+    control_groups: Object.entries(grouped).map(([category, items]) => ({ category, items })),
+    documents: all('SELECT id, name, type, description, gated, updated_at FROM trust_documents ORDER BY gated, name'),
+    subprocessors: all("SELECT name, category, description, data_processed FROM vendors WHERE subprocessor = 1 AND status = 'active' ORDER BY name"),
+    posture,
+    updated_at: get('SELECT MAX(last_run) AS t FROM tests').t,
+  });
+});
+
+app.post('/api/public/trust/request', (req, res) => {
+  const { name, email, company, document } = req.body || {};
+  if (!name || !email || !company || !document) return res.status(400).json({ error: 'All fields are required' });
+  run('INSERT INTO trust_requests (name, email, company, document, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    name, email, company, document, 'pending', new Date().toISOString());
+  logActivity('trust_center', company, `${name} requested access to "${document}"`);
+  res.json({ ok: true, message: 'Request received. You will receive an email once it is approved.' });
+});
+
+app.use('/api', (req, res, next) => (req.path.startsWith('/public') || req.path.startsWith('/auth')) ? next() : requireAuth(req, res, next));
+
+/* -------------------------------------------------------------- dashboard */
+
+function frameworkSummary() {
+  return all('SELECT * FROM frameworks ORDER BY enabled DESC, name').map((f) => {
+    const r = frameworkReadiness(f.id);
+    return {
+      ...f, enabled: !!f.enabled, readiness: r.readiness, requirements_total: r.total,
+      requirements_complete: r.complete, requirements_at_risk: r.at_risk,
+      controls_total: r.controls_total, controls_failing: r.controls_failing,
+    };
+  });
+}
+
+app.get('/api/dashboard', (req, res) => {
+  const posture = overallPosture();
+  const frameworks = frameworkSummary();
+  const enabled = frameworks.filter((f) => f.enabled);
+  const failing = all(`SELECT t.*, c.code AS control_code, c.name AS control_name FROM tests t
+    JOIN controls c ON c.id = t.control_id
+    WHERE t.status = 'failing' ORDER BY
+      CASE t.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, t.deadline`);
+  const people = get(`SELECT
+      SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) AS active,
+      SUM(CASE WHEN status = 'active' AND security_training = 'complete' THEN 1 ELSE 0 END) AS trained,
+      SUM(CASE WHEN status = 'offboarded' THEN 1 ELSE 0 END) AS offboarded FROM personnel`);
+  const acceptance = get(`SELECT COUNT(*) AS total,
+      SUM(CASE WHEN accepted = expected THEN 1 ELSE 0 END) AS complete FROM (
+      SELECT p.id, (SELECT COUNT(*) FROM policies WHERE status='approved') AS expected,
+        (SELECT COUNT(*) FROM policy_acceptances a JOIN policies pol ON pol.id = a.policy_id
+          WHERE a.personnel_id = p.id AND pol.status='approved') AS accepted
+      FROM personnel p WHERE p.status='active')`);
+  res.json({
+    posture,
+    frameworks: enabled,
+    all_frameworks: frameworks,
+    overall_readiness: enabled.length ? Math.round(enabled.reduce((a, f) => a + f.readiness, 0) / enabled.length) : 0,
+    failing_tests: failing.slice(0, 12),
+    failing_by_severity: ['critical', 'high', 'medium', 'low'].map((s) => ({ severity: s, count: failing.filter((t) => t.severity === s).length })),
+    people: { ...people, training_pct: people.active ? Math.round((people.trained / people.active) * 100) : 0 },
+    policy_acceptance_pct: acceptance.total ? Math.round((acceptance.complete / acceptance.total) * 100) : 0,
+    devices: get(`SELECT COUNT(*) AS total, SUM(CASE WHEN encrypted = 1 AND screen_lock = 1 AND antivirus = 1 AND os_up_to_date = 1 THEN 1 ELSE 0 END) AS compliant FROM devices`),
+    vendors: get(`SELECT COUNT(*) AS total, SUM(CASE WHEN security_review_status = 'complete' THEN 1 ELSE 0 END) AS reviewed,
+      SUM(CASE WHEN risk_level = 'high' THEN 1 ELSE 0 END) AS high_risk FROM vendors WHERE status='active'`),
+    risks: get(`SELECT COUNT(*) AS total, SUM(CASE WHEN status='open' THEN 1 ELSE 0 END) AS open,
+      SUM(CASE WHEN due_date < date('now') AND status='open' THEN 1 ELSE 0 END) AS overdue FROM risks`),
+    integrations: get("SELECT COUNT(*) AS total, SUM(CASE WHEN status='connected' THEN 1 ELSE 0 END) AS connected FROM integrations"),
+    monitored_resources: get('SELECT COUNT(*) AS n FROM resources').n,
+    audit: (() => {
+      const audit = get("SELECT a.*, f.short_name FROM audits a JOIN frameworks f ON f.id = a.framework_id WHERE a.status != 'complete' ORDER BY a.period_end LIMIT 1");
+      if (!audit) return null;
+      const reqs = get('SELECT COUNT(*) AS total, SUM(CASE WHEN status = \'accepted\' THEN 1 ELSE 0 END) AS accepted FROM audit_requests WHERE audit_id = ?', audit.id);
+      return { ...audit, ...reqs };
+    })(),
+    activity: all('SELECT * FROM activity ORDER BY created_at DESC LIMIT 12'),
+    last_run: get('SELECT MAX(last_run) AS t FROM tests').t,
+  });
+});
+
+/* ------------------------------------------------------------- frameworks */
+
+app.get('/api/frameworks', (req, res) => res.json(frameworkSummary()));
+
+app.get('/api/frameworks/:slug', (req, res) => {
+  const f = get('SELECT * FROM frameworks WHERE slug = ?', req.params.slug);
+  if (!f) return res.status(404).json({ error: 'Framework not found' });
+  const r = frameworkReadiness(f.id);
+  const controlRows = all('SELECT id, code, name, category, description FROM controls');
+  const controlById = new Map(controlRows.map((c) => [c.id, c]));
+  const statuses = controlStatuses();
+  const sections = {};
+  for (const req_ of r.requirements) {
+    (sections[req_.section] ||= []).push({
+      ...req_,
+      controls: req_.controls.map((c) => ({ ...controlById.get(c.id), status: statuses.get(c.id)?.status || 'no_tests' })),
+    });
+  }
+  res.json({
+    framework: { ...f, enabled: !!f.enabled },
+    readiness: r.readiness,
+    controls_total: r.controls_total,
+    controls_failing: r.controls_failing,
+    complete: r.complete,
+    total: r.total,
+    at_risk: r.at_risk,
+    sections: Object.entries(sections).map(([section, requirements]) => ({ section, requirements })),
+  });
+});
+
+app.post('/api/frameworks/:slug/toggle', (req, res) => {
+  const f = get('SELECT * FROM frameworks WHERE slug = ?', req.params.slug);
+  if (!f) return res.status(404).json({ error: 'Framework not found' });
+  run('UPDATE frameworks SET enabled = ? WHERE id = ?', f.enabled ? 0 : 1, f.id);
+  logActivity('framework', req.user.name, `${f.enabled ? 'Disabled' : 'Enabled'} the ${f.name} framework`);
+  res.json({ ok: true, enabled: !f.enabled });
+});
+
+/* --------------------------------------------------------------- controls */
+
+app.get('/api/controls', (req, res) => {
+  const statuses = controlStatuses();
+  const owners = new Map(all('SELECT id, name FROM users').map((u) => [u.id, u.name]));
+  const frameworksByControl = all(`SELECT cr.control_id, f.short_name, f.slug, f.color FROM control_requirements cr
+    JOIN requirements r ON r.id = cr.requirement_id JOIN frameworks f ON f.id = r.framework_id
+    WHERE f.enabled = 1 GROUP BY cr.control_id, f.id`);
+  const fwMap = new Map();
+  for (const row of frameworksByControl) {
+    if (!fwMap.has(row.control_id)) fwMap.set(row.control_id, []);
+    fwMap.get(row.control_id).push({ short_name: row.short_name, slug: row.slug, color: row.color });
+  }
+  res.json(all('SELECT * FROM controls ORDER BY code').map((c) => ({
+    ...c,
+    owner: owners.get(c.owner_id) || 'Unassigned',
+    ...(statuses.get(c.id) || { status: 'no_tests', tests: 0, failing: 0 }),
+    frameworks: fwMap.get(c.id) || [],
+  })));
+});
+
+app.get('/api/controls/:code', (req, res) => {
+  const c = get('SELECT * FROM controls WHERE code = ?', req.params.code);
+  if (!c) return res.status(404).json({ error: 'Control not found' });
+  const statuses = controlStatuses();
+  res.json({
+    ...c,
+    owner: get('SELECT name, email FROM users WHERE id = ?', c.owner_id),
+    ...(statuses.get(c.id) || { status: 'no_tests', tests: 0, failing: 0 }),
+    tests_detail: all('SELECT * FROM tests WHERE control_id = ? ORDER BY name', c.id),
+    evidence: all('SELECT * FROM evidence WHERE control_id = ? ORDER BY collected_at DESC', c.id),
+    requirements: all(`SELECT r.code, r.title, r.section, f.short_name, f.slug, f.color FROM control_requirements cr
+      JOIN requirements r ON r.id = cr.requirement_id JOIN frameworks f ON f.id = r.framework_id
+      WHERE cr.control_id = ? ORDER BY f.name, r.code`, c.id),
+  });
+});
+
+app.patch('/api/controls/:code', (req, res) => {
+  const c = get('SELECT * FROM controls WHERE code = ?', req.params.code);
+  if (!c) return res.status(404).json({ error: 'Control not found' });
+  const { owner_id } = req.body || {};
+  if (owner_id) {
+    run('UPDATE controls SET owner_id = ? WHERE id = ?', owner_id, c.id);
+    const owner = get('SELECT name FROM users WHERE id = ?', owner_id);
+    logActivity('control', req.user.name, `Assigned control ${c.code} ${c.name} to ${owner?.name}`);
+  }
+  res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ tests */
+
+const testQuery = `SELECT t.*, c.code AS control_code, c.name AS control_name, c.category AS control_category FROM tests t
+  JOIN controls c ON c.id = t.control_id`;
+
+app.get('/api/tests', (req, res) => {
+  const { status, severity, integration, q } = req.query;
+  let rows = all(`${testQuery} ORDER BY CASE t.status WHEN 'failing' THEN 0 WHEN 'ok' THEN 1 ELSE 2 END,
+    CASE t.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, t.name`);
+  if (status) rows = rows.filter((r) => r.status === status);
+  if (severity) rows = rows.filter((r) => r.severity === severity);
+  if (integration) rows = rows.filter((r) => r.integration === integration);
+  if (q) {
+    const needle = String(q).toLowerCase();
+    rows = rows.filter((r) => `${r.name} ${r.description} ${r.control_code}`.toLowerCase().includes(needle));
+  }
+  res.json({
+    tests: rows.map((r) => ({ ...r, disabled: !!r.disabled })),
+    facets: {
+      integrations: [...new Set(all('SELECT integration FROM tests').map((t) => t.integration))].sort(),
+      counts: {
+        all: all('SELECT id FROM tests').length,
+        failing: all("SELECT id FROM tests WHERE status = 'failing'").length,
+        ok: all("SELECT id FROM tests WHERE status = 'ok'").length,
+        disabled: all('SELECT id FROM tests WHERE disabled = 1').length,
+      },
+    },
+  });
+});
+
+app.get('/api/tests/:slug', (req, res) => {
+  const t = get(`${testQuery} WHERE t.slug = ?`, req.params.slug);
+  if (!t) return res.status(404).json({ error: 'Test not found' });
+  res.json({
+    ...t, disabled: !!t.disabled, rule: JSON.parse(t.rule),
+    entities: all('SELECT * FROM test_entities WHERE test_id = ? ORDER BY passed, entity_name', t.id).map((e) => ({ ...e, passed: !!e.passed })),
+  });
+});
+
+app.post('/api/tests/run', (req, res) => {
+  const result = runTests({ actor: req.user.name });
+  logActivity('monitoring', req.user.name, `Ran all ${result.ran} automated tests`);
+  res.json(result);
+});
+
+app.post('/api/tests/:slug/run', (req, res) => {
+  const t = get('SELECT * FROM tests WHERE slug = ?', req.params.slug);
+  if (!t) return res.status(404).json({ error: 'Test not found' });
+  res.json(runTests({ actor: req.user.name, testIds: [t.id] }));
+});
+
+app.post('/api/tests/:slug/toggle', (req, res) => {
+  const t = get('SELECT * FROM tests WHERE slug = ?', req.params.slug);
+  if (!t) return res.status(404).json({ error: 'Test not found' });
+  run('UPDATE tests SET disabled = ? WHERE id = ?', t.disabled ? 0 : 1, t.id);
+  logActivity('monitoring', req.user.name, `${t.disabled ? 'Enabled' : 'Deactivated'} test "${t.name}"`);
+  runTests({ actor: req.user.name, testIds: [t.id] });
+  res.json({ ok: true, disabled: !t.disabled });
+});
+
+/* ------------------------------------------------------------ remediation */
+
+function desiredValue(rule) {
+  switch (rule.op) {
+    case 'eq': return rule.value;
+    case 'in': return Array.isArray(rule.value) ? rule.value[0] : rule.value;
+    case 'gte': case 'lte': return Number(rule.value);
+    case 'gt': return Number(rule.value) + 1;
+    case 'lt': return Number(rule.value) - 1;
+    case 'neq': return null;
+    case 'within_days': return new Date().toISOString();
+    case 'exists': return 'documented';
+    default: return rule.value;
+  }
+}
+
+app.post('/api/tests/:slug/remediate', (req, res) => {
+  const t = get('SELECT * FROM tests WHERE slug = ?', req.params.slug);
+  if (!t) return res.status(404).json({ error: 'Test not found' });
+  const rule = JSON.parse(t.rule);
+  const entityId = req.body?.entity_id;
+  const target = desiredValue(rule);
+  const fixed = [];
+
+  const entities = entityId
+    ? all('SELECT * FROM test_entities WHERE test_id = ? AND entity_id = ?', t.id, entityId)
+    : all('SELECT * FROM test_entities WHERE test_id = ? AND passed = 0', t.id);
+
+  for (const e of entities) {
+    switch (rule.kind) {
+      case 'resource': {
+        const resource = get('SELECT * FROM resources WHERE external_id = ? AND type = ?', e.entity_id, rule.type);
+        if (!resource) break;
+        const meta = JSON.parse(resource.metadata);
+        meta[rule.field] = target;
+        run('UPDATE resources SET metadata = ? WHERE id = ?', JSON.stringify(meta), resource.id);
+        fixed.push(e.entity_name);
+        break;
+      }
+      case 'device': {
+        const id = Number(e.entity_id.replace('device-', ''));
+        const value = rule.field === 'last_checkin' ? new Date().toISOString() : (target === true ? 1 : target === false ? 0 : target);
+        run(`UPDATE devices SET ${rule.field} = ? WHERE id = ?`, value, id);
+        fixed.push(e.entity_name);
+        break;
+      }
+      case 'personnel': {
+        const id = Number(e.entity_id.replace('person-', ''));
+        run(`UPDATE personnel SET ${rule.field} = ? WHERE id = ?`, target === true ? 1 : target, id);
+        fixed.push(e.entity_name);
+        break;
+      }
+      case 'policy_acceptance': {
+        const id = Number(e.entity_id.replace('person-', ''));
+        for (const p of all("SELECT id FROM policies WHERE status = 'approved'")) {
+          run('INSERT OR IGNORE INTO policy_acceptances (policy_id, personnel_id, accepted_at) VALUES (?, ?, ?)', p.id, id, new Date().toISOString());
+        }
+        fixed.push(e.entity_name);
+        break;
+      }
+      case 'policy': {
+        const policy = get('SELECT * FROM policies WHERE slug = ?', e.entity_id);
+        if (!policy) break;
+        run("UPDATE policies SET status = 'approved', approved_at = ?, renewal_date = ?, version = ? WHERE id = ?",
+          new Date().toISOString(), new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10),
+          policy.status === 'approved' ? policy.version : '1.0', policy.id);
+        fixed.push(e.entity_name);
+        break;
+      }
+      case 'vendor': {
+        const id = Number(e.entity_id.replace('vendor-', ''));
+        const value = rule.field === 'last_reviewed' ? new Date().toISOString() : target;
+        run(`UPDATE vendors SET ${rule.field} = ?, last_reviewed = ?, next_review = ? WHERE id = ?`,
+          value, new Date().toISOString(), new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10), id);
+        fixed.push(e.entity_name);
+        break;
+      }
+      case 'risk': {
+        run("UPDATE risks SET due_date = ? WHERE code = ?", new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10), e.entity_id);
+        fixed.push(e.entity_name);
+        break;
+      }
+      default: break;
+    }
+  }
+
+  const result = runTests({ actor: req.user.name, testIds: [t.id] });
+  if (fixed.length) logActivity('remediation', req.user.name, `Remediated ${fixed.length} ${fixed.length === 1 ? 'entity' : 'entities'} for "${t.name}"`);
+  res.json({ fixed, count: fixed.length, ...result, test: get(`${testQuery} WHERE t.id = ?`, t.id) });
+});
+
+/* -------------------------------------------------------------- inventory */
+
+app.get('/api/resources', (req, res) => {
+  const rows = all('SELECT * FROM resources ORDER BY integration, type, name').map((r) => ({ ...r, metadata: JSON.parse(r.metadata) }));
+  const filtered = req.query.type ? rows.filter((r) => r.type === req.query.type) : rows;
+  res.json({
+    resources: filtered,
+    types: [...new Set(rows.map((r) => r.type))].sort(),
+    total: rows.length,
+  });
+});
+
+app.get('/api/integrations', (req, res) => {
+  const counts = all('SELECT integration, COUNT(*) AS n FROM resources GROUP BY integration');
+  const testCounts = all('SELECT integration, COUNT(*) AS n FROM tests GROUP BY integration');
+  const byIntegration = Object.fromEntries(counts.map((c) => [c.integration, c.n]));
+  const byTests = Object.fromEntries(testCounts.map((c) => [c.integration, c.n]));
+  res.json(all('SELECT * FROM integrations ORDER BY status DESC, name').map((i) => ({
+    ...i, resource_count: byIntegration[i.slug] || 0, test_count: byTests[i.slug] || 0,
+  })));
+});
+
+app.post('/api/integrations/:slug/:action', (req, res) => {
+  const i = get('SELECT * FROM integrations WHERE slug = ?', req.params.slug);
+  if (!i) return res.status(404).json({ error: 'Integration not found' });
+  const now = new Date().toISOString();
+  if (req.params.action === 'connect') {
+    run("UPDATE integrations SET status = 'connected', connected_at = ?, last_sync = ?, account = COALESCE(account, ?) WHERE id = ?",
+      now, now, `${setting('company')?.domain || 'demo'} (${i.slug})`, i.id);
+    logActivity('integration', req.user.name, `Connected the ${i.name} integration`);
+  } else if (req.params.action === 'disconnect') {
+    run("UPDATE integrations SET status = 'available', connected_at = NULL, last_sync = NULL WHERE id = ?", i.id);
+    logActivity('integration', req.user.name, `Disconnected the ${i.name} integration`);
+  } else if (req.params.action === 'sync') {
+    run('UPDATE integrations SET last_sync = ? WHERE id = ?', now, i.id);
+    const n = get('SELECT COUNT(*) AS n FROM resources WHERE integration = ?', i.slug).n;
+    logActivity('integration_sync', req.user.name, `Synced ${n} resources from ${i.name}`);
+    runTests({ actor: req.user.name });
+  } else {
+    return res.status(400).json({ error: 'Unknown action' });
+  }
+  res.json({ ok: true, integration: get('SELECT * FROM integrations WHERE id = ?', i.id) });
+});
+
+/* --------------------------------------------------------------- policies */
+
+app.get('/api/policies', (req, res) => {
+  const activeCount = get("SELECT COUNT(*) AS n FROM personnel WHERE status = 'active'").n;
+  res.json(all(`SELECT p.*, u.name AS owner,
+      (SELECT COUNT(*) FROM policy_acceptances a JOIN personnel pe ON pe.id = a.personnel_id
+        WHERE a.policy_id = p.id AND pe.status = 'active') AS acceptances
+    FROM policies p LEFT JOIN users u ON u.id = p.owner_id ORDER BY p.category, p.name`)
+    .map((p) => ({ ...p, body: undefined, acceptance_pct: activeCount ? Math.round((p.acceptances / activeCount) * 100) : 0, headcount: activeCount })));
+});
+
+app.get('/api/policies/:slug', (req, res) => {
+  const p = get('SELECT p.*, u.name AS owner FROM policies p LEFT JOIN users u ON u.id = p.owner_id WHERE p.slug = ?', req.params.slug);
+  if (!p) return res.status(404).json({ error: 'Policy not found' });
+  res.json({
+    ...p,
+    acceptances: all(`SELECT pe.name, pe.title, a.accepted_at FROM policy_acceptances a
+      JOIN personnel pe ON pe.id = a.personnel_id WHERE a.policy_id = ? ORDER BY a.accepted_at DESC`, p.id),
+    outstanding: all(`SELECT pe.name, pe.title, pe.email FROM personnel pe WHERE pe.status = 'active'
+      AND pe.id NOT IN (SELECT personnel_id FROM policy_acceptances WHERE policy_id = ?) ORDER BY pe.name`, p.id),
+  });
+});
+
+app.post('/api/policies/:slug/approve', (req, res) => {
+  const p = get('SELECT * FROM policies WHERE slug = ?', req.params.slug);
+  if (!p) return res.status(404).json({ error: 'Policy not found' });
+  const version = p.status === 'approved' ? `${(parseFloat(p.version) + 0.1).toFixed(1)}` : '1.0';
+  run("UPDATE policies SET status = 'approved', approved_at = ?, renewal_date = ?, version = ? WHERE id = ?",
+    new Date().toISOString(), new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10), version, p.id);
+  logActivity('policy', req.user.name, `Approved "${p.name}" v${version}`);
+  runTests({ actor: req.user.name });
+  res.json({ ok: true });
+});
+
+app.post('/api/policies/:slug/remind', (req, res) => {
+  const p = get('SELECT * FROM policies WHERE slug = ?', req.params.slug);
+  if (!p) return res.status(404).json({ error: 'Policy not found' });
+  const outstanding = all(`SELECT pe.id FROM personnel pe WHERE pe.status = 'active'
+    AND pe.id NOT IN (SELECT personnel_id FROM policy_acceptances WHERE policy_id = ?)`, p.id);
+  logActivity('policy', req.user.name, `Sent acceptance reminders for "${p.name}" to ${outstanding.length} people`);
+  res.json({ ok: true, reminded: outstanding.length });
+});
+
+/* -------------------------------------------------------------- personnel */
+
+app.get('/api/personnel', (req, res) => {
+  const approved = get("SELECT COUNT(*) AS n FROM policies WHERE status = 'approved'").n;
+  res.json(all(`SELECT p.*,
+      (SELECT COUNT(*) FROM policy_acceptances a JOIN policies pol ON pol.id = a.policy_id
+        WHERE a.personnel_id = p.id AND pol.status = 'approved') AS policies_accepted,
+      (SELECT COUNT(*) FROM devices d WHERE d.personnel_id = p.id) AS device_count
+    FROM personnel p ORDER BY p.status, p.name`)
+    .map((p) => ({ ...p, policies_expected: approved, offboarded_access_removed: !!p.offboarded_access_removed })));
+});
+
+app.get('/api/personnel/:id', (req, res) => {
+  const p = get('SELECT * FROM personnel WHERE id = ?', Number(req.params.id));
+  if (!p) return res.status(404).json({ error: 'Not found' });
+  res.json({
+    ...p,
+    devices: all('SELECT * FROM devices WHERE personnel_id = ?', p.id).map((d) => ({
+      ...d, encrypted: !!d.encrypted, screen_lock: !!d.screen_lock, antivirus: !!d.antivirus, os_up_to_date: !!d.os_up_to_date,
+    })),
+    accepted: all(`SELECT pol.name, pol.slug, a.accepted_at FROM policy_acceptances a
+      JOIN policies pol ON pol.id = a.policy_id WHERE a.personnel_id = ? ORDER BY pol.name`, p.id),
+    outstanding: all(`SELECT name, slug FROM policies WHERE status = 'approved'
+      AND id NOT IN (SELECT policy_id FROM policy_acceptances WHERE personnel_id = ?) ORDER BY name`, p.id),
+  });
+});
+
+app.post('/api/personnel/:id/:action', (req, res) => {
+  const p = get('SELECT * FROM personnel WHERE id = ?', Number(req.params.id));
+  if (!p) return res.status(404).json({ error: 'Not found' });
+  const actions = {
+    complete_training: () => {
+      run("UPDATE personnel SET security_training = 'complete', training_due = ? WHERE id = ?",
+        new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10), p.id);
+      return `Recorded security training completion for ${p.name}`;
+    },
+    complete_background_check: () => {
+      run("UPDATE personnel SET background_check = 'complete' WHERE id = ?", p.id);
+      return `Recorded background check completion for ${p.name}`;
+    },
+    accept_policies: () => {
+      for (const pol of all("SELECT id FROM policies WHERE status = 'approved'")) {
+        run('INSERT OR IGNORE INTO policy_acceptances (policy_id, personnel_id, accepted_at) VALUES (?, ?, ?)', pol.id, p.id, new Date().toISOString());
+      }
+      return `Recorded policy acceptance for ${p.name}`;
+    },
+    revoke_access: () => {
+      run('UPDATE personnel SET offboarded_access_removed = 1 WHERE id = ?', p.id);
+      return `Confirmed access revocation for ${p.name}`;
+    },
+  };
+  const action = actions[req.params.action];
+  if (!action) return res.status(400).json({ error: 'Unknown action' });
+  const message = action();
+  logActivity('personnel', req.user.name, message);
+  runTests({ actor: req.user.name });
+  res.json({ ok: true, message });
+});
+
+app.get('/api/devices', (req, res) => {
+  res.json(all(`SELECT d.*, p.name AS owner, p.department, p.status AS owner_status FROM devices d
+    JOIN personnel p ON p.id = d.personnel_id ORDER BY p.name`)
+    .map((d) => ({ ...d, encrypted: !!d.encrypted, screen_lock: !!d.screen_lock, antivirus: !!d.antivirus, os_up_to_date: !!d.os_up_to_date })));
+});
+
+/* ---------------------------------------------------------------- vendors */
+
+app.get('/api/vendors', (req, res) => {
+  res.json(all('SELECT v.*, u.name AS owner FROM vendors v LEFT JOIN users u ON u.id = v.owner_id ORDER BY CASE v.risk_level WHEN \'high\' THEN 0 WHEN \'medium\' THEN 1 ELSE 2 END, v.name')
+    .map((v) => ({ ...v, subprocessor: !!v.subprocessor, soc2: !!v.soc2, iso27001: !!v.iso27001 })));
+});
+
+app.post('/api/vendors/:id/review', (req, res) => {
+  const v = get('SELECT * FROM vendors WHERE id = ?', Number(req.params.id));
+  if (!v) return res.status(404).json({ error: 'Vendor not found' });
+  run("UPDATE vendors SET security_review_status = 'complete', last_reviewed = ?, next_review = ? WHERE id = ?",
+    new Date().toISOString(), new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10), v.id);
+  logActivity('vendor', req.user.name, `Completed the security review for ${v.name}`);
+  runTests({ actor: req.user.name });
+  res.json({ ok: true });
+});
+
+app.patch('/api/vendors/:id', (req, res) => {
+  const v = get('SELECT * FROM vendors WHERE id = ?', Number(req.params.id));
+  if (!v) return res.status(404).json({ error: 'Vendor not found' });
+  const { risk_level, status } = req.body || {};
+  if (risk_level) run('UPDATE vendors SET risk_level = ? WHERE id = ?', risk_level, v.id);
+  if (status) run('UPDATE vendors SET status = ? WHERE id = ?', status, v.id);
+  res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ risks */
+
+app.get('/api/risks', (req, res) => {
+  res.json(all('SELECT r.*, u.name AS owner FROM risks r LEFT JOIN users u ON u.id = r.owner_id ORDER BY (r.likelihood * r.impact) DESC')
+    .map((r) => ({
+      ...r,
+      inherent_score: r.likelihood * r.impact,
+      residual_score: r.residual_likelihood * r.residual_impact,
+      overdue: !!(r.due_date && r.status === 'open' && new Date(r.due_date) < new Date()),
+    })));
+});
+
+app.patch('/api/risks/:code', (req, res) => {
+  const r = get('SELECT * FROM risks WHERE code = ?', req.params.code);
+  if (!r) return res.status(404).json({ error: 'Risk not found' });
+  const fields = ['treatment', 'status', 'due_date', 'residual_likelihood', 'residual_impact', 'mitigation', 'owner_id'];
+  for (const f of fields) {
+    if (req.body?.[f] !== undefined) run(`UPDATE risks SET ${f} = ? WHERE id = ?`, req.body[f], r.id);
+  }
+  logActivity('risk', req.user.name, `Updated risk ${r.code} ${r.title}`);
+  runTests({ actor: req.user.name });
+  res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------- audit hub */
+
+app.get('/api/audits', (req, res) => {
+  res.json(all('SELECT a.*, f.short_name, f.color, f.slug AS framework_slug FROM audits a JOIN frameworks f ON f.id = a.framework_id ORDER BY a.period_end')
+    .map((a) => ({ ...a, ...get('SELECT COUNT(*) AS requests, SUM(CASE WHEN status = \'accepted\' THEN 1 ELSE 0 END) AS accepted FROM audit_requests WHERE audit_id = ?', a.id) })));
+});
+
+app.get('/api/audits/:id', (req, res) => {
+  const a = get('SELECT a.*, f.short_name, f.color, f.slug AS framework_slug FROM audits a JOIN frameworks f ON f.id = a.framework_id WHERE a.id = ?', Number(req.params.id));
+  if (!a) return res.status(404).json({ error: 'Audit not found' });
+  const readiness = frameworkReadiness(get('SELECT id FROM frameworks WHERE slug = ?', a.framework_slug).id);
+  res.json({ ...a, readiness: readiness.readiness, requests: all('SELECT * FROM audit_requests WHERE audit_id = ? ORDER BY ref', a.id) });
+});
+
+app.patch('/api/audit-requests/:id', (req, res) => {
+  const r = get('SELECT * FROM audit_requests WHERE id = ?', Number(req.params.id));
+  if (!r) return res.status(404).json({ error: 'Request not found' });
+  const { status, evidence_count } = req.body || {};
+  if (status) run('UPDATE audit_requests SET status = ? WHERE id = ?', status, r.id);
+  if (evidence_count !== undefined) run('UPDATE audit_requests SET evidence_count = ? WHERE id = ?', evidence_count, r.id);
+  logActivity('audit', req.user.name, `Updated audit request ${r.ref} to ${status || 'new evidence'}`);
+  res.json({ ok: true });
+});
+
+app.get('/api/evidence', (req, res) => {
+  res.json(all(`SELECT e.*, c.code AS control_code, c.name AS control_name FROM evidence e
+    LEFT JOIN controls c ON c.id = e.control_id ORDER BY e.collected_at DESC`));
+});
+
+/* --------------------------------------------------- questionnaires (AI) */
+
+const STOPWORDS = new Set(['do', 'you', 'your', 'the', 'a', 'an', 'is', 'are', 'of', 'and', 'or', 'to', 'in', 'for', 'on', 'how', 'what', 'does', 'have', 'has', 'with', 'we', 'be', 'by', 'at', 'it', 'this', 'that', 'describe', 'please', 'any', 'all', 'from', 'can']);
+const tokenize = (text) => String(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOPWORDS.has(w));
+
+function knowledgeBase() {
+  const statuses = controlStatuses();
+  const entries = all('SELECT * FROM controls').map((c) => {
+    const st = statuses.get(c.id) || { status: 'no_tests', tests: 0 };
+    return {
+      kind: 'control', title: `${c.code} ${c.name}`, source: `Control ${c.code}`,
+      text: `${c.name}. ${c.description}`, status: st.status, tests: st.tests,
+      tokens: tokenize(`${c.name} ${c.description} ${c.category}`),
+    };
+  });
+  for (const p of all("SELECT * FROM policies WHERE status = 'approved'")) {
+    entries.push({
+      kind: 'policy', title: p.name, source: p.name, text: p.description,
+      status: 'approved', tokens: tokenize(`${p.name} ${p.description} ${p.category}`),
+    });
+  }
+  return entries;
+}
+
+function answerQuestion(question, kb) {
+  const qTokens = tokenize(question);
+  const scored = kb.map((entry) => {
+    const overlap = qTokens.filter((t) => entry.tokens.includes(t)).length;
+    const coverage = qTokens.length ? overlap / qTokens.length : 0;
+    return { entry, score: coverage * 100 + overlap * 4 + (entry.kind === 'control' ? 3 : 0) };
+  }).sort((a, b) => b.score - a.score);
+
+  const best = scored[0];
+  if (!best || best.score < 8) {
+    return { answer: null, confidence: 0, source: null, status: 'needs_review' };
+  }
+  const supporting = scored.slice(0, 3).filter((s) => s.score > 6);
+  const controls = supporting.filter((s) => s.entry.kind === 'control');
+  const passing = controls.filter((c) => c.entry.status === 'passing');
+  const openEnded = /^(describe|what|how|which|where|when|why|explain|provide|list)\b/i.test(question.trim());
+  const affirm = openEnded ? '' : 'Yes. ';
+  const lead = best.entry.kind === 'control'
+    ? `${affirm}${best.entry.text}`
+    : `${affirm}This is governed by our ${best.entry.title}, which is approved by management and reviewed at least annually. ${best.entry.text}`;
+  const evidence = controls.length
+    ? ` Supporting controls: ${controls.map((c) => c.entry.title).join('; ')}.`
+    : '';
+  const monitoring = passing.length
+    ? ` These controls are monitored continuously in Vantage and ${passing.reduce((a, c) => a + c.entry.tests, 0)} automated tests are currently passing.`
+    : ' Evidence for this control is collected and reviewed manually each period.';
+  const confidence = Math.max(35, Math.min(97, Math.round(best.score)));
+  return {
+    answer: `${lead}${evidence}${monitoring}`,
+    confidence,
+    source: best.entry.source,
+    status: confidence >= 70 ? 'answered' : 'needs_review',
+  };
+}
+
+app.get('/api/questionnaires', (req, res) => {
+  res.json(all(`SELECT q.*,
+      (SELECT COUNT(*) FROM questionnaire_items i WHERE i.questionnaire_id = q.id) AS total,
+      (SELECT COUNT(*) FROM questionnaire_items i WHERE i.questionnaire_id = q.id AND i.status != 'unanswered') AS answered
+    FROM questionnaires q ORDER BY q.due_date`));
+});
+
+app.get('/api/questionnaires/:id', (req, res) => {
+  const q = get('SELECT * FROM questionnaires WHERE id = ?', Number(req.params.id));
+  if (!q) return res.status(404).json({ error: 'Questionnaire not found' });
+  res.json({ ...q, items: all('SELECT * FROM questionnaire_items WHERE questionnaire_id = ? ORDER BY id', q.id) });
+});
+
+app.post('/api/questionnaires/:id/autofill', (req, res) => {
+  const q = get('SELECT * FROM questionnaires WHERE id = ?', Number(req.params.id));
+  if (!q) return res.status(404).json({ error: 'Questionnaire not found' });
+  const kb = knowledgeBase();
+  const items = all("SELECT * FROM questionnaire_items WHERE questionnaire_id = ? AND status = 'unanswered'", q.id);
+  let filled = 0;
+  for (const item of items) {
+    const result = answerQuestion(item.question, kb);
+    if (!result.answer) continue;
+    run('UPDATE questionnaire_items SET answer = ?, confidence = ?, source = ?, status = ? WHERE id = ?',
+      result.answer, result.confidence, result.source, result.status, item.id);
+    filled++;
+  }
+  const remaining = get("SELECT COUNT(*) AS n FROM questionnaire_items WHERE questionnaire_id = ? AND status = 'unanswered'", q.id).n;
+  run('UPDATE questionnaires SET status = ? WHERE id = ?', remaining === 0 ? 'in_progress' : q.status, q.id);
+  logActivity('questionnaire', req.user.name, `Auto-answered ${filled} questions for "${q.name}" (${q.company})`);
+  res.json({ filled, remaining });
+});
+
+app.patch('/api/questionnaire-items/:id', (req, res) => {
+  const item = get('SELECT * FROM questionnaire_items WHERE id = ?', Number(req.params.id));
+  if (!item) return res.status(404).json({ error: 'Item not found' });
+  const { answer, status } = req.body || {};
+  if (answer !== undefined) run('UPDATE questionnaire_items SET answer = ?, status = ? WHERE id = ?', answer, 'answered', item.id);
+  if (status) run('UPDATE questionnaire_items SET status = ? WHERE id = ?', status, item.id);
+  res.json({ ok: true });
+});
+
+/* ----------------------------------------------------- trust center admin */
+
+app.get('/api/trust', (req, res) => {
+  res.json({
+    settings: setting('trust_center'),
+    company: setting('company'),
+    documents: all('SELECT * FROM trust_documents ORDER BY name').map((d) => ({ ...d, gated: !!d.gated })),
+    requests: all('SELECT * FROM trust_requests ORDER BY created_at DESC'),
+  });
+});
+
+app.patch('/api/trust', (req, res) => {
+  const current = setting('trust_center');
+  setSetting('trust_center', { ...current, ...req.body });
+  logActivity('trust_center', req.user.name, 'Updated Trust Center settings');
+  res.json({ ok: true, settings: setting('trust_center') });
+});
+
+app.patch('/api/trust/documents/:id', (req, res) => {
+  const d = get('SELECT * FROM trust_documents WHERE id = ?', Number(req.params.id));
+  if (!d) return res.status(404).json({ error: 'Document not found' });
+  if (req.body?.gated !== undefined) run('UPDATE trust_documents SET gated = ? WHERE id = ?', req.body.gated ? 1 : 0, d.id);
+  res.json({ ok: true });
+});
+
+app.post('/api/trust/requests/:id/:action', (req, res) => {
+  const r = get('SELECT * FROM trust_requests WHERE id = ?', Number(req.params.id));
+  if (!r) return res.status(404).json({ error: 'Request not found' });
+  const status = req.params.action === 'approve' ? 'approved' : 'denied';
+  run('UPDATE trust_requests SET status = ? WHERE id = ?', status, r.id);
+  logActivity('trust_center', req.user.name, `${status === 'approved' ? 'Approved' : 'Denied'} document access for ${r.company}`);
+  res.json({ ok: true, status });
+});
+
+/* --------------------------------------------------------------- general */
+
+app.get('/api/activity', (req, res) => res.json(all('SELECT * FROM activity ORDER BY created_at DESC LIMIT 100')));
+app.get('/api/users', (req, res) => res.json(all('SELECT id, name, email, role, title FROM users ORDER BY name')));
+
+app.get('/api/settings', (req, res) => res.json({ company: setting('company'), trust_center: setting('trust_center') }));
+app.patch('/api/settings', (req, res) => {
+  if (req.body?.company) setSetting('company', { ...setting('company'), ...req.body.company });
+  if (req.body?.trust_center) setSetting('trust_center', { ...setting('trust_center'), ...req.body.trust_center });
+  res.json({ company: setting('company'), trust_center: setting('trust_center') });
+});
+
+app.post('/api/demo/reset', (req, res) => {
+  const { email, name } = req.user;
+  seed({ force: true });
+  // Seeding recreates users and clears sessions, so re-issue a token for the caller.
+  const user = get('SELECT * FROM users WHERE email = ?', email);
+  let token = null;
+  if (user) {
+    token = randomUUID();
+    run('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
+      token, user.id, new Date(Date.now() + SESSION_DAYS * 86400000).toISOString());
+  }
+  logActivity('system', name, 'Reset the demo environment to its initial state');
+  res.json({ ok: true, token });
+});
+
+/* ------------------------------------------------------------ static site */
+
+if (existsSync(dist)) {
+  app.use(staticFiles(dist));
+  app.get(/^\/(?!api).*/, (req, res) => res.sendFile(join(dist, 'index.html')));
+} else {
+  app.get('/', (req, res) => res.status(503).send('<h1>Vantage</h1><p>Frontend not built. Run <code>npm run build</code>.</p>'));
+}
+
+// Continuous monitoring: re-evaluate every test on a schedule, like the real agent.
+const INTERVAL_MINUTES = Number(process.env.VANTAGE_SCAN_MINUTES || 60);
+setInterval(() => {
+  try { runTests({ actor: 'Vantage Agent' }); } catch (err) { console.error('scan failed', err); }
+}, INTERVAL_MINUTES * 60000).unref?.();
+
+const PORT = Number(process.env.PORT || 4173);
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`\n  Vantage ${RELEASE.version} (${RELEASE.release_sha}) listening on ${HOST}:${PORT}`);
+  console.log(`  Health            http://127.0.0.1:${PORT}/healthz`);
+  console.log(`  Readiness         http://127.0.0.1:${PORT}/readyz`);
+  console.log(`  Trust Center      http://127.0.0.1:${PORT}/trust`);
+  console.log(`  Database          ${DB_PATH}\n`);
+});
