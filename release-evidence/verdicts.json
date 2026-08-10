@@ -33,5 +33,10 @@
     "lane": "live_qa",
     "reviewer": "Live QA Lead (independent, claude-opus-4.8)",
     "verdict": "PASS_LIVE"
+  },
+  {
+    "lane": "release_publish",
+    "reviewer": "Principal Platform SRE and Release Engineer (independent, claude-opus-4.8)",
+    "verdict": "GO_PUBLISH"
   }
 ]

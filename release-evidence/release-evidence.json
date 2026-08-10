@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1",
   "framework_version": "2.8.0",
-  "state": "LIVE_QA_PASSED",
-  "outcome": "DEPLOYED_NOT_PUBLISHED",
+  "state": "PUBLISHED",
+  "outcome": "RELEASED",
   "release": {
     "id": "vantage-1.0.0",
     "product": "Vantage",
@@ -138,11 +138,11 @@
       "evidence": "release-evidence/verdicts.json"
     },
     "publish": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
+      "verdict": "GO_PUBLISH",
+      "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
+      "at": "2026-08-10T19:30:00+10:00",
       "release_commit": "c01fbed090274a8b9629e68bd1b7dfe68f112b69",
-      "evidence": ""
+      "evidence": "release-evidence/verdicts.json; five validators PASS, ledger complete, production healthy at gate time"
     }
   },
   "deployment": {
@@ -232,7 +232,7 @@
   "publication": {
     "repository_uses_github": true,
     "tag": "v1.0.0",
-    "github_release": "PENDING",
+    "github_release": "https://github.com/phamid/vantage/releases/tag/v1.0.0",
     "release_notes": "RELEASE_NOTES.md"
   },
   "incident": null,
@@ -245,14 +245,19 @@
     "deploy_started_at": "2026-08-10T18:45:00+10:00",
     "deploy_completed_at": "2026-08-10T18:52:00+10:00",
     "live_qa_completed_at": "2026-08-10T19:15:00+10:00",
-    "published_at": "",
+    "published_at": "2026-08-10T19:32:00+10:00",
     "corrective_iterations": 2,
     "approval_retries": 0,
     "external_wait_minutes": 0,
     "avoidable_delays": [
       "Docker on macOS could not share the /tmp worktree path, costing one iteration before the repository checkout was used for the Linux read-only readiness proof."
     ],
-    "process_improvements": [],
+    "process_improvements": [
+      "Run the container-runtime mount probe before relying on a path: Docker on macOS silently mounted an empty directory for the /tmp worktree, which cost one iteration during the read-only readiness proof. Probe the mount with ls before running the real check.",
+      "When an API payload is coarsened for disclosure reasons, grep the frontend for the removed field names in the same change. Renaming the public posture fields broke the Trust Center consumer and was only caught by the browser check.",
+      "Expand a git rename into both old and new paths when passing an owned-file manifest to the freeze gate; --name-only reports a single R entry that the gate treats as an unowned dirty path.",
+      "For a brand-new repository, create the remote and a bootstrap commit before the first freeze gate, because the gate requires an existing HEAD and an upstream."
+    ],
     "learning_record": "release-evidence/learning.json"
   },
   "state_history": [
@@ -318,6 +323,20 @@
       "at": "2026-08-10T19:15:00+10:00",
       "actor": "Live QA Lead (independent agent)",
       "reason": "PASS_LIVE against production including the public identity gate"
+    },
+    {
+      "from": "LIVE_QA_PASSED",
+      "to": "GO_PUBLISH",
+      "at": "2026-08-10T19:30:00+10:00",
+      "actor": "Principal Platform SRE and Release Engineer (independent agent)",
+      "reason": "All evidence validators pass and production is healthy"
+    },
+    {
+      "from": "GO_PUBLISH",
+      "to": "PUBLISHED",
+      "at": "2026-08-10T19:32:00+10:00",
+      "actor": "release-manager",
+      "reason": "Annotated tag v1.0.0 and GitHub Release created from the committed release notes"
     }
   ]
 }
