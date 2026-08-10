@@ -1,0 +1,5 @@
+node_modules/
+data/
+# web/dist is committed: the release artifact is the commit, built and bind-mounted read-only
+*.log
+.DS_Store
