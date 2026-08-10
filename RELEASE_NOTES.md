@@ -68,6 +68,10 @@ regression test proven to fail without the fix.
 | SEC-5 | LOW | Remediation interpolated a column name into `UPDATE` | Per-kind allow-list of remediable columns |
 | ENG-L2 / L4 | LOW | Guard matched bare prefixes; decoded and normalised paths could diverge | Whole-segment matching and consistent normalisation |
 | ENG-L3 | LOW | Readiness could report not-ready during warm-up | Two-minute warm-up grace for the monitoring engine |
+| SEC-4b | LOW | Re-review found the coarsening incomplete: the anonymous payload still published `tests_failing`, `critical_failing` and `high_failing` counts | Aggregate posture reduced to monitored / verified / coverage percent, with the Trust Center UI updated to match |
+| ENG-L-a | LOW | `uncaughtException` logged and continued, so a half-broken process would never be recycled | Log and exit non-zero; the container restart policy recycles it |
+| ENG-L-b | LOW | Readiness probe advanced the rowid on every poll | Single fixed-id row upserted in place |
+| ENG-L-c | LOW | Login throttle map was unbounded | Expired entries swept above a tracked-key ceiling |
 
 ## Architecture change
 

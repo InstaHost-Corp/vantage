@@ -26,9 +26,10 @@ export default function TrustCenter() {
     }
   };
 
+  // The public API publishes coarse status only: verified, in_progress or documented.
   const controlIcon = (status) => {
-    if (status === 'passing') return <CheckCircle2 size={16} className="shrink-0 text-emerald-500" />;
-    if (status === 'failing') return <Clock3 size={16} className="shrink-0 text-amber-500" />;
+    if (status === 'verified') return <CheckCircle2 size={16} className="shrink-0 text-emerald-500" />;
+    if (status === 'in_progress') return <Clock3 size={16} className="shrink-0 text-amber-500" />;
     return <MinusCircle size={16} className="shrink-0 text-slate-400" />;
   };
 
@@ -77,7 +78,7 @@ export default function TrustCenter() {
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {[
-              [`${posture.tests_passing}/${posture.tests_total}`, 'automated controls tests passing'],
+              [`${posture.controls_verified}/${posture.controls_monitored}`, 'controls verified by continuous monitoring'],
               [`${groups.reduce((a, g) => a + g.items.length, 0)}`, 'documented controls in the programme'],
               [`${subprocessors.length}`, 'sub-processors disclosed publicly'],
             ].map(([value, label]) => (
@@ -122,7 +123,7 @@ export default function TrustCenter() {
           <div className="mt-5 space-y-2">
             {groups.map((group) => {
               const isOpen = open[group.category];
-              const passing = group.items.filter((i) => i.status === 'passing').length;
+              const passing = group.items.filter((i) => i.status === 'verified').length;
               return (
                 <Card key={group.category} className="overflow-hidden">
                   <button onClick={() => setOpen((o) => ({ ...o, [group.category]: !o[group.category] }))}

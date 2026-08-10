@@ -68,11 +68,10 @@ app.get('/readyz', (req, res) => {
     // full or remounted-read-only volume, which is the failure this deployment
     // most needs to catch because /readyz is the only monitoring signal.
     const probe = `readiness_probe_${Date.now()}`;
-    db.exec(`CREATE TABLE IF NOT EXISTS readiness_probe (id INTEGER PRIMARY KEY, marker TEXT NOT NULL)`);
-    run('INSERT INTO readiness_probe (marker) VALUES (?)', probe);
-    const stored = get('SELECT marker FROM readiness_probe WHERE marker = ?', probe);
-    run('DELETE FROM readiness_probe WHERE marker = ?', probe);
-    record('database_writable', stored?.marker === probe, 'insert, read back and delete succeeded on the data volume');
+    db.exec('CREATE TABLE IF NOT EXISTS readiness_probe (id INTEGER PRIMARY KEY CHECK (id = 1), marker TEXT NOT NULL)');
+    run('INSERT INTO readiness_probe (id, marker) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET marker = excluded.marker', probe);
+    const stored = get('SELECT marker FROM readiness_probe WHERE id = 1');
+    record('database_writable', stored?.marker === probe, 'write and read back succeeded on the data volume');
   } catch (err) {
     record('database_writable', false, String(err.message));
   }
@@ -128,8 +127,17 @@ const loginAttempts = new Map();
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
 
+const LOGIN_MAX_TRACKED_KEYS = 5000;
+
 function loginThrottle(key) {
   const now = Date.now();
+  // Sweep expired entries so a rotating email field cannot grow the map.
+  if (loginAttempts.size > LOGIN_MAX_TRACKED_KEYS) {
+    for (const [k, v] of loginAttempts) {
+      if (now - v.first > LOGIN_WINDOW_MS) loginAttempts.delete(k);
+    }
+    if (loginAttempts.size > LOGIN_MAX_TRACKED_KEYS) loginAttempts.clear();
+  }
   const entry = loginAttempts.get(key);
   if (!entry || now - entry.first > LOGIN_WINDOW_MS) {
     loginAttempts.set(key, { first: now, count: 1 });
@@ -187,7 +195,14 @@ app.get('/api/public/trust', (req, res) => {
     code: c.code, name: c.name, category: c.category, description: c.description,
     status: publicStatus(statuses.get(c.id)?.status || 'no_tests'),
   }));
-  const posture = overallPosture();
+  const raw = overallPosture();
+  // Publish coverage, never a live count of what is currently failing. The
+  // per-control status is already coarsened above; the aggregate must match.
+  const posture = {
+    controls_monitored: raw.tests_total,
+    controls_verified: raw.tests_passing,
+    coverage_percent: raw.tests_total ? Math.round((raw.tests_passing / raw.tests_total) * 100) : 0,
+  };
   const grouped = {};
   for (const c of controls) (grouped[c.category] ||= []).push(c);
   res.json({
@@ -941,7 +956,11 @@ process.on('unhandledRejection', (reason) => {
   console.error('[vantage] unhandled rejection:', reason?.stack || reason);
 });
 process.on('uncaughtException', (err) => {
-  console.error('[vantage] uncaught exception:', err?.stack || err);
+  // After an uncaught exception the process may hold undefined state. Log and
+  // exit so the container restart policy recycles it, rather than serving from
+  // a half-broken process the supervisor will never recycle.
+  console.error('[vantage] uncaught exception, exiting for restart:', err?.stack || err);
+  process.exit(1);
 });
 
 const PORT = Number(process.env.PORT || 4173);

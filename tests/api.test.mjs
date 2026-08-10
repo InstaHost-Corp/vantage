@@ -249,7 +249,7 @@ test('ENG-L2: the api guard matches whole path segments, not bare prefixes', asy
 test('ENG-M1: readiness proves the data volume accepts writes', async () => {
   const body = await fetch(`${BASE}/readyz`).then((r) => r.json());
   assert.equal(body.checks.database_writable.ok, true);
-  assert.match(body.checks.database_writable.detail, /insert, read back and delete/);
+  assert.match(body.checks.database_writable.detail, /write and read back succeeded/);
   assert.match(body.checks.database.detail, /quick_check=ok/);
 });
 
@@ -258,6 +258,12 @@ test('SEC-4: the public trust payload does not disclose which controls are faili
   const statuses = new Set(body.control_groups.flatMap((g) => g.items.map((i) => i.status)));
   assert.ok(!statuses.has('failing'), `public payload leaked raw status: ${[...statuses]}`);
   for (const status of statuses) assert.ok(['verified', 'in_progress', 'documented'].includes(status), `unexpected public status ${status}`);
+  // The aggregate must be coarsened too, or the per-control coarsening is defeated.
+  assert.deepEqual(Object.keys(body.posture).sort(), ['controls_monitored', 'controls_verified', 'coverage_percent']);
+  const rawPosture = JSON.stringify(body.posture);
+  for (const leaked of ['failing', 'critical', 'high']) {
+    assert.ok(!rawPosture.includes(leaked), `public posture leaked '${leaked}'`);
+  }
 });
 
 test('SEC-3: repeated failed sign-ins are throttled', async () => {
