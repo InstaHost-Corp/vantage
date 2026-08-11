@@ -29,7 +29,7 @@ hours. Do not put anything real into it.
 git clone https://github.com/phamid/vantage.git && cd vantage
 npm run setup     # install frontend build tooling and build web/dist
 npm start         # http://localhost:4173
-npm test          # 43 tests, no network required
+npm test          # 49 tests, no network required
 ```
 
 The server has **no runtime dependencies** — it runs on Node 24+ using only
@@ -116,11 +116,13 @@ web/
   src/pages/*.jsx     23 routes
 ```
 
-* **Backend** — Node 22+ with Express and the built-in `node:sqlite` driver. No native modules, no
-  external services, no API keys. The database is created and seeded automatically on first boot at
-  `data/vantage.db`.
+* **Backend** — Node 24+ with the built-in `node:sqlite` driver and a hand-written, Express-shaped
+  HTTP layer (`server/http.js`) rather than Express itself: the production deployment bind-mounts the
+  release source read-only into a stock node image, so there is nowhere to run `npm install`. No
+  runtime dependencies, no native modules, no external services, no API keys. The database is
+  created and seeded automatically on first boot at `data/vantage.db`.
 * **Frontend** — React 19, React Router 7, Tailwind CSS v4, Vite 7, lucide icons. The production
-  build is served by the same Express process.
+  build is served by the same node process.
 * **Scan loop** — every test re-runs on an interval (`VANTAGE_SCAN_MINUTES`, default 60) and on
   demand via *Run all tests*.
 
