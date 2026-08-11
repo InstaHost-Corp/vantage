@@ -29,12 +29,24 @@ one: it resets **daily**, and it keeps nothing a visitor types.
 
 ### Security
 
+- **The daily reset survives a restart.** The cadence was measured from process
+  start and never written down, so any restart before the deadline postponed the
+  reset by another full day while the page kept promising "daily". The last
+  reset is now persisted, the schedule is anchored to it, and a reset that fell
+  due while the service was down happens at boot.
+- **No token is left on a visitor's device.** `sessionStorage` has no
+  `localStorage` fallback — the fallback is memory — and any token left in
+  `localStorage` by an earlier version is removed on load, since nothing else
+  would ever have cleaned it up.
 - **The sign-in throttle no longer holds what a visitor typed.** It keyed on
   `<client address>|<email>` in the clear, so a real work address entered out of
   habit sat in process memory for the length of the fifteen-minute window. It
-  now keys on a SHA-256 digest of the same pair: the throttle still tells
-  attempts apart — same client and account collide, different ones do not — but
-  retains neither the address nor the account.
+  now keys on an HMAC of the same pair under a key generated at boot and held
+  only in memory. A plain digest would have been pseudonymous rather than
+  private — anyone holding this source could confirm a guessed address by
+  hashing it — and a keyed one cannot be reproduced or linked across restarts.
+  Entries are also swept on a cadence rather than only when the map grows large,
+  so the fifteen-minute window is the real retention period.
 - Confirmed by test rather than by inspection: nothing a visitor types at
   sign-in reaches the activity feed, the user list or any other surface a later
   visitor can read, and a successful sign-in records the account name only,

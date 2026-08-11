@@ -8,7 +8,7 @@ import { runTests, controlStatuses, frameworkReadiness, overallPosture } from '.
 import { seed, verifyPassword } from './seed.js';
 import {
   anonymizeTrustRequest, createResetSchedule, clientIp, publicModeConfig, rateLimit,
-  readinessDetailAllowed, sanitizeTrustRequest, securityHeaders, throttleKeyFor,
+  readinessDetailAllowed, sanitizeTrustRequest, securityHeaders, sweepExpired, throttleKeyFor,
 } from './public-mode.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,7 +26,18 @@ export const RELEASE = {
 // Vantage is served publicly and free of charge, with no identity gate in
 // front of it, so these guards are the first thing an anonymous request meets.
 export const PUBLIC_MODE = publicModeConfig();
-const resetSchedule = createResetSchedule({ intervalMinutes: PUBLIC_MODE.resetMinutes });
+
+// The reset cadence is measured from the last reset that actually happened, and
+// that marker outlives the process. A schedule anchored to process start would
+// let a restart postpone the reset for another whole interval, so the service
+// would quietly stop keeping the promise it makes on its own sign-in page.
+const RESET_MARKER = 'demo_reset';
+const readLastReset = () => {
+  try { return setting(RESET_MARKER)?.at || null; } catch { return null; }
+};
+const persistLastReset = (at) => {
+  try { setSetting(RESET_MARKER, { at }); } catch (err) { console.error('[vantage] could not persist the reset marker:', err?.message || err); }
+};
 
 const app = createApp();
 app.use(securityHeaders({ hsts: PUBLIC_MODE.hsts }));
@@ -34,6 +45,25 @@ app.use(rateLimit({ trustProxy: PUBLIC_MODE.trustProxy, enabled: PUBLIC_MODE.rat
 app.use(jsonBody({ limit: 256_000 }));
 
 seed();
+
+const resetSchedule = createResetSchedule({
+  intervalMinutes: PUBLIC_MODE.resetMinutes,
+  last: readLastReset(),
+});
+if (resetSchedule.enabled) {
+  if (!readLastReset()) persistLastReset(resetSchedule.last_reset_at);
+  // Catch up immediately when the deadline passed while the service was down.
+  if (resetSchedule.due()) {
+    try {
+      seed({ force: true });
+      resetSchedule.markRun();
+      persistLastReset(resetSchedule.last_reset_at);
+      console.log('[vantage] shared demo data was overdue at boot and has been reset');
+    } catch (err) {
+      console.error('[vantage] overdue demo reset failed:', err?.stack || err);
+    }
+  }
+}
 
 /* --------------------------------------------------- health and readiness */
 
@@ -163,14 +193,15 @@ const LOGIN_MAX_ATTEMPTS = 10;
 
 const LOGIN_MAX_TRACKED_KEYS = 5000;
 
-function loginThrottle(key) {
-  const now = Date.now();
-  // Sweep expired entries so a rotating email field cannot grow the map.
-  if (loginAttempts.size > LOGIN_MAX_TRACKED_KEYS) {
-    for (const [k, v] of loginAttempts) {
-      if (now - v.first > LOGIN_WINDOW_MS) loginAttempts.delete(k);
-    }
-    if (loginAttempts.size > LOGIN_MAX_TRACKED_KEYS) loginAttempts.clear();
+let lastThrottleSweep = 0;
+
+function loginThrottle(key, now = Date.now()) {
+  // Sweep on a cadence, not only when the map grows large: an entry is meant to
+  // live for the window, and "until five thousand other people try to sign in"
+  // is not the window. Nothing derived from an attempt outlives it.
+  if (now - lastThrottleSweep > 60_000 || loginAttempts.size > LOGIN_MAX_TRACKED_KEYS) {
+    lastThrottleSweep = now;
+    sweepExpired(loginAttempts, now, LOGIN_WINDOW_MS, LOGIN_MAX_TRACKED_KEYS);
   }
   const entry = loginAttempts.get(key);
   if (!entry || now - entry.first > LOGIN_WINDOW_MS) {
@@ -1026,6 +1057,7 @@ app.post('/api/demo/reset', requireAdmin, (req, res) => {
   const { email, name } = req.user;
   seed({ force: true });
   resetSchedule.markRun();
+  persistLastReset(resetSchedule.last_reset_at);
   // Seeding recreates users and clears sessions, so re-issue a token for the caller.
   const user = get('SELECT * FROM users WHERE email = ?', email);
   let token = null;
@@ -1062,6 +1094,7 @@ if (resetSchedule.enabled) {
     try {
       seed({ force: true });
       resetSchedule.markRun();
+      persistLastReset(resetSchedule.last_reset_at);
       logActivity('system', 'Vantage', 'Restored the shared demonstration data to its initial state');
       console.log(`[vantage] shared demo data reset; next ${resetSchedule.next_reset_at}`);
     } catch (err) {

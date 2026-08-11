@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
   anonymizeTrustRequest, classify, clientIp, createRateLimiter, createResetSchedule,
   publicModeConfig, readinessDetailAllowed, sanitizeTrustRequest, securityHeaders,
-  throttleKeyFor,
+  sweepExpired, throttleKeyFor,
 } from '../server/public-mode.js';
 
 const fakeRes = () => {
@@ -171,4 +171,66 @@ test('the sign-in throttle identifies a client without keeping what they typed',
   assert.match(key, /^[0-9a-f]{32}$/, 'the key should be an opaque digest');
 
   assert.equal(throttleKeyFor(ip, ''), throttleKeyFor(ip, undefined), 'a missing account is one bucket, not many');
+});
+
+test('the daily reset is measured from the last reset, not from process start', () => {
+  let clock = Date.parse('2026-08-12T09:00:00Z');
+  const day = 1440 * 60_000;
+
+  // A restart 23 hours after the last reset must still reset an hour later,
+  // not a further day later. Anchoring to process start is how a service
+  // quietly stops keeping the cadence it advertises.
+  const afterRestart = createResetSchedule({
+    intervalMinutes: 1440,
+    now: () => clock,
+    last: new Date(clock - 23 * 60 * 60_000).toISOString(),
+  });
+  assert.equal(afterRestart.due(), false, 'not due yet at 23 hours');
+  clock += 2 * 60 * 60_000;
+  assert.equal(afterRestart.due(), true, 'due at 25 hours, one hour after the deadline');
+
+  // A restart after the deadline has already passed is overdue immediately.
+  const overdue = createResetSchedule({
+    intervalMinutes: 1440,
+    now: () => clock,
+    last: new Date(clock - 3 * day).toISOString(),
+  });
+  assert.equal(overdue.due(), true, 'three days without a reset must be overdue at boot');
+
+  // No marker yet, or an unreadable one: fall back to now rather than resetting
+  // a brand new tenant immediately.
+  for (const value of [null, undefined, '', 'not-a-date']) {
+    const fresh = createResetSchedule({ intervalMinutes: 1440, now: () => clock, last: value });
+    assert.equal(fresh.due(), false, `a ${JSON.stringify(value)} marker must not read as overdue`);
+    assert.equal(fresh.next_reset_at, new Date(clock + day).toISOString());
+  }
+});
+
+test('nothing derived from a sign-in attempt outlives its window', () => {
+  const windowMs = 15 * 60_000;
+  const map = new Map();
+  const t0 = 1_000_000;
+  map.set('recent', { first: t0, count: 1 });
+  map.set('older', { first: t0 - windowMs - 1, count: 4 });
+  map.set('ancient', { first: t0 - 10 * windowMs, count: 9 });
+
+  sweepExpired(map, t0, windowMs);
+  assert.deepEqual([...map.keys()], ['recent'], 'only the entry inside the window survives');
+
+  // The ceiling is the backstop, not the mechanism.
+  const flood = new Map();
+  for (let i = 0; i < 50; i++) flood.set(`k${i}`, { first: t0, count: 1 });
+  assert.equal(sweepExpired(flood, t0, windowMs, 10), 0, 'over the ceiling the map is cleared outright');
+});
+
+test('the throttle digest is keyed, so a guessed address cannot be confirmed', async () => {
+  const { createHash } = await import('node:crypto');
+  const ip = '203.0.113.4';
+  const guess = 'real.person@theiremployer.example';
+
+  // An unkeyed digest is only pseudonymous: anyone holding this source can hash
+  // a candidate and compare. The key lives in process memory alone, so they
+  // cannot.
+  const unkeyed = createHash('sha256').update(`${ip}|${guess}`).digest('hex').slice(0, 32);
+  assert.notEqual(throttleKeyFor(ip, guess), unkeyed, 'the digest must not be reproducible from the source alone');
 });

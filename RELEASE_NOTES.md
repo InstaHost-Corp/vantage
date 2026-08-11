@@ -46,15 +46,32 @@ Two things, both about the hosted instance being honestly a *demonstration*:
 
 | Guard | What it prevents |
 |---|---|
-| The sign-in throttle keys on a SHA-256 digest of `<client address>\|<account>` instead of the pair in the clear | A real work address, typed out of habit into a public demonstration, sitting in process memory for the fifteen-minute throttle window. The throttle still distinguishes clients and accounts — same pair collides, different pairs do not — it simply cannot say what either was |
+| The sign-in throttle keys on an HMAC of `<client address>\|<account>` under a process-random key | A real work address, typed out of habit into a public demonstration, sitting in process memory in the clear. A plain digest would only be pseudonymous — a guessed address could be confirmed by hashing it — so the key is generated at boot and never leaves memory |
+| Throttle entries swept on a cadence, not only under pressure | An entry outliving its fifteen-minute window because too few other people happened to sign in |
 | Autocomplete disabled and both fields pre-filled | A visitor's password manager saving a credential against a shared demonstration, or autofilling their real one into it |
 | `sessionStorage` rather than `localStorage` | A session token outliving the visit on someone else's machine |
 | `VANTAGE_SESSION_DAYS=1` on the public deployment | A session outliving the data it was issued against, given the tenant now reseeds daily |
+| The last reset is persisted and an overdue reset runs at boot | The advertised daily cadence quietly lapsing, because a schedule anchored to process start restarts its clock on every deployment |
+| No `localStorage` fallback, and the legacy key is purged on load | A token left behind on a visitor's device — including one written by 1.1.0, which nothing else would have removed |
 
-Two tests assert the outcome rather than the mechanism: driving the throttle to
-its limit with a realistic work address leaves that address in no surface a
-later visitor can read, and a successful sign-in records the account name with
-no credential material anywhere.
+Tests assert outcomes rather than mechanisms: driving the throttle to its limit
+with a realistic work address leaves that address in no surface a later visitor
+can read; a successful sign-in records the account name with no credential
+material anywhere; and `tests/restart.test.mjs` boots the real server, changes
+something as a visitor would, restarts it twice — once inside the window and
+once with the deadline already passed — and proves the change survives the
+first and is gone after the second.
+
+### Findings fixed from the mandatory pre-deployment review
+
+The independent security lane returned **REVISE** on the first candidate. All
+three findings were fixed; none was waived.
+
+| Finding | Severity | Fix |
+|---|---|---|
+| The daily reset was measured from process start and never persisted, so a restart before the deadline postponed it by another full day while the UI kept promising "daily" | MEDIUM | The last reset is persisted in the settings table, the schedule is anchored to it, and an overdue reset runs at boot. Proven by a restart test that fails when the anchor is removed |
+| `sessionStorage` fell back to `localStorage`, and tokens written by 1.1.0 were never cleaned up, so a bearer token could still outlive the tab | LOW | The fallback is memory, and the legacy `localStorage` key is removed on load |
+| Throttle digests were unsalted and swept only when the map grew past 5,000 keys, so a guessed address could be confirmed and entries could outlive the stated window | LOW | HMAC under a process-random key, and a time-based sweep |
 
 ### Already true before this release, and re-verified
 

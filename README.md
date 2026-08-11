@@ -180,12 +180,13 @@ Nothing sits in front of the hosted instance, so the application defends itself:
   subtracted back into a live failing count.
 * **Role separation.** Auditor accounts are read-only; tenant reset, policy approval, framework
   enablement, settings and Trust Center configuration require an administrator.
-* **A self-healing tenant.** The shared workspace reseeds daily, so no visitor can leave it
-  permanently broken.
+* **A self-healing tenant.** The shared workspace reseeds daily — measured from the last reset and
+  persisted, so a restart cannot quietly postpone it — and an overdue reset runs at boot.
 * **Nothing a visitor types is kept.** The sign-in page pre-fills the demonstration account and asks
   the browser not to save or autofill credentials against it; the session token lives in
-  `sessionStorage` and dies with the tab; and the sign-in throttle keys on a digest, so a real
-  address typed by habit is never held in memory in the clear.
+  `sessionStorage` and dies with the tab; and the sign-in throttle keys on an HMAC under a
+  process-random key, so a real address typed by habit is neither held in the clear nor
+  confirmable by guessing.
 
 Report a vulnerability privately — see [SECURITY.md](SECURITY.md).
 

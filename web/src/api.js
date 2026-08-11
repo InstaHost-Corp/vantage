@@ -1,12 +1,36 @@
 const TOKEN_KEY = 'vantage.token';
 
-// sessionStorage, not localStorage: this is a shared public demonstration, so
-// the session must not outlive the browser tab. Nothing about a visitor's
-// visit is left on their device after they close it.
-const store = typeof sessionStorage !== 'undefined' ? sessionStorage : localStorage;
+// sessionStorage only: this is a shared public demonstration, so the session
+// must not outlive the browser tab. When sessionStorage is unavailable the
+// fallback is memory, never localStorage — a fallback that quietly persisted
+// the token would defeat the whole point.
+let memoryToken = null;
+const sessionStore = (() => {
+  try {
+    if (typeof sessionStorage === 'undefined') return null;
+    const probe = '__vantage_probe__';
+    sessionStorage.setItem(probe, '1');
+    sessionStorage.removeItem(probe);
+    return sessionStorage;
+  } catch {
+    return null;
+  }
+})();
 
-export const getToken = () => store.getItem(TOKEN_KEY);
-export const setToken = (t) => (t ? store.setItem(TOKEN_KEY, t) : store.removeItem(TOKEN_KEY));
+// Earlier versions kept the token in localStorage. Anyone who signed in then
+// still has one sitting on their device, and nothing else would ever remove it.
+try {
+  if (typeof localStorage !== 'undefined') localStorage.removeItem(TOKEN_KEY);
+} catch { /* storage may be blocked entirely; there is nothing to clean up */ }
+
+export const getToken = () => (sessionStore ? sessionStore.getItem(TOKEN_KEY) : memoryToken);
+
+export const setToken = (t) => {
+  memoryToken = t || null;
+  if (!sessionStore) return;
+  if (t) sessionStore.setItem(TOKEN_KEY, t);
+  else sessionStore.removeItem(TOKEN_KEY);
+};
 
 export async function api(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'content-type': 'application/json' };

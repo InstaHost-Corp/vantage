@@ -8,11 +8,17 @@
 // Everything is a pure function or an injectable-clock factory so the same
 // logic that runs in production is exercised directly by the unit tests.
 
-import { createHash } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 
 const TRUTHY = new Set(['1', 'true', 'yes', 'on']);
 
-const defaultHash = (value) => createHash('sha256').update(value).digest('hex').slice(0, 32);
+// Keyed, with a key that exists only in this process's memory and changes on
+// every restart. A plain digest of `ip|email` is pseudonymous rather than
+// private: anyone holding the code can confirm a guessed address by hashing it.
+// With a random key they cannot, and the digests are not even linkable across
+// restarts.
+const PROCESS_KEY = randomBytes(32);
+const defaultHash = (value) => createHmac('sha256', PROCESS_KEY).update(value).digest('hex').slice(0, 32);
 
 export const boolEnv = (value, fallback = false) =>
   (value === undefined || value === '' ? fallback : TRUTHY.has(String(value).toLowerCase()));
@@ -181,9 +187,13 @@ export function securityHeaders({ hsts = false } = {}) {
  * tenant is reseeded on a fixed cadence. The schedule is a value rather than a
  * timer so the tests can advance it deterministically.
  */
-export function createResetSchedule({ intervalMinutes = 0, now = Date.now } = {}) {
+export function createResetSchedule({ intervalMinutes = 0, now = Date.now, last: persisted = null } = {}) {
   const intervalMs = Math.max(0, intervalMinutes) * 60_000;
-  let last = now();
+  // Measured from the last reset that actually happened, not from process
+  // start: otherwise a restart before the deadline silently postpones the reset
+  // for another whole interval, and visitors' changes outlive the promise.
+  const parsed = persisted ? new Date(persisted).getTime() : NaN;
+  let last = Number.isFinite(parsed) ? parsed : now();
   return {
     enabled: intervalMs > 0,
     interval_minutes: intervalMinutes,
@@ -256,6 +266,20 @@ export function readinessDetailAllowed(req, env = process.env) {
  * address out of habit; the throttle needs to tell attempts apart, not to know
  * the address, so it only ever holds a digest.
  */
+/**
+ * Drops entries older than the window, and clears the map outright if it is
+ * still over its ceiling afterwards. Retention has to be governed by time, not
+ * only by pressure: an entry that lives until thousands of other people sign in
+ * is not an entry that lives for fifteen minutes.
+ */
+export function sweepExpired(map, now, windowMs, maxKeys = Infinity) {
+  for (const [key, entry] of map) {
+    if (now - entry.first > windowMs) map.delete(key);
+  }
+  if (map.size > maxKeys) map.clear();
+  return map.size;
+}
+
 export function throttleKeyFor(ip, email, { hash = defaultHash } = {}) {
   return hash(`${ip || 'unknown'}|${String(email || '').toLowerCase().trim() || 'anonymous'}`);
 }

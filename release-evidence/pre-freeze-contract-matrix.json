@@ -495,11 +495,13 @@
     "Anything a visitor types at sign-in reaches the database, the activity feed, the user list or the logs",
     "The abuse throttle retains the typed account or the client address in the clear",
     "The sign-in page invites the browser to save or autofill credentials against this origin",
-    "The session token outlives the browser tab"
+    "The session token outlives the browser tab",
+    "A bearer token survives the browser tab, including through a storage fallback or a key written by an earlier version",
+    "The advertised reset cadence can lapse because the schedule is anchored to process start rather than to the last reset"
    ],
    "validation_command": "node --test tests/*.test.mjs",
    "result": "PASS",
-   "evidence": "PUB-10 drives the throttle to its limit with a realistic work address and asserts the address and its domain appear in neither the activity feed nor the user list; PUB-11 asserts a successful sign-in carries no password_hash and puts no credential wording in the activity feed; the unit test asserts the throttle key is a 32-character digest containing neither the address nor the account while still colliding for the same pair. The built bundle was inspected for the shipped attributes: autocomplete new-password, the 1Password/LastPass/Bitwarden ignore attributes, and sessionStorage.",
+   "evidence": "PUB-10 drives the throttle to its limit with a realistic work address and asserts the address and its domain appear in neither the activity feed nor the user list; PUB-11 asserts a successful sign-in carries no password_hash and puts no credential wording in the activity feed; the unit test asserts the throttle key is a 32-character digest containing neither the address nor the account while still colliding for the same pair. The built bundle was inspected for the shipped attributes: autocomplete new-password, the 1Password/LastPass/Bitwarden ignore attributes, and sessionStorage. The security lane returned REVISE on the first candidate and all three findings were closed: the reset cadence is persisted and catches up at boot, proven by tests/restart.test.mjs which boots the real server, changes state as a visitor would, and restarts twice; the sessionStorage fallback is memory rather than localStorage and the legacy key is purged on load; and the throttle digest is an HMAC under a process-random key with a time-based sweep. Mutation run: re-anchoring the schedule to process start fails the restart test and nothing else.",
    "invariant": {
     "authoritative_source": "What the running service and the shipped bundle actually do with a submitted credential",
     "derived_representation": "The claim made to visitors on the sign-in page and in SECURITY.md that nothing they type is stored",
