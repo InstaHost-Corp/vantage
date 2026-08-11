@@ -131,6 +131,16 @@ has a regression test proven to fail without it:
   this is exact today, but it would need shared state if the service were ever
   scaled out.
 
+### Deployment
+
+Deployed to `nas1.insta.host` as release `a624d802a7a63b1117a8dd5177877af215b72e97`
+(job `12498 app.update SUCCESS`), running `node:24-slim@sha256:3638d9a6…` with
+the release source bind-mounted read-only. The Cloudflare Access application was
+then deleted, so **https://vantage.insta.host is now reachable by anyone with no
+identity gate**, and `phamid/vantage` was made public under the MIT licence.
+Snapshots `pre-1.1.0` and `post-1.1.0` bracket the change. See
+`RELEASE_NOTES.md` for the full evidence table.
+
 ## [1.0.0] - 2026-08-10
 
 First release. Vantage is deployed to the InstaHost estate at

@@ -184,29 +184,52 @@ deployment before any mutation was made.
 
 ## Deployment evidence
 
-<!-- Replaced with measured values after deployment. -->
-
 | Item | Value |
 |---|---|
-| Release commit | _pending deployment_ |
+| Release commit | `a624d802a7a63b1117a8dd5177877af215b72e97` |
+| Evidence commit | `0eee4d1` and this commit |
 | Tag | `v1.1.0` |
-| Repository | `phamid/vantage` — **public**, MIT licence |
-| Source artifact | release commit tree excluding `.git`, `node_modules`, `tests`, `release-evidence` |
-| Staged source digest (post-transfer, hash-sorted manifest) | _pending deployment_ |
+| Repository | `phamid/vantage` — **public**, MIT licence, verified anonymously (`/repos/phamid/vantage` → 200, `visibility: public`) |
+| Source artifact | release commit tree excluding `.git`, `node_modules`, `tests`, `release-evidence`, `__pycache__`, `data` — 51 files |
+| Staged source digest (post-transfer, hash-sorted manifest) | `sha256:29c8bf07901b1c227706707c1bd1f0747915ffc2469c7b0260bd5ee62743c752` — compared after transfer and byte-identical |
+| Rendered configuration digest | `sha256:46612145d8e6ac885514521901359a0bb3fa3413b77008dbf445e598f5560bb5` |
 | Image (configured and active) | `node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03` |
-| Deployment jobs | _pending deployment_ |
-| Runtime identity | _pending deployment_ |
+| Deployment jobs | `12477 app.update SUCCESS` (intermediate build), `12498 app.update SUCCESS` (release build) — no failed job |
+| Runtime identity | state `RUNNING`, 1 container running; `/app` **ro** from the release directory, `/data` **rw**; container port 30002 |
 | Migration result | not applicable — schema created and seeded idempotently on boot |
-| Pre-release snapshot | `TailsPool/vantage@pre-1.1.0` |
-| Post-release snapshot | _pending deployment_ |
-| Origin health | _pending deployment_ |
-| Origin readiness | _pending deployment_ |
-| Public edge | _pending deployment_ |
-| Ungate verification | _pending deployment_ |
-| Pre-deployment QA | _pending_ |
-| `GO_DEPLOY` | _pending_ |
-| Live QA | _pending_ |
-| `GO_PUBLISH` | _pending_ |
+| Pre-release snapshot | `TailsPool/vantage@pre-1.1.0` (recursive) |
+| Post-release snapshot | `TailsPool/vantage@post-1.1.0` (recursive) |
+| Origin health | `/healthz` 200 — version 1.1.0, release_sha `a624d802a7a6…`, node v24.19.0 |
+| Origin readiness | `/readyz` 200 ready=true — database, schema, monitoring engine, writable volume and frontend build all ok |
+| Public edge | `/`, `/login`, `/trust`, `/healthz`, `/readyz`, `/api/public/config`, `/api/public/trust` and both content-hashed assets all **200** anonymously; `/api/dashboard` **401** as the in-boundary negative control; `edgectl` PASS |
+| Ungate verification | The origin was required to report `public_demo`, all four guards, version 1.1.0 and the exact release commit **before** the Access application was deleted; the same claims plus a 401 on `/api/dashboard` were re-proved through the public hostname afterwards. Both halves were proven able to fail beforehand — the origin check refused the running 1.0.0 build, and the public check returned the Cloudflare Access sign-in page while the gate was up |
+| Certificate | SAN `insta.host`, `*.insta.host` (Google Trust Services CN=WE1), one-label depth, handshake ok |
+| DNS | proxied CNAME to the estate tunnel; converged across 1.1.1.1, 8.8.8.8, 9.9.9.9 and the client resolver; the origin address is never published |
+| Live user journey | Signed in through the public hostname with the published demonstration admin, dashboard 73% / 33 of 49 passing, remediated *Endpoints have disk encryption enabled*, readiness moved to 75% / 34 passing; the auditor account was refused the same mutation with 403; an anonymous caller received 401; the tenant was then reset and re-verified at 73% / 33 passing |
+| Anonymised writes, live | A Trust Center request submitted through the public hostname with a realistic identity returned `anonymized: true`; none of the submitted name, email or company appears in the signed-in request queue, which shows an anonymous demonstration requester instead |
+| Rate limiting, live | A repeated anonymous submission through the real edge was refused with **429** and `Retry-After: 3599` on the sixth request in the hour, keyed on the client address Cloudflare supplies |
+| Security headers, live | CSP with `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, referrer policy and HSTS all present on the public document |
+| Pre-deployment QA | **PASS** (after a FAIL on two false README claims, both corrected) |
+| `GO_DEPLOY` | **GO_DEPLOY** with three conditions, all satisfied |
+| Live QA | **PASS_LIVE** |
+| `GO_PUBLISH` | **GO_PUBLISH** |
+
+### What deployment itself found
+
+Two defects were caught by deploying rather than by review, and both were fixed
+before the gate came down:
+
+1. **An untracked local development database was copied into the release
+   directory.** The documented `rsync` exclude list did not cover `data/`. The
+   per-file digest comparison caught it — the staged tree did not match the
+   commit tree — and the exclude list is now part of the documented command.
+2. **The readiness redaction hid the diagnosis from the origin probe too.** The
+   container is reached through a published port, so even a health check run on
+   the deployment host arrives from the docker bridge gateway rather than
+   loopback. The first version of the redaction therefore reduced every
+   component to "ok" or "not ready" for everybody. Each check now carries a
+   stable reason code for every caller while paths and driver text stay
+   restricted.
 
 Full machine-readable evidence: `release-evidence/release-evidence.json`,
 `edge-verification.json`, `cleanup-manifest.json`, `verdicts.json`,
