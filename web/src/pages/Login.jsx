@@ -74,7 +74,8 @@ export default function Login() {
               published password, so the browser must not offer to save credentials
               against this origin, and must not autofill a visitor's real ones into
               it either. Both fields are pre-filled so nobody needs to type. */}
-          <form onSubmit={submit} className="mt-8 space-y-4" autoComplete="off">
+          <form onSubmit={submit} className="mt-8 space-y-4"
+                autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ink-700">Work email</span>
               <input type="email" name="vantage-demo-account" autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore

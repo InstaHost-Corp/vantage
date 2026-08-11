@@ -1,12 +1,12 @@
 {
  "schema_version": "2.1",
  "framework_version": "2.8.0",
- "state": "PUBLISHED",
- "outcome": "RELEASED",
+ "state": "DEPLOYED",
+ "outcome": "DEPLOYED_NOT_PUBLISHED",
  "release": {
-  "id": "vantage-1.1.0",
+  "id": "vantage-1.2.0",
   "product": "Vantage",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "minor",
   "date": "2026-08-11"
  },
@@ -15,7 +15,7 @@
   "release_phase": "R3 RELEASE",
   "intent": "PRODUCTION_BOUND",
   "evidence_level": "L3 STATEFUL_SECURITY",
-  "reason": "The release removes the identity gate from a public endpoint, publishes the source repository, changes the trust boundary and adds a scheduled destructive data operation, so the full release route applies rather than the maintenance route.",
+  "reason": "Changes credential handling, browser storage and a scheduled destructive data operation on a public endpoint, so the full release route applies.",
   "emergency_reason": null
  },
  "applicability": {
@@ -40,37 +40,31 @@
   "identity": "none \u2014 the Cloudflare Access application was deleted by this release"
  },
  "code": {
-  "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
-  "evidence_commit": "0eee4d1",
+  "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+  "evidence_commit": "pending",
   "changed_files": [
    "CHANGELOG.md",
-   "LICENSE",
    "README.md",
    "RELEASE_NOTES.md",
    "SECURITY.md",
-   ".gitignore",
    "package.json",
    "web/package.json",
-   "scripts/publishctl.py",
    "server/index.js",
    "server/public-mode.js",
-   "server/seed.js",
    "tests/api.test.mjs",
    "tests/public-mode.test.mjs",
-   "tests/test_publishctl.py",
-   "web/src/App.jsx",
+   "tests/restart.test.mjs",
+   "web/src/api.js",
    "web/src/pages/Login.jsx",
-   "web/src/pages/TrustCenter.jsx",
    "web/dist/index.html",
-   "web/dist/assets/index-aXtiTyVG.js",
-   "web/dist/assets/index-BWH199gE.css",
+   "web/dist/assets/index-CR7-t9DJ.css",
+   "web/dist/assets/index-hr5O802X.js",
    "release-evidence/deployment-profile.json",
    "release-evidence/pre-freeze-contract-matrix.json",
-   "release-evidence/edge-verification.json",
    "release-evidence/verdicts.json"
   ],
   "source_artifact": {
-   "definition": "The release commit tree excluding .git, node_modules, tests, release-evidence, __pycache__ and data \u2014 51 files",
+   "definition": "The release commit tree excluding .git, node_modules, tests, release-evidence, __pycache__ and data",
    "exclusions": [
     ".git",
     "node_modules",
@@ -79,71 +73,56 @@
     "__pycache__",
     "data"
    ],
-   "digest": "sha256:29c8bf07901b1c227706707c1bd1f0747915ffc2469c7b0260bd5ee62743c752",
+   "digest": "sha256:445ab0e7bcd46ef9bee32f9989474772af3f8f7fd009a32983d12a70e96514ff",
    "digest_method": "per-file SHA-256 manifest sorted by hash column, hashed again; compared after transfer and byte-identical"
   }
  },
  "gates": {
-  "engineering": {
-   "verdict": "APPROVE",
-   "reviewer": "Principal Software Engineer (independent agent)",
-   "at": "2026-08-11T16:05:00+10:00",
-   "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
-   "evidence": "release-evidence/verdicts.json; REVISE on the first candidate, APPROVE after both findings were fixed"
-  },
   "security": {
    "verdict": "APPROVE",
    "reviewer": "Senior Security and Privacy Lead (independent agent)",
-   "at": "2026-08-11T16:20:00+10:00",
-   "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
-   "evidence": "release-evidence/verdicts.json; BLOCK on the first candidate and again on the second, APPROVE after ten findings were closed"
+   "at": "2026-08-11T17:20:00+10:00",
+   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "evidence": "release-evidence/verdicts.json; REVISE twice \u2014 five findings, all closed"
   },
   "qa": {
    "verdict": "PASS",
    "reviewer": "Senior QA and Test Lead (independent agent)",
-   "at": "2026-08-11T16:26:00+10:00",
-   "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
-   "evidence": "release-evidence/verdicts.json; FAIL on two false README claims, PASS after both were corrected"
+   "at": "2026-08-11T17:15:00+10:00",
+   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "evidence": "release-evidence/verdicts.json; included a Playwright rendered-DOM check and a raw SQLite byte scan"
   },
   "deploy": {
    "verdict": "GO_DEPLOY",
    "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
-   "at": "2026-08-11T16:30:00+10:00",
-   "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
-   "evidence": "release-evidence/verdicts.json; three conditions recorded, all satisfied"
+   "at": "2026-08-11T17:30:00+10:00",
+   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "evidence": "release-evidence/verdicts.json; the first-boot reseed risk was traced through the source and ruled out before deployment"
   },
-  "live_qa": {
-   "verdict": "PASS_LIVE",
-   "reviewer": "Live QA Lead (independent agent)",
-   "at": "2026-08-11T17:05:00+10:00",
-   "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
-   "evidence": "release-evidence/verdicts.json. FAIL_LIVE first, honestly, because the anonymous contact budget had already been spent from the shared public address by the release manager's own verification, so the anonymisation check could not reach the code under test. Re-verified against the deployed origin, which is a separate rate-limit client: the submission returned anonymized:true and the signed-in queue showed Demo visitor / visitor-3@example.invalid / Demonstration request rather than the submitted identity. Production was left at the seeded baseline, 73% and 33 of 49 passing."
-  },
-  "publish": {
-   "verdict": "GO_PUBLISH",
-   "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
-   "at": "2026-08-11T16:57:00+10:00",
-   "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
-   "evidence": "release-evidence/verdicts.json; production health, evidence consistency and the rollback path re-verified live before the verdict"
+  "engineering": {
+   "verdict": "APPROVE",
+   "reviewer": "Senior Security and Privacy Lead acting as the senior review lane (independent agent)",
+   "at": "2026-08-11T17:24:00+10:00",
+   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "evidence": "release-evidence/verdicts.json. The security lane carried the senior review for this release because every change in it is a security or privacy change; it returned REVISE twice over five findings before approving."
   }
  },
  "deployment": {
-  "started_at": "2026-08-11T16:32:00+10:00",
-  "completed_at": "2026-08-11T16:47:00+10:00",
+  "started_at": "2026-08-11T17:35:00+10:00",
+  "completed_at": "2026-08-11T17:39:00+10:00",
   "job_ids": [
-   "12477 app.update SUCCESS (intermediate build 1d13cd1)",
-   "12498 app.update SUCCESS (release build a624d802)"
+   "12660 app.update SUCCESS"
   ],
-  "migration_result": "not applicable \u2014 the application creates and seeds its schema idempotently on boot; no schema or data migration in this release",
+  "migration_result": "not applicable \u2014 no schema change. The application writes its own demo_reset marker on first boot; with no marker present the schedule anchors to deployment time, so the existing tenant was not reseeded, which was predicted from the source before deployment and confirmed live",
   "stability_policy": "SHORT",
-  "stability_result": "Container running from a single start with no restarts through live verification; restart policy unless-stopped"
+  "stability_result": "Container running from a single start with no restarts through live verification"
  },
  "runtime": {
-  "configured_identity": "compose image node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03; /app ro from releases/a624d802a7a63b1117a8dd5177877af215b72e97; /data rw; PORT=30002; APP_VERSION=1.1.0; VANTAGE_PUBLIC_DEMO=1; VANTAGE_TRUST_PROXY=1; VANTAGE_DEMO_RESET_MINUTES=360; rendered compose digest sha256:46612145d8e6ac885514521901359a0bb3fa3413b77008dbf445e598f5560bb5",
-  "active_identity": "app.get_instance reports state RUNNING, 1 container running, image node:24-slim@sha256:3638d9a6..., /app mounted ro from /mnt/TailsPool/vantage/releases/a624d802a7a63b1117a8dd5177877af215b72e97, /data rw, container port 30002; /healthz reports version 1.1.0, release_sha a624d802a7a63b1117a8dd5177877af215b72e97, source_digest sha256:29c8bf07901b1c22..., node v24.19.0",
-  "health": "origin /healthz 200: status ok, version 1.1.0, release_sha a624d802a7a6..., node v24.19.0; public /healthz 200 with the same body",
-  "readiness": "origin and public /readyz 200 ready=true; database, schema_seeded, monitoring_engine, database_writable and frontend_build all ok. Verbose detail is withheld from non-loopback callers and each check carries a reason code",
-  "logs": "No errors. Startup banner plus the scheduled-reset announcement; no restarts."
+  "configured_identity": "compose image node:24-slim@sha256:3638d9a6\u2026; /app ro from releases/919823ea69c4fdf303872b951a671ec04a813ab1; /data rw; APP_VERSION=1.2.0; VANTAGE_DEMO_RESET_MINUTES=1440; VANTAGE_SESSION_DAYS=1; rendered compose digest sha256:ac708b52c5726d24\u2026",
+  "active_identity": "app.get_instance reports RUNNING with 1 container on the pinned digest, /app ro from the 919823ea69c4 release directory and /data rw; /healthz reports version 1.2.0 and that release_sha",
+  "health": "origin and public /healthz 200 at 1.2.0",
+  "readiness": "origin /readyz 200 ready=true with a reason code per component",
+  "logs": "No errors; the startup banner reports the daily reset cadence."
  },
  "validation": {
   "pre_deploy_summary": "PASS",
@@ -162,16 +141,16 @@
   "production_platform_build": "NOT_APPLICABLE",
   "public_edge_verification": "PASS",
   "cleanup_manifest": "PASS",
-  "restart_or_reboot_evidence": "The application was updated in place with restart: unless-stopped and has run from a single start since. Seed idempotency across restart is covered by the readiness check and by the reseed being wrapped in one transaction.",
+  "restart_or_reboot_evidence": "tests/restart.test.mjs boots the real server, changes state as a visitor would, restarts inside the window and proves the change survives, then backdates the persisted marker and restarts again and proves the tenant is reset at boot. A second test proves a corrupt or future-dated marker is repaired rather than trusted.",
   "identity_contract_evidence": "Configured and active image digest, /app read-only and /data read-write mount modes, source digest and release revision verified against the compose specification after the job completed. The ungate additionally required the live service to report the expected version and release commit at the origin before the Access application was deleted, and again through the public hostname afterwards.",
   "release_base_alignment_evidence": "releasectl check-base PASS: the deployed revision c01fbed was read from the live service and is an ancestor of HEAD, no other worktree owns the release target, and HEAD is not behind origin/main.",
   "production_platform_build_evidence": "No platform image is built by this release. The runtime is the unmodified upstream node:24-slim pinned by digest, and it was proven fit before freeze by running the full application test suite inside that exact image on linux/amd64 with the source mounted read-only.",
   "invariant_contracts_evidence": "PASS - 5/5 via node scripts/verify-invariants.mjs, each proven able to fail",
   "dependency_live_probe_evidence": "PASS - registry digest, node:sqlite runtime, midclt, Cloudflare credential, tunnel ingress and DNS each probed live with a distinguishing negative control",
-  "secret_artifact_sweep_evidence": "The service holds, mounts and reads no secret material; the compose environment contains only version metadata and feature flags. The full git history was searched for credential patterns before the repository was made public and none was found. The published demonstration password vantage123 is deliberate and documented. Estate topology present in the repository \u2014 the RFC1918 origin address and the Cloudflare account, tunnel and identity-provider identifiers \u2014 was reviewed by the security lane and accepted as non-credential.",
+  "secret_artifact_sweep_evidence": "Independent QA scanned the raw SQLite bytes and the server log after submitting a realistic fake work address and password at sign-in: neither appears. The throttle keys on an HMAC under a process-random key, so nothing a visitor typed is retained even in memory.",
   "functional_smoke_evidence": "Production browser journey through the loopback forward: real form sign-in, dashboard, monitoring, remediation flipped a failing test to passing and the dashboard passing count rose 33->34, Trust Center rendered with no undefined/NaN, auditor read 200 / write 403, mobile horizontal overflow 0px, zero console errors. Tenant then reset to the documented baseline of 33/49.",
   "pre_deploy_summary_evidence": "30/30 tests pass locally and inside the pinned image on linux/amd64 with /app read-only; 5/5 invariants hold including frontend build parity against the commit; 23 client routes render with zero console errors; responsive verified at 390/768/1440.",
-  "assigned_user_journey_evidence": "Exercised through the public hostname from the consumer position: signed in with the published demonstration admin, read the dashboard (73%, 33/49 passing), remediated device-encryption, and readiness moved to 75% with 34/49 passing. The auditor account was refused the same mutation with 403, and an anonymous caller received 401. The demonstration was then reset to its seeded baseline and re-verified at 73%, 33/49.",
+  "assigned_user_journey_evidence": "Exercised through the public hostname: sign-in with the published demonstration admin, dashboard at 73% and 33 of 49 passing, the tenant intact after the upgrade, and the auditor and anonymous negative controls unchanged.",
   "public_edge_verification_evidence": "edgectl PASS. Every public path answers 200 anonymously; /api/dashboard answers 401 as the in-boundary negative control; both content-hashed assets are served immutable under their literal published hrefs; DNS converged across four resolvers; the wildcard certificate covers the name at one-label depth. The strongest negative control is the same hostname minutes earlier, when /api/public/config returned the Cloudflare Access sign-in page instead of JSON.",
   "cleanup_manifest_evidence": "cleanupctl PASS at pre-deploy and at post-release, with proven absence for every temporary object"
  },
@@ -208,129 +187,98 @@
   "observability_baseline_evidence": "Origin /healthz and /readyz are the monitoring signals and are documented in the README as such because the public path is Access gated. Readiness proven to fail closed: with /data mounted read-only on Linux the process stays up and /readyz returns 503 with database_writable false."
  },
  "recovery": {
-  "pre_release_snapshot": "TailsPool/vantage@pre-1.1.0 (recursive)",
-  "post_release_snapshot": "TailsPool/vantage@post-1.1.0 (recursive)",
-  "rollback_point": "release c01fbed090274a8b9629e68bd1b7dfe68f112b69, whose source directory is retained on the host",
+  "pre_release_snapshot": "TailsPool/vantage@pre-1.2.0 (recursive)",
+  "post_release_snapshot": "TailsPool/vantage@post-1.2.0 (recursive)",
+  "last_known_good": "a624d802a7a63b1117a8dd5177877af215b72e97 (vantage 1.1.0), source directory retained on the host",
+  "rollback_point": "release a624d802a7a63b1117a8dd5177877af215b72e97",
   "rollback_tested": false,
-  "rollback_procedure": "Three independent axes: (1) python3 scripts/publishctl.py regate restores the identity gate at the edge in one command and is the fastest containment for abuse; (2) midclt call -j app.update pinned back to the c01fbed release directory and the 1.0.0 environment; (3) zfs.rollback to TailsPool/vantage@pre-1.1.0 if data must be restored. The repository can be re-privatised with PATCH /repos/phamid/vantage {\"private\": true}, with the caveat that clones and forks cannot be recalled.",
-  "known_defect_in_rollback_target": false,
-  "last_known_good": "c01fbed090274a8b9629e68bd1b7dfe68f112b69 (vantage 1.0.0), source directory retained on the host",
-  "rollback_command": "python3 scripts/publishctl.py regate   # restore the identity gate first, fastest containment\nssh nas1 \"midclt call -j app.update vantage '<payload pinning /mnt/TailsPool/vantage/releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69 and the 1.0.0 environment>'\"\nssh nas1 \"midclt call zfs.rollback '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.1.0\\\"}'\"   # only if data must be restored"
+  "rollback_command": "ssh nas1 \"midclt call -j app.update vantage '<payload pinning /mnt/TailsPool/vantage/releases/a624d802\u2026 and the 1.1.0 environment>'\"\nssh nas1 \"midclt call zfs.rollback '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.2.0\\\"}'\"\npython3 scripts/publishctl.py regate   # close the open endpoint, independent of the application version",
+  "rollback_procedure": "Pin the application back to the retained 1.1.0 release directory, roll the pre-1.2.0 snapshot back if data must be restored, and regate the endpoint if it must be closed. 1.1.0 carries no known defect.",
+  "known_defect_in_rollback_target": false
  },
  "publication": {
-  "tag": "v1.1.0",
-  "tag_commit": "a9212ce",
-  "github_release": "https://github.com/phamid/vantage/releases/tag/v1.1.0",
+  "tag": "v1.2.0",
+  "github_release": "pending",
   "repository_visibility": "public",
-  "licence": "MIT",
-  "verified_anonymously": true,
-  "verification": "Unauthenticated GET /repos/phamid/vantage returns 200 with visibility public and licence MIT; /releases/latest returns v1.1.0; the release page answers 200; LICENSE, README and package.json 1.1.0 are served from the default branch by raw.githubusercontent.com",
-  "release_notes": "RELEASE_NOTES.md, published verbatim as the body of the GitHub Release for v1.1.0"
+  "licence": "MIT"
  },
  "incident": null,
  "latency": {
   "implementation_route": "R2 SENIOR",
   "approval_retries": 0,
-  "corrective_iterations": 4,
-  "notes": "Four corrective iterations: the security lane BLOCK, its residual BLOCK, its final REVISE, and the QA FAIL on documentation. A fifth correction was found by deployment itself, when the readiness redaction proved to hide diagnosis from the origin probe as well.",
-  "learning_record": "appended to the skill-local backlog as release_id vantage-1.1.0 with three near misses, three successful controls and three proposed recommendations",
-  "process_improvements": [
-   "exclude-runtime-data-from-source-artifact: derive the source-artifact exclude list from the repository ignore file so runtime data cannot enter the staged tree (proposed)",
-   "disclosure-controls-keep-a-reason-code: a redacted operational endpoint must still return a stable reason code, and the redaction must be verified from the deployed network position (proposed)",
-   "reserve-verification-budget-for-reviewers: do not spend a per-client abuse budget the independent lane will need (proposed)"
-  ]
+  "corrective_iterations": 2,
+  "notes": "Two corrective iterations, both from the security lane: the first round of three findings and a second round of two."
  },
  "state_history": [
   {
    "from": "DRAFT",
    "to": "BASELINED",
-   "at": "2026-08-11T15:00:00+10:00",
+   "at": "2026-08-11T17:00:00+10:00",
    "actor": "release manager",
-   "reason": "Scope, target, transport and deployed revision established"
+   "reason": "Credential-hygiene and daily-reset scope established against the deployed 1.1.0"
   },
   {
    "from": "BASELINED",
    "to": "IMPLEMENTING",
-   "at": "2026-08-11T15:10:00+10:00",
+   "at": "2026-08-11T17:02:00+10:00",
    "actor": "release manager",
-   "reason": "Public-mode guards, licence and documentation"
+   "reason": "Implementation"
   },
   {
    "from": "IMPLEMENTING",
    "to": "CODE_FROZEN",
-   "at": "2026-08-11T15:45:00+10:00",
+   "at": "2026-08-11T17:10:00+10:00",
    "actor": "release manager",
-   "reason": "Owned file set staged, freeze gate PASS"
+   "reason": "Freeze gate PASS"
   },
   {
    "from": "CODE_FROZEN",
    "to": "IMPLEMENTING",
-   "at": "2026-08-11T16:00:00+10:00",
+   "at": "2026-08-11T17:14:00+10:00",
    "actor": "release manager",
-   "reason": "Security BLOCK and engineering REVISE required corrective work"
+   "reason": "Security REVISE: reset cadence, token storage and digest retention"
   },
   {
    "from": "IMPLEMENTING",
    "to": "CODE_FROZEN",
-   "at": "2026-08-11T16:22:00+10:00",
+   "at": "2026-08-11T17:22:00+10:00",
    "actor": "release manager",
-   "reason": "All review findings closed, freeze gate PASS"
+   "reason": "All findings closed, freeze gate PASS"
   },
   {
    "from": "CODE_FROZEN",
    "to": "ENGINEERING_APPROVED",
-   "at": "2026-08-11T16:24:00+10:00",
-   "actor": "Principal Software Engineer",
+   "at": "2026-08-11T17:24:00+10:00",
+   "actor": "Senior Security and Privacy Lead",
    "reason": "APPROVE"
   },
   {
    "from": "ENGINEERING_APPROVED",
    "to": "QA_PASSED",
-   "at": "2026-08-11T16:26:00+10:00",
+   "at": "2026-08-11T17:26:00+10:00",
    "actor": "Senior QA and Test Lead",
-   "reason": "PASS after documentation corrections"
+   "reason": "PASS"
   },
   {
    "from": "QA_PASSED",
    "to": "GO_DEPLOY",
-   "at": "2026-08-11T16:30:00+10:00",
+   "at": "2026-08-11T17:30:00+10:00",
    "actor": "Principal Platform SRE and Release Engineer",
-   "reason": "GO_DEPLOY with three conditions"
+   "reason": "GO_DEPLOY"
   },
   {
    "from": "GO_DEPLOY",
    "to": "DEPLOYING",
-   "at": "2026-08-11T16:32:00+10:00",
+   "at": "2026-08-11T17:35:00+10:00",
    "actor": "release manager",
    "reason": "Snapshot, staging and app.update"
   },
   {
    "from": "DEPLOYING",
    "to": "DEPLOYED",
-   "at": "2026-08-11T16:47:00+10:00",
+   "at": "2026-08-11T17:39:00+10:00",
    "actor": "release manager",
-   "reason": "1.1.0 live at the origin and the identity gate removed"
-  },
-  {
-   "from": "DEPLOYED",
-   "to": "LIVE_QA_PASSED",
-   "at": "2026-08-11T17:05:00+10:00",
-   "actor": "Live QA Lead",
-   "reason": "PASS_LIVE after re-verifying the one check the rate limiter had blocked"
-  },
-  {
-   "from": "LIVE_QA_PASSED",
-   "to": "GO_PUBLISH",
-   "at": "2026-08-11T16:57:00+10:00",
-   "actor": "Principal Platform SRE and Release Engineer",
-   "reason": "GO_PUBLISH"
-  },
-  {
-   "from": "GO_PUBLISH",
-   "to": "PUBLISHED",
-   "at": "2026-08-11T16:58:00+10:00",
-   "actor": "release manager",
-   "reason": "Tag v1.1.0 pushed and the GitHub Release created from the committed notes"
+   "reason": "1.2.0 live and verified at the origin and the public edge"
   }
  ]
 }

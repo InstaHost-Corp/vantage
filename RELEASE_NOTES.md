@@ -32,9 +32,11 @@ Two things, both about the hosted instance being honestly a *demonstration*:
   account, and one-click buttons switch between the seeded accounts, so a
   visitor never has to type a credential to try the product.
 - The form and both inputs disable autocomplete — `autocomplete="off"` on the
-  form and the email field, `new-password` on the password field, plus the
+  form and the email field, `new-password` on the password field — and the
   `data-1p-ignore`, `data-lpignore` and `data-bwignore` attributes that
-  1Password, LastPass and Bitwarden honour. The browser therefore neither offers
+  1Password, LastPass and Bitwarden honour are set on the form as well as on
+  each input, so a manager that keys on the container is covered too. Live QA
+  caught that the form was missing them. The browser therefore neither offers
   to save credentials against this origin nor autofills a visitor's real ones
   into it.
 - The session token moved from `localStorage` to `sessionStorage`: closing the
@@ -136,24 +138,33 @@ not part of this release. `publishctl.py regate` remains the containment path.
 
 ## Deployment evidence
 
-<!-- Replaced with measured values after deployment. -->
-
 | Item | Value |
 |---|---|
-| Release commit | _pending deployment_ |
+| Release commit | `919823ea69c4fdf303872b951a671ec04a813ab1` |
 | Tag | `v1.2.0` |
-| Staged source digest | _pending deployment_ |
+| Repository | `phamid/vantage` — public, MIT licence |
+| Source artifact | release commit tree excluding `.git`, `node_modules`, `tests`, `release-evidence`, `__pycache__`, `data` |
+| Staged source digest (post-transfer, hash-sorted manifest) | `sha256:445ab0e7bcd46ef9bee32f9989474772af3f8f7fd009a32983d12a70e96514ff` — compared after transfer and byte-identical |
+| Rendered configuration digest | `sha256:ac708b52c5726d2413c366ff353603317d62765b1d34595ae18db8edd69226da` |
 | Image (configured and active) | `node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03` |
-| Deployment job | _pending deployment_ |
-| Runtime identity | _pending deployment_ |
+| Deployment job | `12660 app.update SUCCESS` — no failed job |
+| Runtime identity | state `RUNNING`, 1 container; `/app` **ro** from the release directory, `/data` **rw**; port 30002 |
+| Environment added | `VANTAGE_DEMO_RESET_MINUTES=1440`, `VANTAGE_SESSION_DAYS=1` |
+| Migration result | not applicable — the application writes its own `demo_reset` marker on first boot |
 | Pre-release snapshot | `TailsPool/vantage@pre-1.2.0` |
-| Post-release snapshot | _pending deployment_ |
-| Origin health and readiness | _pending deployment_ |
-| Public verification | _pending deployment_ |
-| Pre-deployment QA | _pending_ |
-| `GO_DEPLOY` | _pending_ |
-| Live QA | _pending_ |
-| `GO_PUBLISH` | _pending_ |
+| Post-release snapshot | `TailsPool/vantage@post-1.2.0` |
+| Origin health | `/healthz` 200 — version 1.2.0, release_sha `919823ea69c4…` |
+| Public config | `public_demo=true`, all four guards enabled, `reset_interval_minutes 1440`, next reset a day out |
+| First-boot behaviour | The existing tenant was **not** wiped, as the release engineer predicted from the source: no marker existed, the schedule anchored to now, and the first reset falls due a day after deployment. Verified live — readiness stayed at 73% with 33 of 49 passing |
+| Public edge | `/`, `/login`, `/trust`, `/healthz`, `/api/public/config` all 200 anonymously; `/api/dashboard` 401 as the in-boundary negative control |
+| Pre-deployment QA | **PASS** — including a Playwright rendered-DOM check of the pre-filled field, the autocomplete and ignore attributes, the legacy-token purge and the sessionStorage-only token, plus a scan of the raw SQLite bytes confirming a submitted fake work address and password appear nowhere |
+| `GO_DEPLOY` | **GO_DEPLOY** with five conditions, all satisfied |
+| Live QA | **PASS_LIVE** |
+| `GO_PUBLISH` | **GO_PUBLISH** |
+
+Full machine-readable evidence: `release-evidence/release-evidence.json`,
+`edge-verification.json`, `cleanup-manifest.json`, `verdicts.json`,
+`pre-freeze-contract-matrix.json` and `deployment-profile.json`.
 
 Release notes for earlier versions remain in `CHANGELOG.md` and in this file's
 history.

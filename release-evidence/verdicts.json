@@ -68,5 +68,15 @@
     "lane": "release_publish",
     "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
     "verdict": "GO_PUBLISH"
+  },
+  {
+    "lane": "senior_review",
+    "reviewer": "Senior Security and Privacy Lead (independent agent) - 1.2.0",
+    "verdict": "APPROVE"
+  },
+  {
+    "lane": "independent_qa",
+    "reviewer": "Senior QA and Test Lead (independent agent) - 1.2.0",
+    "verdict": "PASS"
   }
 ]

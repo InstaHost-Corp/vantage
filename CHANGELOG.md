@@ -15,9 +15,10 @@ one: it resets **daily**, and it keeps nothing a visitor types.
   set). A day is long enough to explore and short enough that nobody inherits
   yesterday's mess.
 - **The sign-in page is pre-filled and asks not to be remembered.** Both fields
-  arrive filled with the published demonstration account, the form and both
-  inputs set `autocomplete` off (`new-password` on the password field, plus the
-  ignore attributes 1Password, LastPass and Bitwarden honour), so the browser
+  arrive filled with the published demonstration account, and the form *and*
+  both inputs set `autocomplete` off (`new-password` on the password field)
+  along with the ignore attributes 1Password, LastPass and Bitwarden honour, so
+  the browser
   neither offers to save credentials against this origin nor autofills a
   visitor's real ones into it. One-click buttons switch between the seeded
   accounts, so there is no reason to type at all.
@@ -72,6 +73,16 @@ one: it resets **daily**, and it keeps nothing a visitor types.
   `VANTAGE_PUBLIC_DEMO` is set. A self-hosted instance still defaults to no
   scheduled reset at all.
 - No schema or data migration.
+
+### Deployment
+
+Deployed to `nas1.insta.host` as release `919823ea69c4fdf303872b951a671ec04a813ab1`
+(job `12660 app.update SUCCESS`) with `VANTAGE_DEMO_RESET_MINUTES=1440` and
+`VANTAGE_SESSION_DAYS=1`. The existing tenant was not wiped on first boot: with
+no marker recorded the schedule anchors to deployment time, so the first daily
+reset falls due a day later. Snapshots `pre-1.2.0` and `post-1.2.0` bracket the
+change. Vantage is also now listed on https://insta.host/tools with a landing
+page at https://insta.host/tools/vantage.
 
 ## [1.1.0] - 2026-08-11
 
