@@ -3,6 +3,60 @@
 All notable changes to Vantage are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-08-11
+
+The hosted instance is a demonstration, and this release makes it behave like
+one: it resets **daily**, and it keeps nothing a visitor types.
+
+### What's new
+
+- **The shared demonstration resets daily** rather than every six hours
+  (`VANTAGE_DEMO_RESET_MINUTES` default `1440` when `VANTAGE_PUBLIC_DEMO` is
+  set). A day is long enough to explore and short enough that nobody inherits
+  yesterday's mess.
+- **The sign-in page is pre-filled and asks not to be remembered.** Both fields
+  arrive filled with the published demonstration account, the form and both
+  inputs set `autocomplete` off (`new-password` on the password field, plus the
+  ignore attributes 1Password, LastPass and Bitwarden honour), so the browser
+  neither offers to save credentials against this origin nor autofills a
+  visitor's real ones into it. One-click buttons switch between the seeded
+  accounts, so there is no reason to type at all.
+- **The session ends with the tab.** The token moved from `localStorage` to
+  `sessionStorage`, so closing the tab leaves nothing behind on the visitor's
+  device. `VANTAGE_SESSION_DAYS` makes the server-side lifetime configurable and
+  the public deployment sets it to `1`, so a session never outlives the data it
+  was issued against.
+
+### Security
+
+- **The sign-in throttle no longer holds what a visitor typed.** It keyed on
+  `<client address>|<email>` in the clear, so a real work address entered out of
+  habit sat in process memory for the length of the fifteen-minute window. It
+  now keys on a SHA-256 digest of the same pair: the throttle still tells
+  attempts apart — same client and account collide, different ones do not — but
+  retains neither the address nor the account.
+- Confirmed by test rather than by inspection: nothing a visitor types at
+  sign-in reaches the activity feed, the user list or any other surface a later
+  visitor can read, and a successful sign-in records the account name only,
+  never credential material.
+
+### Behaviour changes
+
+- The reset cadence shown on the sign-in page and in the application banner now
+  says "daily".
+- Signing in no longer persists across browser restarts. On the public
+  demonstration that is the point; a self-hosted instance is unaffected in every
+  other respect.
+
+### Deployment
+
+- New environment variable `VANTAGE_SESSION_DAYS` (default `14`; the public
+  deployment sets `1`).
+- `VANTAGE_DEMO_RESET_MINUTES` default changes from `360` to `1440` when
+  `VANTAGE_PUBLIC_DEMO` is set. A self-hosted instance still defaults to no
+  scheduled reset at all.
+- No schema or data migration.
+
 ## [1.1.0] - 2026-08-11
 
 Vantage becomes a **free public tool with public source code**. The identity

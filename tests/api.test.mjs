@@ -316,7 +316,7 @@ test('PUB-1: the public config advertises a free shared demo without an account'
   assert.equal(body.version, '9.9.9');
   assert.equal(body.demo.password, 'vantage123');
   assert.equal(body.demo.auto_reset, true);
-  assert.equal(body.demo.reset_interval_minutes, 360);
+  assert.equal(body.demo.reset_interval_minutes, 1440, 'the public demonstration resets daily');
   assert.ok(new Date(body.demo.next_reset_at).getTime() > Date.now());
   assert.ok(body.source_url.startsWith('https://github.com/'));
   assert.ok(body.demo.accounts.some((a) => a.email === 'ada@northwind.io' && a.role === 'admin'));
@@ -442,4 +442,43 @@ test('PUB-9: the document field cannot smuggle an identity into the shared queue
     assert.ok(!queue.includes(personal), `identity reached the queue through the document field: ${personal}`);
     assert.ok(!activity.includes(personal), `identity reached the activity feed through the document field: ${personal}`);
   }
+});
+
+test('PUB-10: the demonstration keeps nothing a visitor types at sign-in', async () => {
+  // A visitor may enter a real work address out of habit. Drive the throttle
+  // past its limit with one, then prove the service kept no trace of it.
+  const typed = 'real.person@theiremployer.example';
+  for (let i = 0; i < 12; i++) {
+    const res = await fetch(`${BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.201' },
+      body: JSON.stringify({ email: typed, password: `not-the-password-${i}` }),
+    });
+    if (res.status === 429) break;
+  }
+
+  // Nothing reaches the activity feed, the user table or any other surface a
+  // later visitor can read.
+  const activity = JSON.stringify(await api('/api/activity').then((r) => r.json()));
+  const users = JSON.stringify(await api('/api/users').then((r) => r.json()));
+  for (const surface of [activity, users]) {
+    assert.ok(!surface.includes(typed), 'a typed address reached a readable surface');
+    assert.ok(!surface.includes('theiremployer'), 'a typed domain reached a readable surface');
+  }
+  assert.ok(!activity.includes('not-the-password'), 'a typed password reached the activity feed');
+});
+
+test('PUB-11: a successful sign-in records the account, never the credential', async () => {
+  const res = await fetch(`${BASE}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.202' },
+    body: JSON.stringify({ email: 'sofia@northwind.io', password: 'vantage123' }),
+  });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.user.password_hash, undefined, 'the response must not carry credential material');
+
+  const activity = JSON.stringify(await api('/api/activity').then((r) => r.json()));
+  assert.ok(!activity.includes('vantage123'), 'the password reached the activity feed');
+  assert.ok(!activity.includes('password'), 'the activity feed should not discuss credentials at all');
 });

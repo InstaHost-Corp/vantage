@@ -8,7 +8,7 @@ import { runTests, controlStatuses, frameworkReadiness, overallPosture } from '.
 import { seed, verifyPassword } from './seed.js';
 import {
   anonymizeTrustRequest, createResetSchedule, clientIp, publicModeConfig, rateLimit,
-  readinessDetailAllowed, sanitizeTrustRequest, securityHeaders,
+  readinessDetailAllowed, sanitizeTrustRequest, securityHeaders, throttleKeyFor,
 } from './public-mode.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -16,7 +16,7 @@ const dist = join(__dirname, '..', 'web', 'dist');
 
 export const RELEASE = {
   service: 'vantage',
-  version: process.env.APP_VERSION || '1.1.0',
+  version: process.env.APP_VERSION || '1.2.0',
   release_sha: process.env.RELEASE_SHA || 'unversioned',
   source_digest: process.env.SOURCE_DIGEST || 'unrecorded',
   node: process.version,
@@ -112,7 +112,9 @@ app.get('/readyz', (req, res) => {
 
 /* ------------------------------------------------------------------ auth */
 
-const SESSION_DAYS = 14;
+// A session must not outlive the data it was issued against: the public
+// demonstration reseeds daily, which drops the sessions table with it.
+const SESSION_DAYS = Number(process.env.VANTAGE_SESSION_DAYS || 14);
 
 function currentUser(req) {
   // Bearer header only. A token in the query string leaks into access logs,
@@ -152,7 +154,9 @@ function enforceReadOnlyRoles(req, res, next) {
 }
 
 // Simple in-memory backoff so a shared demonstration password cannot be
-// brute-forced from behind the identity gate.
+// brute-forced. The key is hashed: on a public demonstration a visitor may
+// type a real work address by habit, and that address must not sit in process
+// memory in the clear for the length of the window.
 const loginAttempts = new Map();
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
@@ -179,9 +183,13 @@ function loginThrottle(key) {
 
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body || {};
-  // Keyed on the address as well as the address book entry: a rotating email
-  // field must not hand an anonymous client an unlimited attempt budget.
-  const throttleKey = `${clientIp(req, { trustProxy: PUBLIC_MODE.trustProxy })}|${String(email || '').toLowerCase().trim() || 'anonymous'}`;
+  // Keyed on the address as well as the account, so rotating the email field
+  // cannot buy an unlimited attempt budget — but hashed, so nothing the
+  // visitor typed is retained in the clear.
+  const throttleKey = throttleKeyFor(
+    clientIp(req, { trustProxy: PUBLIC_MODE.trustProxy }),
+    String(email || '').toLowerCase().trim(),
+  );
   const throttle = loginThrottle(throttleKey);
   if (throttle.blocked) {
     return res.status(429).json({ error: 'Too many sign-in attempts. Try again later.', retry_after_seconds: throttle.retry_after_seconds });

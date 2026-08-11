@@ -8,7 +8,11 @@
 // Everything is a pure function or an injectable-clock factory so the same
 // logic that runs in production is exercised directly by the unit tests.
 
+import { createHash } from 'node:crypto';
+
 const TRUTHY = new Set(['1', 'true', 'yes', 'on']);
+
+const defaultHash = (value) => createHash('sha256').update(value).digest('hex').slice(0, 32);
 
 export const boolEnv = (value, fallback = false) =>
   (value === undefined || value === '' ? fallback : TRUTHY.has(String(value).toLowerCase()));
@@ -246,6 +250,16 @@ export function readinessDetailAllowed(req, env = process.env) {
   return /^(::1|::ffff:127\.|127\.)/.test(address);
 }
 
+/**
+ * Rate-limit and throttle keys must identify a client without retaining what
+ * the client typed. On a public demonstration a visitor may enter a real work
+ * address out of habit; the throttle needs to tell attempts apart, not to know
+ * the address, so it only ever holds a digest.
+ */
+export function throttleKeyFor(ip, email, { hash = defaultHash } = {}) {
+  return hash(`${ip || 'unknown'}|${String(email || '').toLowerCase().trim() || 'anonymous'}`);
+}
+
 export function publicModeConfig(env = process.env) {  const publicDemo = boolEnv(env.VANTAGE_PUBLIC_DEMO, false);
   return {
     publicDemo,
@@ -253,8 +267,9 @@ export function publicModeConfig(env = process.env) {  const publicDemo = boolEn
     rateLimit: boolEnv(env.VANTAGE_RATE_LIMIT, true),
     hsts: boolEnv(env.VANTAGE_HSTS, false),
     // Reseeding is destructive, so it is only ever on by default where the data
-    // is deliberately disposable: the public demonstration.
-    resetMinutes: numEnv(env.VANTAGE_DEMO_RESET_MINUTES, publicDemo ? 360 : 0),
+    // is deliberately disposable: the public demonstration, which restores
+    // itself once a day.
+    resetMinutes: numEnv(env.VANTAGE_DEMO_RESET_MINUTES, publicDemo ? 1440 : 0),
     maxPendingTrustRequests: numEnv(env.VANTAGE_MAX_PENDING_TRUST_REQUESTS, 200),
     sourceUrl: env.VANTAGE_SOURCE_URL || 'https://github.com/phamid/vantage',
   };

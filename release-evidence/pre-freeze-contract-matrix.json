@@ -1,6 +1,6 @@
 {
  "schema_version": "1.2",
- "release_id": "vantage-1.1.0",
+ "release_id": "vantage-1.2.0",
  "invariant_review": "declared",
  "invariant_review_justification": "The release publishes derived compliance values (framework readiness percentages, per-test pass/fail counters) and a generated artifact (web/dist) that is committed and served directly, each with a repository-owned command that recomputes it from its authoritative source and compares. 1.1.0 adds the public-mode guards, whose behaviour is asserted by executable tests proven to fail when each guard is removed, and the fail-closed ungate verifier, whose negative control was run against the still-gated service.",
  "contracts": [
@@ -233,7 +233,7 @@
    "id": "runtime-identity",
    "category": "identity",
    "authoritative_source": "Compose specification and the running container reported by app.get_instance",
-   "version": "vantage 1.1.0",
+   "version": "vantage 1.2.0",
    "reject_conditions": [
     "Deployed image digest differs from the pinned digest",
     "RELEASE_SHA reported by /healthz differs from the deployed commit",
@@ -467,10 +467,10 @@
    ],
    "validation_command": "node --test tests/*.test.mjs && python3 -m unittest discover -s tests -p 'test_*.py'",
    "result": "PASS",
-   "evidence": "48 tests pass, and inside the pinned production image with the source mounted read-only. The API suite boots the server with VANTAGE_PUBLIC_DEMO=1, the exact shape production runs. Two mutation runs were performed. Round one: disabling the rate limiter, removing the security-headers middleware and removing trust-request validation failed exactly PUB-2, PUB-3, PUB-4, the trust-request contract test and the sanitiser unit test. Round two, covering the review fixes: disabling request anonymisation, restoring the three-state public control status and always allowing readiness detail failed exactly SEC-4, PUB-6 and the two corresponding unit tests. Restoring the guards returned the suite to green each time. Round three, covering the residual security findings: accepting caller-supplied document text and restoring the test-level public aggregate failed exactly PUB-9 and SEC-4. 49 node tests and 17 python tests pass, node tests also inside the pinned production image with the source mounted read-only.",
+   "evidence": "52 node tests and 19 python tests pass, node tests also inside the pinned production image with the source mounted read-only. 1.2.0 adds two outcome-level assertions \u2014 that nothing typed at sign-in reaches any readable surface, and that a successful sign-in records no credential material \u2014 plus a unit test proving the throttle key still distinguishes clients and accounts while retaining neither. Mutation run: reverting the throttle-key digest and the daily reset default failed exactly PUB-1, the reseeding-default unit test and the throttle-key unit test, and nothing else.",
    "live_probe": {
     "command": "Mutation run of the three guards, then restore",
-    "observed_at": "2026-08-11T16:00:00+10:00",
+    "observed_at": "2026-08-11T17:25:00+10:00",
     "observed_semantics": "Each guard has at least one test that fails for the intended reason when the guard is absent.",
     "ran_against_production_dependency": false,
     "negative_control": {
@@ -484,6 +484,38 @@
     "derived_representation": "The behaviour an anonymous client observes: 429 with Retry-After over budget, security headers on every response, 400 on an oversized anonymous write, and public_demo reported by /api/public/config and /api/me",
     "recompute_command": "node --test tests/*.test.mjs && python3 -m unittest discover -s tests -p 'test_*.py'",
     "compares_to_authoritative_source": true
+   }
+  },
+  {
+   "id": "invariant-no-credential-retention",
+   "category": "invariant",
+   "authoritative_source": "The sign-in path in server/index.js and throttleKeyFor in server/public-mode.js, plus the browser storage and autocomplete choices in web/src",
+   "version": "vantage 1.2.0",
+   "reject_conditions": [
+    "Anything a visitor types at sign-in reaches the database, the activity feed, the user list or the logs",
+    "The abuse throttle retains the typed account or the client address in the clear",
+    "The sign-in page invites the browser to save or autofill credentials against this origin",
+    "The session token outlives the browser tab"
+   ],
+   "validation_command": "node --test tests/*.test.mjs",
+   "result": "PASS",
+   "evidence": "PUB-10 drives the throttle to its limit with a realistic work address and asserts the address and its domain appear in neither the activity feed nor the user list; PUB-11 asserts a successful sign-in carries no password_hash and puts no credential wording in the activity feed; the unit test asserts the throttle key is a 32-character digest containing neither the address nor the account while still colliding for the same pair. The built bundle was inspected for the shipped attributes: autocomplete new-password, the 1Password/LastPass/Bitwarden ignore attributes, and sessionStorage.",
+   "invariant": {
+    "authoritative_source": "What the running service and the shipped bundle actually do with a submitted credential",
+    "derived_representation": "The claim made to visitors on the sign-in page and in SECURITY.md that nothing they type is stored",
+    "recompute_command": "node --test tests/*.test.mjs",
+    "compares_to_authoritative_source": true
+   },
+   "live_probe": {
+    "command": "Mutation run: throttle key un-hashed, daily reset default reverted",
+    "observed_at": "2026-08-11T17:20:00+10:00",
+    "observed_semantics": "Each guard has at least one test that fails for the intended reason when it is absent.",
+    "ran_against_production_dependency": false,
+    "negative_control": {
+     "input": "throttleKeyFor returning the plain `${ip}|${email}` pair, and resetMinutes back to 360",
+     "observed_result": "3 failures naming the retained address and the wrong cadence; no other test changed state",
+     "distinguishes_success": true
+    }
    }
   }
  ]

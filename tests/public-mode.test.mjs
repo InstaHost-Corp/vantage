@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
   anonymizeTrustRequest, classify, clientIp, createRateLimiter, createResetSchedule,
   publicModeConfig, readinessDetailAllowed, sanitizeTrustRequest, securityHeaders,
+  throttleKeyFor,
 } from '../server/public-mode.js';
 
 const fakeRes = () => {
@@ -99,7 +100,7 @@ test('reseeding is off unless the deployment asks for it', () => {
   // A private self-hosted install must never wipe its own data on a timer.
   assert.equal(publicModeConfig({}).resetMinutes, 0);
   assert.equal(publicModeConfig({}).publicDemo, false);
-  assert.equal(publicModeConfig({ VANTAGE_PUBLIC_DEMO: '1' }).resetMinutes, 360);
+  assert.equal(publicModeConfig({ VANTAGE_PUBLIC_DEMO: '1' }).resetMinutes, 1440, 'the public demonstration resets daily');
   assert.equal(publicModeConfig({ VANTAGE_PUBLIC_DEMO: '1' }).trustProxy, true);
   assert.equal(publicModeConfig({ VANTAGE_PUBLIC_DEMO: '1', VANTAGE_DEMO_RESET_MINUTES: '0' }).resetMinutes, 0);
 });
@@ -150,4 +151,24 @@ test('readiness detail is served to origin monitoring and withheld from the publ
   assert.equal(readinessDetailAllowed(from('172.16.41.1'), {}), false);
   assert.equal(readinessDetailAllowed(from('203.0.113.9'), {}), false);
   assert.equal(readinessDetailAllowed(from('203.0.113.9'), { VANTAGE_READYZ_DETAIL: '1' }), true);
+});
+
+test('the sign-in throttle identifies a client without keeping what they typed', () => {
+  const ip = '203.0.113.4';
+  const typed = 'real.person@theiremployer.example';
+  const key = throttleKeyFor(ip, typed);
+
+  // It must still tell attempts apart, or the throttle does not work.
+  assert.equal(key, throttleKeyFor(ip, typed), 'the same client and account must map to the same key');
+  assert.notEqual(key, throttleKeyFor(ip, 'someone.else@example.com'));
+  assert.notEqual(key, throttleKeyFor('198.51.100.9', typed));
+  assert.equal(throttleKeyFor(ip, 'REAL.Person@TheirEmployer.Example  '), key, 'case and padding must not split the budget');
+
+  // And it must not retain the address a visitor typed by habit, nor their IP.
+  assert.ok(!key.includes(typed), 'the typed address is retained in the throttle key');
+  assert.ok(!key.includes('theiremployer'), 'the typed domain is retained in the throttle key');
+  assert.ok(!key.includes(ip), 'the client address is retained in the throttle key');
+  assert.match(key, /^[0-9a-f]{32}$/, 'the key should be an opaque digest');
+
+  assert.equal(throttleKeyFor(ip, ''), throttleKeyFor(ip, undefined), 'a missing account is one bucket, not many');
 });

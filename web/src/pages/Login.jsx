@@ -2,7 +2,17 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Github, ShieldCheck } from 'lucide-react';
 import { api, post, setToken } from '../api.js';
-import { Button, Card } from '../ui.jsx';
+import { Button, Card, cx } from '../ui.jsx';
+
+// "every 24 hours" reads worse than "daily", and the cadence is configurable,
+// so say whatever is actually true of this deployment.
+function resetPhrase(minutes) {
+  if (!minutes) return '';
+  if (minutes === 1440) return ' and is restored to the seeded baseline daily';
+  if (minutes % 1440 === 0) return ` and is restored to the seeded baseline every ${minutes / 1440} days`;
+  if (minutes % 60 === 0) return ` and is restored to the seeded baseline every ${minutes / 60} hours`;
+  return ` and is restored to the seeded baseline every ${minutes} minutes`;
+}
 
 const HIGHLIGHTS = [
   ['49 automated tests', 'Continuously evaluate cloud, identity, endpoint and people data against your controls.'],
@@ -12,7 +22,7 @@ const HIGHLIGHTS = [
 
 export default function Login() {
   const [email, setEmail] = useState('ada@northwind.io');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('vantage123');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState(null);
@@ -60,15 +70,21 @@ export default function Login() {
               : 'Automate compliance and prove trust continuously.'}
           </p>
 
-          <form onSubmit={submit} className="mt-8 space-y-4">
+          {/* autoComplete is off throughout: this is a shared demonstration with a
+              published password, so the browser must not offer to save credentials
+              against this origin, and must not autofill a visitor's real ones into
+              it either. Both fields are pre-filled so nobody needs to type. */}
+          <form onSubmit={submit} className="mt-8 space-y-4" autoComplete="off">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ink-700">Work email</span>
-              <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required
+              <input type="email" name="vantage-demo-account" autoComplete="off" data-1p-ignore data-lpignore="true" data-bwignore
+                value={email} onChange={(e) => setEmail(e.target.value)} required
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ink-700">Password</span>
-              <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required
+              <input type="password" name="vantage-demo-passphrase" autoComplete="new-password" data-1p-ignore data-lpignore="true" data-bwignore
+                value={password} onChange={(e) => setPassword(e.target.value)} required
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
             </label>
             {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
@@ -87,11 +103,29 @@ export default function Login() {
               The shared demonstration password is <code className="rounded bg-white px-1">{demo?.password || 'vantage123'}</code>.
             </p>
             {publicDemo && (
-              <p className="mt-1">
-                Everyone shares this workspace, so anything you change is visible to other visitors
-                {demo?.auto_reset ? ` and is restored to the seeded baseline every ${Math.round(demo.reset_interval_minutes / 60)} hours` : ''}.
-                Run it on your own machine for a private copy.
-              </p>
+              <>
+                <p className="mt-1">
+                  Everyone shares this workspace, so anything you change is visible to other visitors
+                  {demo?.auto_reset ? `${resetPhrase(demo.reset_interval_minutes)}` : ''}.
+                  Run it on your own machine for a private copy.
+                </p>
+                <p className="mt-1">
+                  Both fields are filled in already — nothing you type here is stored, and the page asks your browser
+                  not to save or autofill credentials for it.
+                </p>
+                {demo?.accounts?.length > 0 && (
+                  <p className="mt-2 flex flex-wrap items-center gap-1">
+                    <span className="text-ink-500">Sign in as</span>
+                    {demo.accounts.map((a) => (
+                      <button key={a.email} type="button" onClick={() => setEmail(a.email)}
+                        className={cx('rounded border px-1.5 py-0.5 font-medium transition-colors',
+                          email === a.email ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-slate-300 bg-white text-ink-700 hover:bg-slate-100')}>
+                        {a.name.split(' ')[0]} <span className="text-ink-500">({a.role})</span>
+                      </button>
+                    ))}
+                  </p>
+                )}
+              </>
             )}
           </Card>
           <p className="mt-4 text-center text-xs text-ink-500">

@@ -1,7 +1,12 @@
 const TOKEN_KEY = 'vantage.token';
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY);
-export const setToken = (t) => (t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY));
+// sessionStorage, not localStorage: this is a shared public demonstration, so
+// the session must not outlive the browser tab. Nothing about a visitor's
+// visit is left on their device after they close it.
+const store = typeof sessionStorage !== 'undefined' ? sessionStorage : localStorage;
+
+export const getToken = () => store.getItem(TOKEN_KEY);
+export const setToken = (t) => (t ? store.setItem(TOKEN_KEY, t) : store.removeItem(TOKEN_KEY));
 
 export async function api(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'content-type': 'application/json' };

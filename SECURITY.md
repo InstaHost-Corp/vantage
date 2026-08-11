@@ -10,8 +10,13 @@ deliberately not an identity-gated system:
 * All data is fictional. There is no real company, no real personnel and no
   real customer data in it.
 * The workspace is shared. Anything you change is visible to every other
-  visitor, and the whole tenant is restored to its seeded baseline every six
-  hours.
+  visitor, and the whole tenant is restored to its seeded baseline **daily**.
+* **It does not save credentials.** The sign-in page pre-fills the published
+  demonstration account and asks your browser not to save or autofill anything
+  against this origin. Your session token lives in `sessionStorage`, so it is
+  gone when you close the tab. Nothing you type into the sign-in form is
+  written to the database or the logs, and the abuse throttle keys on a digest
+  rather than on the address you typed.
 * Do not put real, personal or confidential information into it. Anything you
   type into the demonstration should be treated as public and disposable.
 * The one form that asks for your identity — the Trust Center document request

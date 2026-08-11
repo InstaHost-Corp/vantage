@@ -53,9 +53,8 @@
    "none - the application creates and seeds its own SQLite schema idempotently on boot"
   ],
   "deploy": [
-   "rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' --exclude 'release-evidence' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/",
-   "ssh nas1 \"midclt call -j app.update <payload pinning the new release directory and the 1.1.0 environment>\"",
-   "python3 scripts/publishctl.py apply --stage public --confirm --expect-version 1.1.0 --expect-sha <40-char sha>"
+   "rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' --exclude 'release-evidence' --exclude '__pycache__' --exclude 'data' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/",
+   "ssh nas1 \"midclt call -j app.update vantage <payload pinning the new release directory, APP_VERSION=1.2.0, VANTAGE_DEMO_RESET_MINUTES=1440 and VANTAGE_SESSION_DAYS=1>\""
   ],
   "health": [
    "ssh nas1 'curl -s http://127.0.0.1:30002/healthz'"
@@ -64,19 +63,17 @@
    "ssh nas1 'curl -s http://127.0.0.1:30002/readyz'"
   ],
   "smoke": [
-   "ssh nas1 'curl -s http://127.0.0.1:30002/api/public/config'",
-   "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/            (expect 200, no identity gate)",
-   "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/api/dashboard  (expect 401 - negative control)",
-   "node /tmp/vcheck/check.mjs with BASE=https://vantage.insta.host"
+   "ssh nas1 'curl -s http://127.0.0.1:30002/api/public/config'   # expect reset_interval_minutes 1440",
+   "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/            (expect 200)",
+   "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/api/dashboard  (expect 401 - negative control)"
   ],
   "restart": [
    "ssh nas1 'midclt call -j app.redeploy vantage'"
   ],
   "rollback": [
-   "python3 scripts/publishctl.py regate                      # fastest containment: restore the identity gate",
-   "ssh nas1 \"midclt call -j app.update <payload pinning /mnt/TailsPool/vantage/releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69 and the 1.0.0 environment>\"",
-   "ssh nas1 \"midclt call zfs.rollback '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.1.0\\\"}'\"",
-   "curl -X PATCH -H \"Authorization: ******\" https://api.github.com/repos/phamid/vantage -d '{\"private\": true}'   # re-privatise the repository"
+   "ssh nas1 \"midclt call -j app.update <payload pinning /mnt/TailsPool/vantage/releases/a624d802a7a63b1117a8dd5177877af215b72e97 and the 1.1.0 environment>\"",
+   "ssh nas1 \"midclt call zfs.rollback '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.2.0\\\"}'\"",
+   "python3 scripts/publishctl.py regate   # close the open endpoint, independent of the application version"
   ]
  },
  "policies": {

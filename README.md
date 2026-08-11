@@ -20,8 +20,9 @@ a read-only external-auditor view). The public Trust Center is at
 [`/trust`](https://vantage.insta.host/trust) and needs no account at all.
 
 That instance is a **shared** demonstration containing entirely fictional data. Anything you change
-is visible to everyone else, and the whole workspace is restored to its seeded baseline every six
-hours. Do not put anything real into it.
+is visible to everyone else, and the whole workspace is restored to its seeded baseline **daily**.
+Nothing you type is stored: the credentials are pre-filled, the browser is asked not to save them,
+and your session ends when you close the tab. Do not put anything real into it.
 
 ## Run your own
 
@@ -145,12 +146,13 @@ web/
 | `VANTAGE_DB` | `data/vantage.db` | SQLite file location |
 | `VANTAGE_SCAN_MINUTES` | `60` | Continuous monitoring interval |
 | `VANTAGE_PUBLIC_DEMO` | `0` | Announce a free shared demonstration in the UI and default the reset cadence on |
-| `VANTAGE_DEMO_RESET_MINUTES` | `360` when public, else `0` | Reseed the whole tenant on this cadence. **Destructive** — `0` disables it |
+| `VANTAGE_DEMO_RESET_MINUTES` | `1440` (daily) when public, else `0` | Reseed the whole tenant on this cadence. **Destructive** — `0` disables it |
 | `VANTAGE_RATE_LIMIT` | `1` | Per-client rate limiting on `/api` |
 | `VANTAGE_TRUST_PROXY` | follows `VANTAGE_PUBLIC_DEMO` | Take the client address from `CF-Connecting-IP` / `X-Forwarded-For`. Only enable behind a proxy you control |
 | `VANTAGE_HSTS` | `0` | Always send HSTS, rather than only when the request arrived over TLS |
 | `VANTAGE_MAX_PENDING_TRUST_REQUESTS` | `200` | Cap on the anonymous Trust Center request backlog |
 | `VANTAGE_SOURCE_URL` | this repository | "Source on GitHub" link shown in the UI |
+| `VANTAGE_SESSION_DAYS` | `14` | Session lifetime. The public demonstration uses `1`, so a session never outlives the data it was issued against |
 | `VANTAGE_READYZ_DETAIL` | `0` | Serve full `/readyz` diagnostics to every caller. By default paths, driver errors and row counts go only to a loopback caller; everyone else gets a reason code such as `data_volume_not_writable` |
 | `VANTAGE_ALLOW_DEMO_RESET` | `1` | Set to `0` to refuse tenant resets entirely |
 
@@ -178,8 +180,12 @@ Nothing sits in front of the hosted instance, so the application defends itself:
   subtracted back into a live failing count.
 * **Role separation.** Auditor accounts are read-only; tenant reset, policy approval, framework
   enablement, settings and Trust Center configuration require an administrator.
-* **A self-healing tenant.** The shared workspace reseeds every six hours, so no visitor can leave
-  it permanently broken.
+* **A self-healing tenant.** The shared workspace reseeds daily, so no visitor can leave it
+  permanently broken.
+* **Nothing a visitor types is kept.** The sign-in page pre-fills the demonstration account and asks
+  the browser not to save or autofill credentials against it; the session token lives in
+  `sessionStorage` and dies with the tab; and the sign-in throttle keys on a digest, so a real
+  address typed by habit is never held in memory in the clear.
 
 Report a vulnerability privately — see [SECURITY.md](SECURITY.md).
 
@@ -305,7 +311,7 @@ titles are paraphrased summaries of publicly published standard structures; no p
 branding or assets are reproduced. All company, personnel and vendor data is fictional.
 
 The seeded demonstration accounts use a published password. That is deliberate
-on the hosted demonstration, whose data is fictional, shared and reset every six
-hours. It is **not** safe anywhere else: change the passwords in
-`server/seed.js`, or put your own identity gate in front, before running an
-instance that holds anything real.
+on the hosted demonstration, whose data is fictional, shared and reset daily. It
+is **not** safe anywhere else: change the passwords in `server/seed.js`, or put
+your own identity gate in front, before running an instance that holds anything
+real.

@@ -1,238 +1,140 @@
-# Vantage 1.1.0 — release notes
+# Vantage 1.2.0 — release notes
 
 | | |
 |---|---|
-| **Release** | 1.1.0 |
-| **Type** | Minor — free public access and open source, no breaking API change |
+| **Release** | 1.2.0 |
+| **Type** | Minor — demonstration behaviour and credential hygiene, no breaking API change |
 | **Service** | `vantage` |
 | **Public endpoint** | https://vantage.insta.host |
 | **Target** | nas1.insta.host (TrueNAS SCALE), TCP 30002 |
 | **Runtime** | `node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03`, release source bind-mounted read-only |
 | **Data** | `/mnt/TailsPool/vantage/data` (SQLite) |
-| **Identity** | **none — the Cloudflare Access gate is removed by this release** |
-| **Repository** | `phamid/vantage` — **public**, MIT licence |
-| **Previous release** | 1.0.0 (`c01fbed0…`), see `CHANGELOG.md` |
+| **Identity** | none — public and free, as of 1.1.0 |
+| **Repository** | `phamid/vantage` — public, MIT licence |
+| **Previous release** | 1.1.0 (`a624d802…`) |
 
 ## What is being released
 
-Vantage becomes a free tool with public source code.
+Two things, both about the hosted instance being honestly a *demonstration*:
 
-Until now the service ran behind Cloudflare Access, admitting only
-`mytechie.com.au` identities, and the repository was private. This release
-opens both: `https://vantage.insta.host` is reachable by anyone at no cost with
-no account of their own, and the source is published on GitHub under the MIT
-licence so anyone can read, fork or self-host it.
-
-Nothing about the product's function changes. What changes is who may use it,
-and what the application must defend against now that nothing sits in front of
-it.
+1. **It resets daily.** The shared workspace restores itself to the seeded
+   baseline once a day instead of every six hours.
+2. **It saves no credentials.** Nothing a visitor types at sign-in is retained
+   anywhere — not on their device, not in the database, not in the logs, and not
+   in the process's own abuse counters.
 
 ## What's new
 
-- **Free public access.** No identity gate, no signup, no cost. The seeded
-  demonstration accounts shown on the sign-in page are the only credentials
-  needed.
-- **MIT licence and a public repository**, with `SECURITY.md` describing
-  private vulnerability reporting and what the hosted instance is and is not.
-- **`GET /api/public/config`** — an unauthenticated description of the
-  environment: version, public-demo state, demonstration accounts, reset
-  cadence and source URL.
-- **A shared demonstration that heals itself**, reseeding on a six-hour cadence
-  so one visitor cannot leave it broken for the next.
-- **In-product honesty**: a banner in the shell and sign-in copy stating that
-  the workspace is shared, when it resets, and where the source lives.
-- **`publishctl.py apply --stage public`** — ungating as a verified, reversible
-  operation that proves the build at the origin before removing the gate and
-  restores it on any failure, plus `publishctl.py regate` to put the gate back
-  in one step.
+- The reset cadence is daily (`VANTAGE_DEMO_RESET_MINUTES` defaults to `1440`
+  when `VANTAGE_PUBLIC_DEMO` is set). The sign-in page and the in-app banner say
+  so.
+- The sign-in form arrives **pre-filled** with the published demonstration
+  account, and one-click buttons switch between the seeded accounts, so a
+  visitor never has to type a credential to try the product.
+- The form and both inputs disable autocomplete — `autocomplete="off"` on the
+  form and the email field, `new-password` on the password field, plus the
+  `data-1p-ignore`, `data-lpignore` and `data-bwignore` attributes that
+  1Password, LastPass and Bitwarden honour. The browser therefore neither offers
+  to save credentials against this origin nor autofills a visitor's real ones
+  into it.
+- The session token moved from `localStorage` to `sessionStorage`: closing the
+  tab leaves nothing on the visitor's device. `VANTAGE_SESSION_DAYS` makes the
+  server-side session lifetime configurable, and the public deployment sets it
+  to `1` so a session never outlives the data it was issued against.
 
 ## Security changes
 
-The identity gate was doing real work: it meant an anonymous request never
-reached the process. Removing it moves that burden into the application, so
-this release adds the guards that make an ungated deployment defensible. Each
-has a regression test that was **proven to fail** with the guard removed.
-
 | Guard | What it prevents |
 |---|---|
-| Per-client rate limiting across five budgets under a global ceiling | One client exhausting CPU with repeated full monitoring scans, remediation or questionnaire autofill, or flooding the process |
-| Client address taken from `CF-Connecting-IP` only when the deployment declares the hop trustworthy | A client forging its own rate-limit identity with a header |
-| Bounded, swept counter map | Memory growth from rotating source addresses |
-| CSP, `frame-ancestors 'none'`, `X-Frame-Options`, `nosniff`, referrer policy, permissions policy, cross-origin isolation, HSTS over TLS | Clickjacking, MIME confusion, referrer leakage, injected third-party content |
-| Length-capped, validated anonymous Trust Center requests, capped pending backlog, JSON body limit 1 MB → 256 kB | The one anonymous write path being used to grow the database without limit |
-| Sign-in throttle keyed on address **and** account; expired sessions deleted on each new sign-in | An unlimited attempt budget from rotating the email field; unbounded session accumulation |
-| Anonymous Trust Center submissions anonymised before storage on the public demo | A real visitor's name, email and employer being handed to everyone who signs in to the shared workspace |
-| Public control status reduced to verified / not yet verified | A reader deriving the live failing-control set by subtraction from the published totals |
-| `/readyz` detail restricted to origin monitoring on loopback | Publishing database paths, driver error text and row counts to anonymous callers |
-| Reseeding wrapped in one transaction with deferred foreign keys | A crash or a concurrent request observing a half-wiped tenant |
+| The sign-in throttle keys on a SHA-256 digest of `<client address>\|<account>` instead of the pair in the clear | A real work address, typed out of habit into a public demonstration, sitting in process memory for the fifteen-minute throttle window. The throttle still distinguishes clients and accounts — same pair collides, different pairs do not — it simply cannot say what either was |
+| Autocomplete disabled and both fields pre-filled | A visitor's password manager saving a credential against a shared demonstration, or autofilling their real one into it |
+| `sessionStorage` rather than `localStorage` | A session token outliving the visit on someone else's machine |
+| `VANTAGE_SESSION_DAYS=1` on the public deployment | A session outliving the data it was issued against, given the tenant now reseeds daily |
 
-### Findings fixed from the mandatory pre-deployment reviews
+Two tests assert the outcome rather than the mechanism: driving the throttle to
+its limit with a realistic work address leaves that address in no surface a
+later visitor can read, and a successful sign-in records the account name with
+no credential material anywhere.
 
-The independent security lane returned **BLOCK** and the principal engineering
-lane **REVISE** on the first candidate. Both were re-reviewed after these
-fixes; nothing was waived.
+### Already true before this release, and re-verified
 
-| Finding | Severity | Fix |
-|---|---|---|
-| SEC-1 The public Trust Center collected a real visitor's name, email and company and exposed them to anyone holding the published demo credentials | MEDIUM | On the public deployment the submission is accepted and the identifying fields are discarded; the queue records an anonymous demonstration request, and the form says so before you type |
-| SEC-1b The `document` field remained caller-controlled free text, so a direct API call could smuggle an identity into the queue and activity feed through it | MEDIUM | The requested document is resolved against the published catalogue; an unrecognised value is refused with 400 |
-| SEC-2 The ungate verifier accepted any build reporting `public_demo`, without checking version, release commit or whether the guards were actually enabled | MEDIUM | `/api/public/config` now reports release SHA and per-guard state; the verifier requires the expected version and commit, every guard enabled, the security headers, and `/api/dashboard` answering 401 anonymously |
-| SEC-2b The identity flags were optional, so the unsafe invocation was still accepted — and still documented | MEDIUM | `--expect-version` and a full 40-character `--expect-sha` are mandatory for the `public` stage, refused before any network call; a build reporting `unversioned` is refused |
-| SEC-3 The ungate deleted the Access application *before* verifying anything, so an interrupt or transport failure could leave the service open | MEDIUM | The build is proven at the origin first, while the gate is still up; post-delete verification is wrapped so that any failure, exception or interrupt triggers a retrying, read-back-confirmed restoration |
-| SEC-3b The restoration loop caught `Exception`, but the helper it calls aborted with `SystemExit`, which escaped it — so the first Cloudflare rejection left the service public with no retry and no warning | MEDIUM | Helpers raise an ordinary `PublishError`; the loop catches `BaseException` so nothing short of exhausting its attempts can stop it. `tests/test_publishctl.py` proves it against API rejection, transport failure, interruption and a disagreeing readback |
-| SEC-3c The failure path ignored whether restoration had actually succeeded and reported "ungate reverted" either way, so an exhausted restoration would be recorded as a clean revert while the service stayed open | MEDIUM | The return value decides the message: a failed restoration exits with `NOT REVERTED … is PUBLIC and unverified` naming the manual containment steps, and the interrupt path does the same |
-| SEC-4 `/readyz` published database paths, `dist` path, raw SQLite error text and row counts anonymously | LOW | Detail is served to a loopback caller only, or with `VANTAGE_READYZ_DETAIL=1`; every other caller gets a stable per-component reason code |
-| OPS-1 Found during deployment: the container is reached through a published port, so even the origin probe arrives from the bridge gateway and the first version of the redaction reduced every failure to "not ready", losing the diagnosis the endpoint exists to give | MEDIUM | Each check now carries a reason code (`data_volume_not_writable`, `schema_not_seeded`, `frontend_build_missing`, …) that is served to every caller, with verbose paths and driver text still restricted. Verified live: a loopback caller sees paths, a non-loopback caller sees reason codes, and a genuinely broken component answers 503 naming the component |
-| SEC-5 Public control status had three states, so the failing set was recoverable by subtraction | LOW | Two states only: verified, or not yet verified |
-| SEC-5b The published aggregate still counted *tests*, so the failing test count was recoverable from the complement | LOW | The aggregate counts controls, matching the per-control publication exactly |
-| ENG-1 `seed()` wiped and refilled 25 tables outside a transaction while the reset timer could fire mid-request | NON-BLOCKING | One `BEGIN IMMEDIATE` transaction with `PRAGMA defer_foreign_keys`, rolled back on failure |
-| ENG-2 `publishctl rollback` ignored the result of its own Cloudflare mutations and printed success regardless | NON-BLOCKING | Every rollback mutation is checked and read back; an incomplete rollback exits non-zero and says what is still live |
-| ENG-3 Rate-limit budgets could leak between tests sharing a client address | SUGGESTION | Each rate-limit test uses its own `CF-Connecting-IP` |
-
-Role separation from 1.0.0 is unchanged and still enforced: auditor accounts
-remain read-only, and tenant reset, policy approval, framework enablement,
-settings and Trust Center configuration still require an administrator.
-
-### Accepted security debt, recorded deliberately
-
-- **The demonstration password is public.** `vantage123` is documented on the
-  sign-in page, in this repository and through `/api/public/config`. It is a
-  published credential for fictional data, not a leaked one. The threat model
-  is explicitly "anyone may sign in and change anything", which is why the
-  workspace is shared, disposable and reset on a cadence.
-- **The repository documents the estate deployment** — the origin's RFC1918
-  address, the Cloudflare account, tunnel and identity-provider identifiers.
-  None of these is a credential: no API call, tunnel connection or sign-in is
-  possible with them alone, and Entra tenant identifiers are already publicly
-  discoverable. They are retained because the deployment runbook is part of
-  what makes this repository useful.
-- **Rate limiting is in-process.** Exact for the single deployed instance;
-  would need shared state if the service were ever scaled out.
+No password has ever been written to the database or the logs; only the seeded
+scrypt hashes exist, and the service holds, mounts and reads no secret material
+of its own. This release closes the remaining places where something a visitor
+*typed* could linger.
 
 ## Behaviour changes
 
-- `/healthz` and `/readyz` report version `1.1.0`.
-- `GET /api/me` additionally returns `public_demo`, `source_url` and
-  `next_reset_at`.
-- Over-budget requests receive `429` with `Retry-After`.
-- On the public deployment, all data is periodically destroyed and reseeded. A
-  self-hosted instance defaults to **no** scheduled reset and no public-demo
-  banner; both are opt-in via `VANTAGE_PUBLIC_DEMO`.
+- Sign-in no longer persists across browser restarts.
+- The reset cadence displayed in the UI reads "daily".
+- `GET /api/public/config` reports `reset_interval_minutes: 1440`.
 
 ## Data and migrations
 
-None. The schema is created and seeded idempotently on boot, exactly as in
-1.0.0. The scheduled reset uses the same seeding path as the existing
-**Settings → Reset demo data** action.
+None. The schema is created and seeded idempotently on boot.
 
 ## Breaking changes
 
-None. Every 1.0.0 endpoint keeps its shape; `/api/me` gains fields and no
-response field was renamed or removed.
+None.
 
 ## Known issues and residual risks
 
-- The hosted workspace is shared and mutable by design; vandalism between
-  resets is expected and self-heals.
-- The public deployment carries no availability commitment. It is one small
-  instance on a home-lab host.
-- Scheduled resets sign everybody out, because reseeding recreates the users
-  table. The client detects the `401` and returns to the sign-in page.
+- The demonstration password remains published, deliberately. It is a shared
+  fictional workspace; the guards above ensure that choice costs a visitor
+  nothing.
+- A visitor who deliberately types a real credential into the password field is
+  still sending it to this service. It is not stored, logged or echoed, but the
+  only complete protection is not to do it — which is why the field is
+  pre-filled and the page says so.
+- Rate limiting and the throttle remain in-process, which is exact for the
+  single deployed instance.
 
 ## Deployment instructions
 
 ```sh
-# 1. pre-release recursive snapshot
-ssh nas1 "midclt call zfs.snapshot.create '{\"dataset\":\"TailsPool/vantage\",\"name\":\"pre-1.1.0\",\"recursive\":true}'"
+ssh nas1 "midclt call zfs.snapshot.create '{\"dataset\":\"TailsPool/vantage\",\"name\":\"pre-1.2.0\",\"recursive\":true}'"
 
-# 2. stage the exact release commit, then compare per-file SHA-256 manifests
 rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' \
-      --exclude 'release-evidence' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/
+      --exclude 'release-evidence' --exclude '__pycache__' --exclude 'data' \
+      -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/
 
-# 3. update the application onto the new release directory and the new env
-ssh nas1 "midclt call -j app.update <payload>"
+ssh nas1 "midclt call -j app.update vantage '<payload pinning the new release directory, APP_VERSION=1.2.0, VANTAGE_DEMO_RESET_MINUTES=1440 and VANTAGE_SESSION_DAYS=1>'"
 
-# 4. verify on the origin before touching the edge
-ssh nas1 "curl -s http://127.0.0.1:30002/healthz; curl -s http://127.0.0.1:30002/readyz"
 ssh nas1 "curl -s http://127.0.0.1:30002/api/public/config"
-
-# 5. remove the identity gate (fails closed and self-reverts if the deployed
-#    build is not the public-mode build)
-python3 scripts/publishctl.py apply --stage public --confirm \
-        --expect-version 1.1.0 --expect-sha <release-sha>
 ```
+
+The identity gate is already removed, so `publishctl.py apply --stage public` is
+not part of this release. `publishctl.py regate` remains the containment path.
 
 ## Rollback
 
-Two independent axes, each reversible on its own:
-
-1. **Re-gate the service** — `python3 scripts/publishctl.py regate` recreates
-   the Access application and the `mytechie.com.au` policy. Ingress and DNS are
-   untouched, so this is the fastest containment for any abuse of the open
-   endpoint and takes effect at the edge immediately.
-2. **Roll the application back to 1.0.0** — `midclt call -j app.update`
-   pinning `/mnt/TailsPool/vantage/releases/c01fbed090274a8b9629e68bd1b7dfe68f112b69`
-   and the 1.0.0 environment, then
-   `midclt call zfs.rollback '{"id":"TailsPool/vantage@pre-1.1.0"}'` if data
-   must be restored. 1.0.0 carries no known defect, so rollback is safe.
-3. **Re-privatise the repository** — `PATCH /repos/phamid/vantage` with
-   `{"private": true}`. Anything cloned or forked while public cannot be
-   recalled; that is inherent to publishing and accepted.
-
-The rollback path was confirmed reachable over the same transport used for the
-deployment before any mutation was made.
+1. `midclt call -j app.update` pinned back to
+   `/mnt/TailsPool/vantage/releases/a624d802a7a63b1117a8dd5177877af215b72e97`
+   with the 1.1.0 environment. 1.1.0 carries no known defect.
+2. `zfs.rollback` to `TailsPool/vantage@pre-1.2.0` if data must be restored.
+3. `python3 scripts/publishctl.py regate` if the open endpoint must be closed
+   for any reason, independent of the application version.
 
 ## Deployment evidence
 
+<!-- Replaced with measured values after deployment. -->
+
 | Item | Value |
 |---|---|
-| Release commit | `a624d802a7a63b1117a8dd5177877af215b72e97` |
-| Evidence commit | `0eee4d1` and this commit |
-| Tag | `v1.1.0` |
-| Repository | `phamid/vantage` — **public**, MIT licence, verified anonymously (`/repos/phamid/vantage` → 200, `visibility: public`) |
-| Source artifact | release commit tree excluding `.git`, `node_modules`, `tests`, `release-evidence`, `__pycache__`, `data` — 51 files |
-| Staged source digest (post-transfer, hash-sorted manifest) | `sha256:29c8bf07901b1c227706707c1bd1f0747915ffc2469c7b0260bd5ee62743c752` — compared after transfer and byte-identical |
-| Rendered configuration digest | `sha256:46612145d8e6ac885514521901359a0bb3fa3413b77008dbf445e598f5560bb5` |
+| Release commit | _pending deployment_ |
+| Tag | `v1.2.0` |
+| Staged source digest | _pending deployment_ |
 | Image (configured and active) | `node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03` |
-| Deployment jobs | `12477 app.update SUCCESS` (intermediate build), `12498 app.update SUCCESS` (release build) — no failed job |
-| Runtime identity | state `RUNNING`, 1 container running; `/app` **ro** from the release directory, `/data` **rw**; container port 30002 |
-| Migration result | not applicable — schema created and seeded idempotently on boot |
-| Pre-release snapshot | `TailsPool/vantage@pre-1.1.0` (recursive) |
-| Post-release snapshot | `TailsPool/vantage@post-1.1.0` (recursive) |
-| Origin health | `/healthz` 200 — version 1.1.0, release_sha `a624d802a7a6…`, node v24.19.0 |
-| Origin readiness | `/readyz` 200 ready=true — database, schema, monitoring engine, writable volume and frontend build all ok |
-| Public edge | `/`, `/login`, `/trust`, `/healthz`, `/readyz`, `/api/public/config`, `/api/public/trust` and both content-hashed assets all **200** anonymously; `/api/dashboard` **401** as the in-boundary negative control; `edgectl` PASS |
-| Ungate verification | The origin was required to report `public_demo`, all four guards, version 1.1.0 and the exact release commit **before** the Access application was deleted; the same claims plus a 401 on `/api/dashboard` were re-proved through the public hostname afterwards. Both halves were proven able to fail beforehand — the origin check refused the running 1.0.0 build, and the public check returned the Cloudflare Access sign-in page while the gate was up |
-| Certificate | SAN `insta.host`, `*.insta.host` (Google Trust Services CN=WE1), one-label depth, handshake ok |
-| DNS | proxied CNAME to the estate tunnel; converged across 1.1.1.1, 8.8.8.8, 9.9.9.9 and the client resolver; the origin address is never published |
-| Live user journey | Signed in through the public hostname with the published demonstration admin, dashboard 73% / 33 of 49 passing, remediated *Endpoints have disk encryption enabled*, readiness moved to 75% / 34 passing; the auditor account was refused the same mutation with 403; an anonymous caller received 401; the tenant was then reset and re-verified at 73% / 33 passing |
-| Anonymised writes, live | A Trust Center request submitted through the public hostname with a realistic identity returned `anonymized: true`; none of the submitted name, email or company appears in the signed-in request queue, which shows an anonymous demonstration requester instead |
-| Rate limiting, live | A repeated anonymous submission through the real edge was refused with **429** and `Retry-After: 3599` on the sixth request in the hour, keyed on the client address Cloudflare supplies |
-| Security headers, live | CSP with `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, referrer policy and HSTS all present on the public document |
-| Pre-deployment QA | **PASS** (after a FAIL on two false README claims, both corrected) |
-| `GO_DEPLOY` | **GO_DEPLOY** with three conditions, all satisfied |
-| Live QA | **PASS_LIVE** |
-| `GO_PUBLISH` | **GO_PUBLISH** |
+| Deployment job | _pending deployment_ |
+| Runtime identity | _pending deployment_ |
+| Pre-release snapshot | `TailsPool/vantage@pre-1.2.0` |
+| Post-release snapshot | _pending deployment_ |
+| Origin health and readiness | _pending deployment_ |
+| Public verification | _pending deployment_ |
+| Pre-deployment QA | _pending_ |
+| `GO_DEPLOY` | _pending_ |
+| Live QA | _pending_ |
+| `GO_PUBLISH` | _pending_ |
 
-### What deployment itself found
-
-Two defects were caught by deploying rather than by review, and both were fixed
-before the gate came down:
-
-1. **An untracked local development database was copied into the release
-   directory.** The documented `rsync` exclude list did not cover `data/`. The
-   per-file digest comparison caught it — the staged tree did not match the
-   commit tree — and the exclude list is now part of the documented command.
-2. **The readiness redaction hid the diagnosis from the origin probe too.** The
-   container is reached through a published port, so even a health check run on
-   the deployment host arrives from the docker bridge gateway rather than
-   loopback. The first version of the redaction therefore reduced every
-   component to "ok" or "not ready" for everybody. Each check now carries a
-   stable reason code for every caller while paths and driver text stay
-   restricted.
-
-Full machine-readable evidence: `release-evidence/release-evidence.json`,
-`edge-verification.json`, `cleanup-manifest.json`, `verdicts.json`,
-`pre-freeze-contract-matrix.json` and `deployment-profile.json`.
-
-Release notes for 1.0.0 remain in `CHANGELOG.md` and in this file's history.
+Release notes for earlier versions remain in `CHANGELOG.md` and in this file's
+history.
