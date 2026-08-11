@@ -63,5 +63,10 @@
     "lane": "live_qa",
     "reviewer": "Live QA Lead (independent agent)",
     "verdict": "PASS_LIVE"
+  },
+  {
+    "lane": "release_publish",
+    "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
+    "verdict": "GO_PUBLISH"
   }
 ]

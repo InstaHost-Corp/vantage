@@ -1,8 +1,8 @@
 {
  "schema_version": "2.1",
  "framework_version": "2.8.0",
- "state": "LIVE_QA_PASSED",
- "outcome": "DEPLOYED_NOT_PUBLISHED",
+ "state": "PUBLISHED",
+ "outcome": "RELEASED",
  "release": {
   "id": "vantage-1.1.0",
   "product": "Vantage",
@@ -118,6 +118,13 @@
    "at": "2026-08-11T17:05:00+10:00",
    "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
    "evidence": "release-evidence/verdicts.json. FAIL_LIVE first, honestly, because the anonymous contact budget had already been spent from the shared public address by the release manager's own verification, so the anonymisation check could not reach the code under test. Re-verified against the deployed origin, which is a separate rate-limit client: the submission returned anonymized:true and the signed-in queue showed Demo visitor / visitor-3@example.invalid / Demonstration request rather than the submitted identity. Production was left at the seeded baseline, 73% and 33 of 49 passing."
+  },
+  "publish": {
+   "verdict": "GO_PUBLISH",
+   "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
+   "at": "2026-08-11T16:57:00+10:00",
+   "release_commit": "a624d802a7a63b1117a8dd5177877af215b72e97",
+   "evidence": "release-evidence/verdicts.json; production health, evidence consistency and the rollback path re-verified live before the verdict"
   }
  },
  "deployment": {
@@ -212,16 +219,26 @@
  },
  "publication": {
   "tag": "v1.1.0",
-  "github_release": "pending",
+  "tag_commit": "a9212ce",
+  "github_release": "https://github.com/phamid/vantage/releases/tag/v1.1.0",
   "repository_visibility": "public",
-  "licence": "MIT"
+  "licence": "MIT",
+  "verified_anonymously": true,
+  "verification": "Unauthenticated GET /repos/phamid/vantage returns 200 with visibility public and licence MIT; /releases/latest returns v1.1.0; the release page answers 200; LICENSE, README and package.json 1.1.0 are served from the default branch by raw.githubusercontent.com",
+  "release_notes": "RELEASE_NOTES.md, published verbatim as the body of the GitHub Release for v1.1.0"
  },
  "incident": null,
  "latency": {
   "implementation_route": "R2 SENIOR",
   "approval_retries": 0,
   "corrective_iterations": 4,
-  "notes": "Four corrective iterations: the security lane BLOCK, its residual BLOCK, its final REVISE, and the QA FAIL on documentation. A fifth correction was found by deployment itself, when the readiness redaction proved to hide diagnosis from the origin probe as well."
+  "notes": "Four corrective iterations: the security lane BLOCK, its residual BLOCK, its final REVISE, and the QA FAIL on documentation. A fifth correction was found by deployment itself, when the readiness redaction proved to hide diagnosis from the origin probe as well.",
+  "learning_record": "appended to the skill-local backlog as release_id vantage-1.1.0 with three near misses, three successful controls and three proposed recommendations",
+  "process_improvements": [
+   "exclude-runtime-data-from-source-artifact: derive the source-artifact exclude list from the repository ignore file so runtime data cannot enter the staged tree (proposed)",
+   "disclosure-controls-keep-a-reason-code: a redacted operational endpoint must still return a stable reason code, and the redaction must be verified from the deployed network position (proposed)",
+   "reserve-verification-budget-for-reviewers: do not spend a per-client abuse budget the independent lane will need (proposed)"
+  ]
  },
  "state_history": [
   {
@@ -300,6 +317,20 @@
    "at": "2026-08-11T17:05:00+10:00",
    "actor": "Live QA Lead",
    "reason": "PASS_LIVE after re-verifying the one check the rate limiter had blocked"
+  },
+  {
+   "from": "LIVE_QA_PASSED",
+   "to": "GO_PUBLISH",
+   "at": "2026-08-11T16:57:00+10:00",
+   "actor": "Principal Platform SRE and Release Engineer",
+   "reason": "GO_PUBLISH"
+  },
+  {
+   "from": "GO_PUBLISH",
+   "to": "PUBLISHED",
+   "at": "2026-08-11T16:58:00+10:00",
+   "actor": "release manager",
+   "reason": "Tag v1.1.0 pushed and the GitHub Release created from the committed notes"
   }
  ]
 }
