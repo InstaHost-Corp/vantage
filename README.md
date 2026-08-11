@@ -1,5 +1,9 @@
 # Vantage — Trust Management Platform
 
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-6558f5.svg)](LICENSE)
+
+**Free, open source, and live at [vantage.insta.host](https://vantage.insta.host) — no signup, no cost.**
+
 A working replica of [vanta.com](https://www.vanta.com): a compliance automation and trust
 management platform. Vantage connects to the systems a company already uses, continuously tests
 its security controls against live configuration, maps the results to compliance frameworks, and
@@ -8,19 +12,33 @@ turns them into audit evidence, questionnaire answers and a public Trust Center.
 Everything here is functional — the monitoring engine really evaluates data, remediation really
 changes state, and readiness percentages really recompute.
 
+## Try it, free
+
+Open **<https://vantage.insta.host>** and sign in with **ada@northwind.io / vantage123** (also
+`marcus@northwind.io`, `sofia@northwind.io`, `dan@northwind.io`, and `auditor@keeling-cpa.com` for
+a read-only external-auditor view). The public Trust Center is at
+[`/trust`](https://vantage.insta.host/trust) and needs no account at all.
+
+That instance is a **shared** demonstration containing entirely fictional data. Anything you change
+is visible to everyone else, and the whole workspace is restored to its seeded baseline every six
+hours. Do not put anything real into it.
+
+## Run your own
+
 ```
+git clone https://github.com/phamid/vantage.git && cd vantage
 npm run setup     # install frontend build tooling and build web/dist
 npm start         # http://localhost:4173
-npm test          # 22 tests, no network required
+npm test          # 43 tests, no network required
 ```
 
 The server has **no runtime dependencies** — it runs on Node 24+ using only
 `node:` builtins, including `node:sqlite`. `npm install` at the root installs
 nothing; only the frontend build needs packages.
 
-Sign in with **ada@northwind.io / vantage123** (also `marcus@northwind.io`, `sofia@northwind.io`,
-`dan@northwind.io`, and `auditor@keeling-cpa.com`). The public Trust Center is at `/trust` and needs
-no account.
+A self-hosted instance is private by default: no public-demo banner and **no**
+scheduled data reset. Change the seeded passwords in `server/seed.js` before
+putting one on a network.
 
 ---
 
@@ -124,6 +142,34 @@ web/
 | `PORT` | `4173` | HTTP port |
 | `VANTAGE_DB` | `data/vantage.db` | SQLite file location |
 | `VANTAGE_SCAN_MINUTES` | `60` | Continuous monitoring interval |
+| `VANTAGE_PUBLIC_DEMO` | `0` | Announce a free shared demonstration in the UI and default the reset cadence on |
+| `VANTAGE_DEMO_RESET_MINUTES` | `360` when public, else `0` | Reseed the whole tenant on this cadence. **Destructive** — `0` disables it |
+| `VANTAGE_RATE_LIMIT` | `1` | Per-client rate limiting on `/api` |
+| `VANTAGE_TRUST_PROXY` | follows `VANTAGE_PUBLIC_DEMO` | Take the client address from `CF-Connecting-IP` / `X-Forwarded-For`. Only enable behind a proxy you control |
+| `VANTAGE_HSTS` | `0` | Always send HSTS, rather than only when the request arrived over TLS |
+| `VANTAGE_MAX_PENDING_TRUST_REQUESTS` | `200` | Cap on the anonymous Trust Center request backlog |
+| `VANTAGE_SOURCE_URL` | this repository | "Source on GitHub" link shown in the UI |
+| `VANTAGE_ALLOW_DEMO_RESET` | `1` | Set to `0` to refuse tenant resets entirely |
+
+## Public access and abuse resistance
+
+Nothing sits in front of the hosted instance, so the application defends itself:
+
+* **Per-client rate limits** across five budgets — reads, writes, expensive operations (full
+  scans, remediation, questionnaire autofill, tenant reset), sign-in and anonymous contact — under
+  a global per-client ceiling. Over-budget requests get `429` with `Retry-After`.
+* **Browser security headers** on every response: a content security policy matching what the build
+  emits, `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, referrer and permissions
+  policies, cross-origin isolation, and HSTS over TLS.
+* **Bounded anonymous writes.** The Trust Center access-request form is the only table an anonymous
+  visitor can write to: fields are length-capped, the address validated, the backlog capped, and the
+  JSON body limit is 256 kB.
+* **Role separation.** Auditor accounts are read-only; tenant reset, policy approval, framework
+  enablement, settings and Trust Center configuration require an administrator.
+* **A self-healing tenant.** The shared workspace reseeds every six hours, so no visitor can leave
+  it permanently broken.
+
+Report a vulnerability privately — see [SECURITY.md](SECURITY.md).
 
 ## API sketch
 
@@ -139,6 +185,7 @@ POST   /api/vendors/:id/review              → complete a vendor security revie
 POST   /api/questionnaires/:id/autofill     → draft answers from controls and policies
 GET    /api/public/trust                    → public Trust Center payload (no auth)
 POST   /api/public/trust/request            → request a gated document (no auth)
+GET    /api/public/config                   → version, demo accounts, reset cadence (no auth)
 POST   /api/demo/reset                      → restore the seeded baseline
 ```
 
@@ -166,25 +213,42 @@ Vantage runs on the InstaHost estate at **https://vantage.insta.host**.
 | Source | `/mnt/TailsPool/vantage/releases/<commit-sha>` |
 | Data | `/mnt/TailsPool/vantage/data` (SQLite, the only writable path) |
 | Ingress | Cloudflare tunnel `instahost-nas1` → `http://192.168.100.116:30002` |
-| Identity | Cloudflare Access — Entra SSO and one-time PIN |
+| Identity | **None.** The service is deliberately open so it is free to use |
 
 There is no build step on the host and no container image to build: `web/dist`
 is committed, the server has no dependencies, and the release commit SHA is the
 immutable artifact identity.
 
-### Monitoring must point at the origin, not the public URL
+### Health and readiness
 
-Cloudflare Access fronts **every** path including `/healthz`, so a public probe
-answers `302` to the identity provider. That is the gate working, not an
-outage. Health checks run against the origin:
+Since 1.1.0 there is no identity gate, so health can be read from the public
+hostname as well as the origin:
 
 ```sh
-ssh nas1 "curl -s http://127.0.0.1:30002/healthz"   # version, release SHA, source digest
-ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # database, schema, engine, build; 503 when not ready
+curl -s https://vantage.insta.host/healthz          # version, release SHA, source digest
+curl -s https://vantage.insta.host/readyz           # database, schema, engine, build; 503 when not ready
+ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # the same, from the origin
 ```
 
 `/readyz` returns `503` if the database is unreachable, the schema is not
 seeded, the monitoring engine has never run, or `web/dist` is missing.
+
+### Publishing and un-publishing
+
+`scripts/publishctl.py` owns the edge state, in a fixed order — Access
+application → policy → tunnel ingress → DNS — so identity can never lag behind
+routing:
+
+```sh
+python3 scripts/publishctl.py status
+python3 scripts/publishctl.py apply --stage public --confirm   # remove the identity gate
+python3 scripts/publishctl.py regate                           # put it back
+```
+
+The `public` stage fails **closed**: after deleting the Access application it
+proves against the live public hostname that the deployed build reports
+`public_demo` and serves the security headers, and restores the gate
+automatically if it does not.
 
 ### Release process
 
@@ -198,12 +262,26 @@ node scripts/verify-invariants.mjs   # recomputes readiness, counters and dist p
 node --test tests/*.test.mjs         # unit + API contract tests
 ```
 
+## Contributing
+
+Issues and pull requests are welcome. Keep the two rules that shape this
+codebase: the **server takes no runtime dependencies** (only `node:` builtins),
+and `web/dist` is committed, so run `npm run build` and include the rebuilt
+bundle with any frontend change. `node --test tests/*.test.mjs` and
+`node scripts/verify-invariants.mjs` must both pass.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE). Use it, fork it, host it, take pieces of it.
+
 ## Notes
 
 This is an independent educational reimplementation of the product category. Framework requirement
 titles are paraphrased summaries of publicly published standard structures; no proprietary content,
 branding or assets are reproduced. All company, personnel and vendor data is fictional.
 
-The seeded demonstration accounts use a well-known password and are safe only
-because Cloudflare Access gates the service. Do not expose this application
-without an Access policy in front of it.
+The seeded demonstration accounts use a published password. That is deliberate
+on the hosted demonstration, whose data is fictional, shared and reset every six
+hours. It is **not** safe anywhere else: change the passwords in
+`server/seed.js`, or put your own identity gate in front, before running an
+instance that holds anything real.

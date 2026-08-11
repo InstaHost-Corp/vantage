@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Activity, Boxes, Building2, ClipboardCheck, FileText, Gauge, Globe, LayoutGrid, LogOut, Menu,
+  Activity, Boxes, Building2, ClipboardCheck, FileText, Gauge, Github, Globe, LayoutGrid, LogOut, Menu,
   MessageSquareText, Monitor, Plug, RefreshCw, ScrollText, Settings as SettingsIcon, ShieldCheck,
   TriangleAlert, Users, X,
 } from 'lucide-react';
@@ -145,6 +145,21 @@ function Topbar({ lastRun, onScan, scanning, onOpenNav }) {
   );
 }
 
+function DemoBanner({ nextResetAt, sourceUrl }) {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-b border-brand-200 bg-brand-50 px-4 py-1.5 text-center text-[11px] text-brand-800">
+      <span className="font-semibold">Free public demo.</span>
+      <span>
+        Everything you change is shared with every other visitor
+        {nextResetAt ? <> and resets {timeAgo(nextResetAt)}</> : null}.
+      </span>
+      <a href={sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium underline underline-offset-2">
+        <Github size={12} /> Source on GitHub
+      </a>
+    </div>
+  );
+}
+
 function Shell() {
   const [me, setMe] = useState(null);
   const [lastRun, setLastRun] = useState(null);
@@ -193,6 +208,7 @@ function Shell() {
       {navOpen && <div className="fixed inset-0 z-40 bg-ink-900/30 lg:hidden" onClick={() => setNavOpen(false)} />}
       <Sidebar user={me.user} company={me.company} onSignOut={signOut} open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
+        {me.public_demo && <DemoBanner nextResetAt={me.next_reset_at} sourceUrl={me.source_url} />}
         <Topbar lastRun={lastRun} onScan={runScan} scanning={scanning} onOpenNav={() => setNavOpen(true)} />
         <main key={version} className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
           <Routes>

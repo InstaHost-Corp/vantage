@@ -6,29 +6,39 @@ import { createApp, jsonBody, staticFiles } from './http.js';
 import { db, all, get, run, setting, setSetting, logActivity, DB_PATH } from './db.js';
 import { runTests, controlStatuses, frameworkReadiness, overallPosture } from './engine.js';
 import { seed, verifyPassword } from './seed.js';
+import {
+  createResetSchedule, clientIp, publicModeConfig, rateLimit, sanitizeTrustRequest, securityHeaders,
+} from './public-mode.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, '..', 'web', 'dist');
 
 export const RELEASE = {
   service: 'vantage',
-  version: process.env.APP_VERSION || '1.0.0',
+  version: process.env.APP_VERSION || '1.1.0',
   release_sha: process.env.RELEASE_SHA || 'unversioned',
   source_digest: process.env.SOURCE_DIGEST || 'unrecorded',
   node: process.version,
   started_at: new Date().toISOString(),
 };
 
+// Vantage is served publicly and free of charge, with no identity gate in
+// front of it, so these guards are the first thing an anonymous request meets.
+export const PUBLIC_MODE = publicModeConfig();
+const resetSchedule = createResetSchedule({ intervalMinutes: PUBLIC_MODE.resetMinutes });
+
 const app = createApp();
-app.use(jsonBody({ limit: 1_000_000 }));
+app.use(securityHeaders({ hsts: PUBLIC_MODE.hsts }));
+app.use(rateLimit({ trustProxy: PUBLIC_MODE.trustProxy, enabled: PUBLIC_MODE.rateLimit }));
+app.use(jsonBody({ limit: 256_000 }));
 
 seed();
 
 /* --------------------------------------------------- health and readiness */
 
-// Deliberately outside /api so the authentication guard does not gate them,
-// and reachable on the origin for monitoring (the public path sits behind
-// Cloudflare Access and answers 302).
+// Deliberately outside /api so the authentication guard does not gate them.
+// The public deployment has no identity gate in front of it, so these answer
+// on the public hostname as well as the origin.
 app.get('/healthz', (req, res) => {
   res.json({
     status: 'ok',
@@ -149,7 +159,9 @@ function loginThrottle(key) {
 
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body || {};
-  const throttleKey = String(email || '').toLowerCase().trim() || 'anonymous';
+  // Keyed on the address as well as the address book entry: a rotating email
+  // field must not hand an anonymous client an unlimited attempt budget.
+  const throttleKey = `${clientIp(req, { trustProxy: PUBLIC_MODE.trustProxy })}|${String(email || '').toLowerCase().trim() || 'anonymous'}`;
   const throttle = loginThrottle(throttleKey);
   if (throttle.blocked) {
     return res.status(429).json({ error: 'Too many sign-in attempts. Try again later.', retry_after_seconds: throttle.retry_after_seconds });
@@ -159,6 +171,9 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
   loginAttempts.delete(throttleKey);
+  // Expired rows are dead weight on a public demonstration where every visitor
+  // signs in, so clear them out on the one event that creates them.
+  run('DELETE FROM sessions WHERE expires_at < ?', new Date().toISOString());
   const token = randomUUID();
   run('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
     token, user.id, new Date(Date.now() + SESSION_DAYS * 86400000).toISOString());
@@ -172,7 +187,14 @@ app.post('/api/auth/logout', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/me', requireAuth, (req, res) => res.json({ user: req.user, company: setting('company'), release: RELEASE }));
+app.get('/api/me', requireAuth, (req, res) => res.json({
+  user: req.user,
+  company: setting('company'),
+  release: RELEASE,
+  public_demo: PUBLIC_MODE.publicDemo,
+  source_url: PUBLIC_MODE.sourceUrl,
+  next_reset_at: resetSchedule.next_reset_at,
+}));
 
 /* ------------------------------------------------------- public endpoints */
 
@@ -216,12 +238,37 @@ app.get('/api/public/trust', (req, res) => {
 });
 
 app.post('/api/public/trust/request', (req, res) => {
-  const { name, email, company, document } = req.body || {};
-  if (!name || !email || !company || !document) return res.status(400).json({ error: 'All fields are required' });
+  const { ok, value, errors } = sanitizeTrustRequest(req.body || {});
+  if (!ok) return res.status(400).json({ error: errors[0], errors });
+  // The only table an anonymous visitor can write to. Cap the backlog so it
+  // cannot be used to grow the demonstration database without limit.
+  const pending = get("SELECT COUNT(*) AS n FROM trust_requests WHERE status = 'pending'").n;
+  if (pending >= PUBLIC_MODE.maxPendingTrustRequests) {
+    return res.status(429).json({ error: 'The access-request queue is full on this shared demonstration. Try again later.' });
+  }
   run('INSERT INTO trust_requests (name, email, company, document, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    name, email, company, document, 'pending', new Date().toISOString());
-  logActivity('trust_center', company, `${name} requested access to "${document}"`);
+    value.name, value.email, value.company, value.document, 'pending', new Date().toISOString());
+  logActivity('trust_center', value.company, `${value.name} requested access to "${value.document}"`);
   res.json({ ok: true, message: 'Request received. You will receive an email once it is approved.' });
+});
+
+// Lets the interface tell a visitor what kind of environment they are in —
+// free, shared, open source and periodically reset — without an account.
+app.get('/api/public/config', (req, res) => {
+  res.json({
+    service: RELEASE.service,
+    version: RELEASE.version,
+    public_demo: PUBLIC_MODE.publicDemo,
+    source_url: PUBLIC_MODE.sourceUrl,
+    demo: {
+      shared: PUBLIC_MODE.publicDemo,
+      password: 'vantage123',
+      accounts: all('SELECT email, name, role, title FROM users ORDER BY id'),
+      auto_reset: resetSchedule.enabled,
+      reset_interval_minutes: resetSchedule.enabled ? resetSchedule.interval_minutes : null,
+      next_reset_at: resetSchedule.next_reset_at,
+    },
+  });
 });
 
 const isPublicApiPath = (path) => ['/public', '/auth'].some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
@@ -922,6 +969,7 @@ app.post('/api/demo/reset', requireAdmin, (req, res) => {
   }
   const { email, name } = req.user;
   seed({ force: true });
+  resetSchedule.markRun();
   // Seeding recreates users and clears sessions, so re-issue a token for the caller.
   const user = get('SELECT * FROM users WHERE email = ?', email);
   let token = null;
@@ -948,6 +996,23 @@ const INTERVAL_MINUTES = Number(process.env.VANTAGE_SCAN_MINUTES || 60);
 setInterval(() => {
   try { runTests({ actor: 'Vantage Agent' }); } catch (err) { console.error('scan failed', err); }
 }, INTERVAL_MINUTES * 60000).unref?.();
+
+// The public demonstration is shared and anyone may change it, so it restores
+// itself on a cadence rather than accumulating whatever visitors left behind.
+if (resetSchedule.enabled) {
+  console.log(`[vantage] shared demo data resets every ${resetSchedule.interval_minutes} minutes`);
+  setInterval(() => {
+    if (!resetSchedule.due()) return;
+    try {
+      seed({ force: true });
+      resetSchedule.markRun();
+      logActivity('system', 'Vantage', 'Restored the shared demonstration data to its initial state');
+      console.log(`[vantage] shared demo data reset; next ${resetSchedule.next_reset_at}`);
+    } catch (err) {
+      console.error('[vantage] scheduled demo reset failed:', err?.stack || err);
+    }
+  }, 60_000).unref?.();
+}
 
 // The service runs as a single bare node process under the container's
 // restart policy. Log and keep serving rather than exiting on an async fault

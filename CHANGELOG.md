@@ -3,6 +3,92 @@
 All notable changes to Vantage are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-08-11
+
+Vantage becomes a **free public tool with public source code**. The identity
+gate in front of `https://vantage.insta.host` is removed, anyone may use the
+service without an account of their own or any charge, and the repository is
+published on GitHub under the MIT licence.
+
+### What's new
+
+- **Free, open access.** The Cloudflare Access gate is gone. Visiting
+  `https://vantage.insta.host` reaches the application itself, and the seeded
+  demonstration accounts published on the sign-in page are all that is needed.
+  There is no signup, no trial and no cost.
+- **Open source under the MIT licence.** `LICENSE` is added and the repository
+  is public, so anyone can read it, fork it, self-host it or take pieces of it.
+- **`GET /api/public/config`.** An unauthenticated endpoint describing the
+  environment: version, whether it is the shared public demonstration, the
+  demonstration accounts, the reset cadence and the source URL. The sign-in
+  page and the application shell render from it.
+- **Self-healing shared demonstration.** Because everyone shares one workspace,
+  the tenant restores itself to the seeded baseline every six hours
+  (`VANTAGE_DEMO_RESET_MINUTES`). A visitor can no longer leave the
+  demonstration permanently broken for the next one.
+- **In-product honesty about what this is.** A banner in the application shell
+  and new copy on the sign-in page state that the workspace is shared, when it
+  next resets, and where the source lives.
+- **`publishctl.py apply --stage public`.** Ungating is now an executable,
+  reversible operation that **fails closed**: after removing the Access
+  application it proves against the live public hostname that the deployed
+  build reports `public_demo` and serves the security headers, and restores the
+  gate automatically if it does not. `publishctl.py regate` puts the gate back
+  in one step.
+- **`SECURITY.md`** with a private vulnerability-reporting route and an honest
+  statement of what the hosted demonstration is and is not.
+
+### Security
+
+Removing the identity gate moves the whole burden of first contact onto the
+application, so the guards it now needs were added in the same release. Each
+has a regression test proven to fail without it:
+
+- **Per-client rate limiting** on `/api`, keyed on the true client address from
+  `CF-Connecting-IP` — and only when the deployment declares the hop in front
+  trustworthy, so a client cannot forge its own rate-limit identity. Reads,
+  writes, expensive operations (full scans, remediation, questionnaire
+  autofill, tenant reset), sign-in and anonymous contact each get their own
+  budget, under a global per-client ceiling. The counter map is bounded, so
+  rotating source addresses cannot grow it without limit.
+- **Browser security headers on every response**: a content security policy
+  matching what the build actually emits, `frame-ancestors 'none'`,
+  `X-Frame-Options: DENY`, `nosniff`, a referrer policy, a permissions policy,
+  cross-origin isolation headers, and HSTS when the request arrived over TLS.
+- **Bounded anonymous writes.** The Trust Center access-request form is the
+  only table an anonymous visitor can write to: every field is now length-
+  capped and the address validated, the pending backlog is capped, and the JSON
+  body limit is reduced from 1 MB to 256 kB.
+- **Sign-in throttling keyed on address and account** rather than the account
+  alone, so rotating the email field no longer buys an unlimited attempt
+  budget. Expired sessions are deleted whenever a new one is issued.
+
+### Behaviour changes
+
+- Version reported by `/healthz` and `/readyz` is `1.1.0`.
+- `GET /api/me` additionally returns `public_demo`, `source_url` and
+  `next_reset_at`.
+- Requests exceeding a rate-limit budget receive `429` with `Retry-After`.
+- On the public deployment only, **all data is periodically destroyed and
+  reseeded**. A self-hosted instance defaults to no scheduled reset and no
+  public-demo banner; both are opt-in through `VANTAGE_PUBLIC_DEMO`.
+
+### Deployment
+
+- New environment variables: `VANTAGE_PUBLIC_DEMO`, `VANTAGE_TRUST_PROXY`,
+  `VANTAGE_RATE_LIMIT`, `VANTAGE_HSTS`, `VANTAGE_DEMO_RESET_MINUTES`,
+  `VANTAGE_MAX_PENDING_TRUST_REQUESTS`, `VANTAGE_SOURCE_URL`.
+- No schema or data migration. The application seeds itself idempotently.
+
+### Known issues and residual risks
+
+- The hosted workspace is shared and mutable by design. Vandalism between
+  scheduled resets is expected and self-heals; an administrator can also reset
+  it immediately from **Settings → Reset demo data**.
+- Rate limiting is per process and in memory. A single instance is deployed, so
+  this is exact today, but it would need shared state if the service were ever
+  scaled out.
+
 ## [1.0.0] - 2026-08-10
 
 First release. Vantage is deployed to the InstaHost estate at

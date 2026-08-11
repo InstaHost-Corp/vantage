@@ -12,6 +12,11 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const workdir = mkdtempSync(join(tmpdir(), 'vantage-api-'));
+// A few tests import server modules directly. Point the database at the
+// throwaway directory before any of them do, or the import opens the bundled
+// default path — which is read-only in the production image, where this suite
+// also runs.
+process.env.VANTAGE_DB = join(workdir, 'in-process.db');
 const PORT = 41730 + Math.floor(Math.random() * 200);
 const BASE = `http://127.0.0.1:${PORT}`;
 const SHA = 'test0000000000000000000000000000000000000';
@@ -40,6 +45,9 @@ before(async () => {
       RELEASE_SHA: SHA,
       SOURCE_DIGEST: 'sha256:test',
       VANTAGE_SCAN_MINUTES: '600',
+      // Boot the server in exactly the shape the free public deployment uses,
+      // so the public-mode guards are exercised rather than bypassed.
+      VANTAGE_PUBLIC_DEMO: '1',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -276,4 +284,70 @@ test('SEC-3: repeated failed sign-ins are throttled', async () => {
     if (res.status === 429) { sawThrottle = true; break; }
   }
   assert.ok(sawThrottle, 'brute force against one account must eventually be refused');
+});
+
+/* ------------------------------------------------- free public deployment */
+
+test('PUB-1: the public config advertises a free shared demo without an account', async () => {
+  const res = await fetch(`${BASE}/api/public/config`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.public_demo, true);
+  assert.equal(body.version, '9.9.9');
+  assert.equal(body.demo.password, 'vantage123');
+  assert.equal(body.demo.auto_reset, true);
+  assert.equal(body.demo.reset_interval_minutes, 360);
+  assert.ok(new Date(body.demo.next_reset_at).getTime() > Date.now());
+  assert.ok(body.source_url.startsWith('https://github.com/'));
+  assert.ok(body.demo.accounts.some((a) => a.email === 'ada@northwind.io' && a.role === 'admin'));
+  // The sign-in helper must never carry credential material beyond the
+  // deliberately published shared demonstration password.
+  assert.ok(!JSON.stringify(body).includes('password_hash'));
+});
+
+test('PUB-2: every response carries the browser security headers', async () => {
+  for (const path of ['/api/public/trust', '/healthz']) {
+    const res = await fetch(`${BASE}${path}`);
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff', path);
+    assert.equal(res.headers.get('x-frame-options'), 'DENY', path);
+    assert.match(res.headers.get('content-security-policy'), /frame-ancestors 'none'/, path);
+    assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin', path);
+  }
+});
+
+test('PUB-3: an anonymous burst is refused per client, and other clients are unaffected', async () => {
+  const post = (ip) => fetch(`${BASE}/api/public/trust/request`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
+    body: JSON.stringify({ name: 'Burst Tester', email: 'burst@example.com', company: 'Example', document: 'SOC 2 Type II Report' }),
+  });
+
+  let throttled = null;
+  for (let i = 0; i < 8 && !throttled; i++) {
+    const res = await post('203.0.113.77');
+    if (res.status === 429) throttled = res;
+  }
+  assert.ok(throttled, 'a flood from one address must eventually be refused');
+  assert.ok(Number(throttled.headers.get('retry-after')) > 0);
+
+  // Negative control: the limiter must distinguish clients, not simply close
+  // the endpoint once anybody has been noisy.
+  assert.equal((await post('203.0.113.78')).status, 200);
+});
+
+test('PUB-4: anonymous writes are length-bounded', async () => {
+  const res = await fetch(`${BASE}/api/public/trust/request`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.90' },
+    body: JSON.stringify({ name: 'a'.repeat(4000), email: 'jamie@example.com', company: 'Example', document: 'SOC 2 Type II Report' }),
+  });
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /characters or fewer/);
+});
+
+test('PUB-5: a signed-in visitor is told the workspace is shared and when it resets', async () => {
+  const body = await api('/api/me').then((r) => r.json());
+  assert.equal(body.public_demo, true);
+  assert.ok(new Date(body.next_reset_at).getTime() > Date.now());
+  assert.ok(body.source_url.startsWith('https://github.com/'));
 });

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
-import { post, setToken } from '../api.js';
+import { ArrowRight, Github, ShieldCheck } from 'lucide-react';
+import { api, post, setToken } from '../api.js';
 import { Button, Card } from '../ui.jsx';
 
 const HIGHLIGHTS = [
@@ -15,7 +15,16 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [config, setConfig] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let alive = true;
+    api('/public/config', { auth: false })
+      .then((c) => alive && setConfig(c))
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -32,6 +41,10 @@ export default function Login() {
     }
   };
 
+  const demo = config?.demo;
+  const publicDemo = !!config?.public_demo;
+  const sourceUrl = config?.source_url || 'https://github.com/phamid/vantage';
+
   return (
     <div className="grid min-h-full lg:grid-cols-2">
       <div className="flex items-center justify-center px-6 py-16">
@@ -41,7 +54,11 @@ export default function Login() {
             <span className="text-lg font-semibold tracking-tight">Vantage</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Sign in to your workspace</h1>
-          <p className="mt-1 text-sm text-ink-500">Automate compliance and prove trust continuously.</p>
+          <p className="mt-1 text-sm text-ink-500">
+            {publicDemo
+              ? 'A free, open-source trust management platform. Sign in with any demonstration account below — no signup, no cost.'
+              : 'Automate compliance and prove trust continuously.'}
+          </p>
 
           <form onSubmit={submit} className="mt-8 space-y-4">
             <label className="block">
@@ -59,17 +76,31 @@ export default function Login() {
           </form>
 
           <Card className="mt-6 bg-slate-50 p-3 text-xs text-ink-500">
-            <p className="font-medium text-ink-700">Demonstration environment</p>
+            <p className="font-medium text-ink-700">{publicDemo ? 'Free shared demonstration' : 'Demonstration environment'}</p>
             <p className="mt-1">
               This workspace contains fictional data. Sign in as
               <code className="mx-1 rounded bg-white px-1">ada@northwind.io</code> (admin),
               <code className="mx-1 rounded bg-white px-1">marcus@northwind.io</code> (security lead) or
               <code className="mx-1 rounded bg-white px-1">auditor@keeling-cpa.com</code> (external auditor).
             </p>
-            <p className="mt-1">The shared demonstration password is <code className="rounded bg-white px-1">vantage123</code>.</p>
+            <p className="mt-1">
+              The shared demonstration password is <code className="rounded bg-white px-1">{demo?.password || 'vantage123'}</code>.
+            </p>
+            {publicDemo && (
+              <p className="mt-1">
+                Everyone shares this workspace, so anything you change is visible to other visitors
+                {demo?.auto_reset ? ` and is restored to the seeded baseline every ${Math.round(demo.reset_interval_minutes / 60)} hours` : ''}.
+                Run it on your own machine for a private copy.
+              </p>
+            )}
           </Card>
           <p className="mt-4 text-center text-xs text-ink-500">
             Looking for our public security posture? <a href="/trust" className="font-medium text-brand-600 hover:underline">Visit the Trust Center</a>
+          </p>
+          <p className="mt-2 text-center text-xs text-ink-500">
+            <a href={sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">
+              <Github size={13} /> Free and open source on GitHub
+            </a>
           </p>
         </div>
       </div>
