@@ -140,23 +140,24 @@ not part of this release. `publishctl.py regate` remains the containment path.
 
 | Item | Value |
 |---|---|
-| Release commit | `919823ea69c4fdf303872b951a671ec04a813ab1` |
+| Release commit | `911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08` |
 | Tag | `v1.2.0` |
 | Repository | `phamid/vantage` — public, MIT licence |
 | Source artifact | release commit tree excluding `.git`, `node_modules`, `tests`, `release-evidence`, `__pycache__`, `data` |
-| Staged source digest (post-transfer, hash-sorted manifest) | `sha256:445ab0e7bcd46ef9bee32f9989474772af3f8f7fd009a32983d12a70e96514ff` — compared after transfer and byte-identical |
-| Rendered configuration digest | `sha256:ac708b52c5726d2413c366ff353603317d62765b1d34595ae18db8edd69226da` |
+| Staged source digest (post-transfer, hash-sorted manifest) | `sha256:380f86fa0eb4f5c726e82fa76c4beaec4024c88196c0b7f5afb94911f2fe8f20` — compared after transfer and byte-identical |
+| Rendered configuration digest | `sha256:d7654300b600782a9d49ed6df56b23eda4997f7c675c90cd9a49761a9b21cd32` |
 | Image (configured and active) | `node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03` |
-| Deployment job | `12660 app.update SUCCESS` — no failed job |
+| Deployment jobs | `12660 app.update SUCCESS` (first build, 919823ea), `12774 app.update SUCCESS` (released build after the live-QA finding) — no failed job |
 | Runtime identity | state `RUNNING`, 1 container; `/app` **ro** from the release directory, `/data` **rw**; port 30002 |
 | Environment added | `VANTAGE_DEMO_RESET_MINUTES=1440`, `VANTAGE_SESSION_DAYS=1` |
 | Migration result | not applicable — the application writes its own `demo_reset` marker on first boot |
 | Pre-release snapshot | `TailsPool/vantage@pre-1.2.0` |
 | Post-release snapshot | `TailsPool/vantage@post-1.2.0` |
-| Origin health | `/healthz` 200 — version 1.2.0, release_sha `919823ea69c4…` |
+| Origin health | `/healthz` 200 — version 1.2.0, release_sha `911bbfa1e75c…` |
 | Public config | `public_demo=true`, all four guards enabled, `reset_interval_minutes 1440`, next reset a day out |
 | First-boot behaviour | The existing tenant was **not** wiped, as the release engineer predicted from the source: no marker existed, the schedule anchored to now, and the first reset falls due a day after deployment. Verified live — readiness stayed at 73% with 33 of 49 passing |
 | Public edge | `/`, `/login`, `/trust`, `/healthz`, `/api/public/config` all 200 anonymously; `/api/dashboard` 401 as the in-boundary negative control |
+| Live-QA finding | The first build reached production and independent live QA returned **FAIL_LIVE**: the sign-in `<form>` lacked the password-manager ignore attributes both inputs carried, so a manager keying on the container was uncovered and the notes claimed otherwise. Fixed, re-frozen, re-staged with digests compared, and redeployed as the released build |
 | Pre-deployment QA | **PASS** — including a Playwright rendered-DOM check of the pre-filled field, the autocomplete and ignore attributes, the legacy-token purge and the sessionStorage-only token, plus a scan of the raw SQLite bytes confirming a submitted fake work address and password appear nowhere |
 | `GO_DEPLOY` | **GO_DEPLOY** with five conditions, all satisfied |
 | Live QA | **PASS_LIVE** |

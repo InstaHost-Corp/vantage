@@ -115,17 +115,6 @@
    "scope": "snapshot"
   },
   {
-   "id": "release-source-919823e",
-   "location": "/mnt/TailsPool/vantage/releases/919823ea69c4fdf303872b951a671ec04a813ab1",
-   "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/919823ea69c4fdf303872b951a671ec04a813ab1\"",
-   "temporary": false,
-   "retain": true,
-   "retention_reason": "The running release artifact for 1.2.0, bind-mounted read-only at /app.",
-   "created_for": "Immutable release source",
-   "host": "nas1.insta.host",
-   "scope": "file"
-  },
-  {
    "id": "zfs-snapshot-pre-1.2.0",
    "location": "TailsPool/vantage@pre-1.2.0",
    "removal_command": "ssh nas1 \"midclt call zfs.snapshot.delete '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.2.0\\\"}'\"",
@@ -176,6 +165,32 @@
    "removed": true,
    "absence_verified": true,
    "absence_evidence": "ls of each path returns 'No such file or directory' on both hosts; git worktree list reports only the implementation checkout"
+  },
+  {
+   "id": "release-source-911bbfa",
+   "location": "/mnt/TailsPool/vantage/releases/911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
+   "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08\"",
+   "temporary": false,
+   "retain": true,
+   "retention_reason": "The running release artifact for 1.2.0, bind-mounted read-only at /app.",
+   "created_for": "Immutable release source",
+   "host": "nas1.insta.host",
+   "scope": "file"
+  },
+  {
+   "id": "superseded-build-919823e",
+   "location": "/mnt/TailsPool/vantage/releases/919823ea69c4fdf303872b951a671ec04a813ab1",
+   "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/919823ea69c4fdf303872b951a671ec04a813ab1\"",
+   "temporary": true,
+   "expires_at": "2026-08-11T23:59:59+10:00",
+   "retain": false,
+   "retention_reason": "The first 1.2.0 build, superseded within the release after independent live QA found the sign-in form missing its password-manager ignore attributes. It is not a rollback target \u2014 1.1.0 is \u2014 so it is removed.",
+   "created_for": "Superseded intra-release build",
+   "host": "nas1.insta.host",
+   "scope": "file",
+   "removed": true,
+   "absence_verified": true,
+   "absence_evidence": "ssh nas1 'ls /mnt/TailsPool/vantage/releases/' lists only c01fbed (1.0.0), a624d802 (rollback target) and 911bbfa1 (running)"
   }
  ],
  "deletions": [
@@ -187,6 +202,16 @@
    "manifest_verifier": "ssh nas1 'ls /mnt/TailsPool/vantage/releases/'",
    "verifier_result": "Only a624d802 (rollback target) and 919823ea (running) remain",
    "reason": "Superseded staging directory.",
+   "performed": true
+  },
+  {
+   "id": "delete-superseded-build-919823e",
+   "target": "/mnt/TailsPool/vantage/releases/919823ea\u2026",
+   "surviving_copy": "The commit remains in git history; the released build 911bbfa1 supersedes it",
+   "surviving_copy_verified": true,
+   "manifest_verifier": "ssh nas1 'ls /mnt/TailsPool/vantage/releases/'",
+   "verifier_result": "Only c01fbed, a624d802 and 911bbfa1 remain; the superseded build is proven absent",
+   "reason": "Superseded within the release by the corrective build.",
    "performed": true
   }
  ],

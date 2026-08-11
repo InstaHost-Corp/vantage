@@ -1,8 +1,8 @@
 {
  "schema_version": "2.1",
  "framework_version": "2.8.0",
- "state": "DEPLOYED",
- "outcome": "DEPLOYED_NOT_PUBLISHED",
+ "state": "PUBLISHED",
+ "outcome": "RELEASED",
  "release": {
   "id": "vantage-1.2.0",
   "product": "Vantage",
@@ -40,7 +40,7 @@
   "identity": "none \u2014 the Cloudflare Access application was deleted by this release"
  },
  "code": {
-  "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+  "release_commit": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
   "evidence_commit": "pending",
   "changed_files": [
    "CHANGELOG.md",
@@ -48,20 +48,21 @@
    "RELEASE_NOTES.md",
    "SECURITY.md",
    "package.json",
-   "web/package.json",
+   "release-evidence/deployment-profile.json",
+   "release-evidence/pre-freeze-contract-matrix.json",
+   "release-evidence/verdicts.json",
    "server/index.js",
    "server/public-mode.js",
    "tests/api.test.mjs",
    "tests/public-mode.test.mjs",
    "tests/restart.test.mjs",
-   "web/src/api.js",
-   "web/src/pages/Login.jsx",
-   "web/dist/index.html",
    "web/dist/assets/index-CR7-t9DJ.css",
+   "web/dist/assets/index-DHgKdj4w.js",
    "web/dist/assets/index-hr5O802X.js",
-   "release-evidence/deployment-profile.json",
-   "release-evidence/pre-freeze-contract-matrix.json",
-   "release-evidence/verdicts.json"
+   "web/dist/index.html",
+   "web/package.json",
+   "web/src/api.js",
+   "web/src/pages/Login.jsx"
   ],
   "source_artifact": {
    "definition": "The release commit tree excluding .git, node_modules, tests, release-evidence, __pycache__ and data",
@@ -73,7 +74,7 @@
     "__pycache__",
     "data"
    ],
-   "digest": "sha256:445ab0e7bcd46ef9bee32f9989474772af3f8f7fd009a32983d12a70e96514ff",
+   "digest": "sha256:380f86fa0eb4f5c726e82fa76c4beaec4024c88196c0b7f5afb94911f2fe8f20",
    "digest_method": "per-file SHA-256 manifest sorted by hash column, hashed again; compared after transfer and byte-identical"
   }
  },
@@ -82,44 +83,59 @@
    "verdict": "APPROVE",
    "reviewer": "Senior Security and Privacy Lead (independent agent)",
    "at": "2026-08-11T17:20:00+10:00",
-   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "release_commit": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
    "evidence": "release-evidence/verdicts.json; REVISE twice \u2014 five findings, all closed"
   },
   "qa": {
    "verdict": "PASS",
    "reviewer": "Senior QA and Test Lead (independent agent)",
    "at": "2026-08-11T17:15:00+10:00",
-   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "release_commit": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
    "evidence": "release-evidence/verdicts.json; included a Playwright rendered-DOM check and a raw SQLite byte scan"
   },
   "deploy": {
    "verdict": "GO_DEPLOY",
    "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
    "at": "2026-08-11T17:30:00+10:00",
-   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "release_commit": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
    "evidence": "release-evidence/verdicts.json; the first-boot reseed risk was traced through the source and ruled out before deployment"
   },
   "engineering": {
    "verdict": "APPROVE",
    "reviewer": "Senior Security and Privacy Lead acting as the senior review lane (independent agent)",
    "at": "2026-08-11T17:24:00+10:00",
-   "release_commit": "919823ea69c4fdf303872b951a671ec04a813ab1",
+   "release_commit": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
    "evidence": "release-evidence/verdicts.json. The security lane carried the senior review for this release because every change in it is a security or privacy change; it returned REVISE twice over five findings before approving."
+  },
+  "live_qa": {
+   "verdict": "PASS_LIVE",
+   "reviewer": "Live QA Lead (independent agent)",
+   "at": "2026-08-11T18:25:00+10:00",
+   "release_commit": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
+   "evidence": "release-evidence/verdicts.json; FAIL_LIVE on the first build, PASS_LIVE after the corrective redeployment"
+  },
+  "publish": {
+   "verdict": "GO_PUBLISH",
+   "reviewer": "Principal Platform SRE and Release Engineer (independent agent)",
+   "at": "2026-08-11T18:35:00+10:00",
+   "release_commit": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
+   "evidence": "release-evidence/verdicts.json; NO_GO_PUBLISH first because the evidence still named the superseded build, GO_PUBLISH after it was realigned"
   }
  },
  "deployment": {
   "started_at": "2026-08-11T17:35:00+10:00",
-  "completed_at": "2026-08-11T17:39:00+10:00",
+  "completed_at": "2026-08-11T18:18:00+10:00",
   "job_ids": [
-   "12660 app.update SUCCESS"
+   "12660 app.update SUCCESS (first build 919823ea)",
+   "12774 app.update SUCCESS (released build)"
   ],
   "migration_result": "not applicable \u2014 no schema change. The application writes its own demo_reset marker on first boot; with no marker present the schedule anchors to deployment time, so the existing tenant was not reseeded, which was predicted from the source before deployment and confirmed live",
   "stability_policy": "SHORT",
   "stability_result": "Container running from a single start with no restarts through live verification"
  },
  "runtime": {
-  "configured_identity": "compose image node:24-slim@sha256:3638d9a6\u2026; /app ro from releases/919823ea69c4fdf303872b951a671ec04a813ab1; /data rw; APP_VERSION=1.2.0; VANTAGE_DEMO_RESET_MINUTES=1440; VANTAGE_SESSION_DAYS=1; rendered compose digest sha256:ac708b52c5726d24\u2026",
-  "active_identity": "app.get_instance reports RUNNING with 1 container on the pinned digest, /app ro from the 919823ea69c4 release directory and /data rw; /healthz reports version 1.2.0 and that release_sha",
+  "configured_identity": "compose image node:24-slim@sha256:3638d9a6\u2026; /app ro from releases/911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08; /data rw; APP_VERSION=1.2.0; VANTAGE_DEMO_RESET_MINUTES=1440; VANTAGE_SESSION_DAYS=1; rendered compose digest sha256:ac708b52c5726d24\u2026",
+  "active_identity": "app.get_instance reports RUNNING with 1 container on the pinned digest, /app ro from the 911bbfa1e75c release directory and /data rw; /healthz reports version 1.2.0 and that release_sha",
   "health": "origin and public /healthz 200 at 1.2.0",
   "readiness": "origin /readyz 200 ready=true with a reason code per component",
   "logs": "No errors; the startup banner reports the daily reset cadence."
@@ -150,7 +166,7 @@
   "secret_artifact_sweep_evidence": "Independent QA scanned the raw SQLite bytes and the server log after submitting a realistic fake work address and password at sign-in: neither appears. The throttle keys on an HMAC under a process-random key, so nothing a visitor typed is retained even in memory.",
   "functional_smoke_evidence": "Production browser journey through the loopback forward: real form sign-in, dashboard, monitoring, remediation flipped a failing test to passing and the dashboard passing count rose 33->34, Trust Center rendered with no undefined/NaN, auditor read 200 / write 403, mobile horizontal overflow 0px, zero console errors. Tenant then reset to the documented baseline of 33/49.",
   "pre_deploy_summary_evidence": "30/30 tests pass locally and inside the pinned image on linux/amd64 with /app read-only; 5/5 invariants hold including frontend build parity against the commit; 23 client routes render with zero console errors; responsive verified at 390/768/1440.",
-  "assigned_user_journey_evidence": "Exercised through the public hostname: sign-in with the published demonstration admin, dashboard at 73% and 33 of 49 passing, the tenant intact after the upgrade, and the auditor and anonymous negative controls unchanged.",
+  "assigned_user_journey_evidence": "Exercised through the public hostname: sign-in with the published demonstration admin, dashboard at 73% and 33 of 49 passing, the tenant intact after the upgrade, and the auditor and anonymous negative controls unchanged. Re-verified after the corrective redeployment: the form and both inputs carry every required attribute in the rendered DOM, a stale localStorage token is purged on load, and the post-login token exists only in sessionStorage.",
   "public_edge_verification_evidence": "edgectl PASS. Every public path answers 200 anonymously; /api/dashboard answers 401 as the in-boundary negative control; both content-hashed assets are served immutable under their literal published hrefs; DNS converged across four resolvers; the wildcard certificate covers the name at one-label depth. The strongest negative control is the same hostname minutes earlier, when /api/public/config returned the Cloudflare Access sign-in page instead of JSON.",
   "cleanup_manifest_evidence": "cleanupctl PASS at pre-deploy and at post-release, with proven absence for every temporary object"
  },
@@ -200,14 +216,20 @@
   "tag": "v1.2.0",
   "github_release": "pending",
   "repository_visibility": "public",
-  "licence": "MIT"
+  "licence": "MIT",
+  "release_notes": "RELEASE_NOTES.md, published verbatim as the body of the GitHub Release for v1.2.0"
  },
  "incident": null,
  "latency": {
   "implementation_route": "R2 SENIOR",
   "approval_retries": 0,
-  "corrective_iterations": 2,
-  "notes": "Two corrective iterations, both from the security lane: the first round of three findings and a second round of two."
+  "corrective_iterations": 3,
+  "notes": "Three corrective iterations: two rounds of security findings before deployment, and one after it \u2014 independent live QA returned FAIL_LIVE on the sign-in form missing the password-manager ignore attributes its inputs carried, which forced a second build and redeployment before PASS_LIVE.",
+  "learning_record": "appended to the skill-local backlog as release_id vantage-1.2.0",
+  "process_improvements": [
+   "verify-a-claim-in-the-rendered-dom: an attribute claimed on a container must be asserted on that element, not inferred from its children (proposed)",
+   "realign-evidence-after-any-intra-release-rebuild: a corrective build makes every recorded commit, digest and job stale at once (proposed)"
+  ]
  },
  "state_history": [
   {
@@ -279,6 +301,27 @@
    "at": "2026-08-11T17:39:00+10:00",
    "actor": "release manager",
    "reason": "1.2.0 live and verified at the origin and the public edge"
+  },
+  {
+   "from": "DEPLOYED",
+   "to": "LIVE_QA_PASSED",
+   "at": "2026-08-11T18:25:00+10:00",
+   "actor": "Live QA Lead",
+   "reason": "PASS_LIVE after the corrective redeployment"
+  },
+  {
+   "from": "LIVE_QA_PASSED",
+   "to": "GO_PUBLISH",
+   "at": "2026-08-11T18:35:00+10:00",
+   "actor": "Principal Platform SRE and Release Engineer",
+   "reason": "GO_PUBLISH once the evidence named the deployed commit"
+  },
+  {
+   "from": "GO_PUBLISH",
+   "to": "PUBLISHED",
+   "at": "2026-08-11T18:36:00+10:00",
+   "actor": "release manager",
+   "reason": "Tag v1.2.0 and GitHub Release"
   }
  ]
 }

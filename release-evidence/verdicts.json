@@ -78,5 +78,20 @@
     "lane": "independent_qa",
     "reviewer": "Senior QA and Test Lead (independent agent) - 1.2.0",
     "verdict": "PASS"
+  },
+  {
+    "lane": "release_deploy",
+    "reviewer": "Principal Platform SRE and Release Engineer (independent agent) - 1.2.0",
+    "verdict": "GO_DEPLOY"
+  },
+  {
+    "lane": "live_qa",
+    "reviewer": "Live QA Lead (independent agent) - 1.2.0",
+    "verdict": "PASS_LIVE"
+  },
+  {
+    "lane": "release_publish",
+    "reviewer": "Principal Platform SRE and Release Engineer (independent agent) - 1.2.0",
+    "verdict": "GO_PUBLISH"
   }
 ]
