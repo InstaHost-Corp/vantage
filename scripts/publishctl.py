@@ -8,7 +8,8 @@ expose the origin. Rollback reverses that order.
     python3 scripts/publishctl.py status
     python3 scripts/publishctl.py apply --stage access
     python3 scripts/publishctl.py apply --stage network
-    python3 scripts/publishctl.py apply --stage public --confirm   # free tool
+    python3 scripts/publishctl.py apply --stage public --confirm \
+            --expect-version 1.1.0 --expect-sha <40-char release commit>
     python3 scripts/publishctl.py regate                           # restore gate
     python3 scripts/publishctl.py rollback --confirm
 
@@ -27,12 +28,20 @@ Keychain and is never printed.
 import argparse
 import json
 import os
+import re
 import ssl
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
+
+class PublishError(RuntimeError):
+    """A recoverable failure. An ordinary exception rather than SystemExit, so
+    the gate-restoration retry loop can catch it: a helper that aborts the
+    process on its first failure would leave the service public with no second
+    attempt. main() turns an uncaught one into a non-zero exit."""
+
 
 ACCOUNT = "ab479cdd65b082569c7aafaae35e971d"
 TUNNEL = "40cd9ce8-5c37-4b72-afe4-698c57cd8b65"
@@ -68,7 +77,7 @@ def credential():
     out = subprocess.run(["security", "find-generic-password", "-s", "Cloudflare API Token", "-w"],
                          capture_output=True, text=True, check=False).stdout.strip()
     if not out:
-        raise SystemExit("no Cloudflare credential available")
+        raise PublishError("no Cloudflare credential available")
     return out
 
 
@@ -91,7 +100,7 @@ def zone_id(token):
     _, d = call(f"/zones?name={ZONE_NAME}", token=token)
     result = d.get("result") or []
     if not result:
-        raise SystemExit(f"zone {ZONE_NAME} not found")
+        raise PublishError(f"zone {ZONE_NAME} not found")
     return result[0]["id"]
 
 
@@ -154,7 +163,7 @@ def create_access_app(token):
             "enable_binding_cookie": False,
         }, token=token)
         if not d.get("success"):
-            raise SystemExit(f"access app create failed: {json.dumps(d.get('errors'))[:300]}")
+            raise PublishError(f"access app create failed: {json.dumps(d.get('errors'))[:300]}")
         app = d["result"]
         print(f"created Access application {app['id'][:8]}... for {HOSTNAME}")
     else:
@@ -170,11 +179,11 @@ def create_access_app(token):
             "include": intended_include(),
         }, token=token)
         if not d.get("success"):
-            raise SystemExit(f"access policy create failed: {json.dumps(d.get('errors'))[:300]}")
+            raise PublishError(f"access policy create failed: {json.dumps(d.get('errors'))[:300]}")
         print(f"created Access policy admitting {', '.join(ALLOWED_EMAIL_DOMAINS)}")
 
     if not policy_matches(live_policy(token, app["id"])):
-        raise SystemExit("policy readback does not match intent; refusing to proceed")
+        raise PublishError("policy readback does not match intent; refusing to proceed")
     print("verified: live policy matches intent")
     return app
 
@@ -228,6 +237,8 @@ def public_guards_live(expect_version=None, expect_sha=None):
 
     if expect_version and cfg.get("version") != expect_version:
         return False, f"deployed version {cfg.get('version')!r} is not the expected {expect_version!r}"
+    if str(cfg.get("release_sha") or "unversioned") in ("", "unversioned", "unrecorded"):
+        return False, "the deployed build reports no release commit"
     if expect_sha and cfg.get("release_sha") != expect_sha:
         return False, f"deployed release_sha {str(cfg.get('release_sha'))[:12]!r} is not the expected {expect_sha[:12]!r}"
 
@@ -278,6 +289,8 @@ def origin_guards_live(expect_version=None, expect_sha=None):
         return False, f"origin build has guards disabled: {', '.join(missing)}"
     if expect_version and cfg.get("version") != expect_version:
         return False, f"origin version {cfg.get('version')!r} is not the expected {expect_version!r}"
+    if str(cfg.get("release_sha") or "unversioned") in ("", "unversioned", "unrecorded"):
+        return False, "the origin build reports no release commit"
     if expect_sha and cfg.get("release_sha") != expect_sha:
         return False, f"origin release_sha {str(cfg.get('release_sha'))[:12]!r} is not the expected {expect_sha[:12]!r}"
     return True, (f"origin reports public_demo=true version={cfg.get('version')} "
@@ -301,8 +314,11 @@ def restore_gate_or_die(token, reason):
             if app and policy_matches(live_policy(token, app["id"])):
                 print(f"gate restored and read back on attempt {attempt}", file=sys.stderr)
                 return True
-        except Exception as e:  # noqa: BLE001 - keep retrying through any failure
-            print(f"restore attempt {attempt} failed: {str(e)[:200]}", file=sys.stderr)
+        except BaseException as e:  # noqa: BLE001 - including SystemExit and
+            # KeyboardInterrupt: nothing may stop this loop short of exhausting
+            # its attempts, or the service is left public with no gate and no
+            # operator warning.
+            print(f"restore attempt {attempt} failed: {type(e).__name__}: {str(e)[:200]}", file=sys.stderr)
         time.sleep(min(30, 3 * attempt))
     print("CRITICAL: could not restore the Access application. The service is "
           "PUBLIC and unverified. Restore it by hand immediately, or remove the "
@@ -340,6 +356,13 @@ def cmd_apply(token, stage, confirm=False, expect_version=None, expect_sha=None)
         # self-reverting.
         if not confirm:
             raise SystemExit("refusing: --stage public requires --confirm")
+        # Identity is not optional. Ungating an unintended build is exactly the
+        # failure this stage exists to prevent, so the expected version and
+        # release commit must be stated and must be real.
+        if not expect_version:
+            raise SystemExit("refusing: --stage public requires --expect-version")
+        if not expect_sha or not re.fullmatch(r"[0-9a-f]{40}", str(expect_sha)):
+            raise SystemExit("refusing: --stage public requires --expect-sha as a full 40-character commit sha")
         _, ingress = ingress_rules(token)
         if not any(i.get("hostname") == HOSTNAME for i in ingress):
             raise SystemExit(f"refusing: no tunnel ingress rule for {HOSTNAME}")
@@ -502,7 +525,10 @@ def main():
     rollback_parser.add_argument("--confirm", action="store_true")
     args = parser.parse_args()
 
-    token = credential()
+    try:
+        token = credential()
+    except PublishError as e:
+        raise SystemExit(str(e))
     if args.command == "status":
         return cmd_status(token)
     if args.command == "apply":
@@ -516,4 +542,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except PublishError as e:
+        raise SystemExit(str(e))

@@ -277,6 +277,15 @@ test('SEC-4: the public trust payload does not disclose which controls are faili
   for (const code of [...failing, ...noTests]) {
     assert.equal(publicByCode.get(code), 'in_progress', `control ${code} is publicly distinguishable`);
   }
+  // The aggregate must not disclose more than the per-control publication: it
+  // counts controls, so its complement is the same merged bucket rather than a
+  // test-level failing count a reader can subtract out.
+  const publiclyVerified = [...publicByCode.values()].filter((s) => s === 'verified').length;
+  assert.equal(body.posture.controls_monitored, publicByCode.size);
+  assert.equal(body.posture.controls_verified, publiclyVerified);
+  const authedFailingTests = (await api('/api/dashboard').then((r) => r.json())).posture.tests_failing;
+  assert.notEqual(body.posture.controls_monitored - body.posture.controls_verified, authedFailingTests,
+    'the published complement must not equal the live failing-test count');
   // The aggregate must be coarsened too, or the per-control coarsening is defeated.
   assert.deepEqual(Object.keys(body.posture).sort(), ['controls_monitored', 'controls_verified', 'coverage_percent']);
   const rawPosture = JSON.stringify(body.posture);
@@ -403,5 +412,27 @@ test('PUB-8: the public config reports the guard state the ungate tooling verifi
   assert.equal(body.release_sha, SHA);
   for (const guard of ['rate_limit', 'security_headers', 'anonymous_writes_anonymized', 'auto_reset']) {
     assert.equal(body.guards[guard], true, `guard ${guard} not reported`);
+  }
+});
+
+test('PUB-9: the document field cannot smuggle an identity into the shared queue', async () => {
+  const res = await fetch(`${BASE}/api/public/trust/request`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.140' },
+    body: JSON.stringify({
+      name: 'Anon', email: 'anon@example.com', company: 'Anon Ltd',
+      document: 'Jamie Realperson jamie@realcompany.example',
+    }),
+  });
+  // Free text in the document field is refused outright: it is resolved
+  // against the published catalogue rather than stored as given.
+  assert.equal(res.status, 400);
+  assert.equal((await res.json()).error, 'Unknown document');
+
+  const queue = JSON.stringify(await api('/api/trust').then((r) => r.json()));
+  const activity = JSON.stringify(await api('/api/activity').then((r) => r.json()));
+  for (const personal of ['Jamie Realperson', 'jamie@realcompany.example']) {
+    assert.ok(!queue.includes(personal), `identity reached the queue through the document field: ${personal}`);
+    assert.ok(!activity.includes(personal), `identity reached the activity feed through the document field: ${personal}`);
   }
 });

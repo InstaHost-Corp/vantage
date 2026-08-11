@@ -167,8 +167,9 @@ Nothing sits in front of the hosted instance, so the application defends itself:
   JSON body limit is 256 kB.
 * **No visitor identity is stored.** Anyone can sign in to the shared workspace and read the
   access-request queue, so on the public demonstration the name, email and company submitted to that
-  form are discarded and an anonymous demonstration request is recorded instead. A self-hosted
-  instance keeps the requester it was given.
+  form are discarded and an anonymous demonstration request is recorded instead. The requested
+  document is resolved against the published catalogue rather than stored as typed, so no free-text
+  field survives. A self-hosted instance keeps the requester it was given.
 * **A public Trust Center that discloses only coverage.** Control status is published as verified or
   not yet verified, so a failing control is indistinguishable from an untested one.
 * **Role separation.** Auditor accounts are read-only; tenant reset, policy approval, framework
@@ -269,8 +270,9 @@ matrix (live dependency probes with negative controls, bounded-resource
 preflight and executable invariants).
 
 ```sh
-node scripts/verify-invariants.mjs   # recomputes readiness, counters and dist parity
-node --test tests/*.test.mjs         # unit + API contract tests
+node scripts/verify-invariants.mjs                    # readiness, counters and dist parity
+node --test tests/*.test.mjs                          # unit + API contract tests
+python3 -m unittest discover -s tests -p 'test_*.py'  # edge-publication tool
 ```
 
 ## Contributing

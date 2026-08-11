@@ -214,16 +214,22 @@ export function sanitizeTrustRequest(body = {}, limits = FIELD_LIMITS) {
  * otherwise collect a real visitor's name, address and employer and hand them
  * to every other visitor, since anyone can sign in and read the queue. The
  * workflow still has to work — approving a request is part of what the product
- * demonstrates — so the submission is accepted and the identifying fields are
- * replaced with a synthetic requester before anything is stored.
+ * demonstrates — so the submission is accepted and every free-text field is
+ * replaced before anything is stored.
+ *
+ * `document` is replaced too, not merely echoed: it is caller-controlled text
+ * like the rest, so a direct API call could otherwise smuggle an identity into
+ * the queue and the activity feed through it. The caller's document is resolved
+ * against the published catalogue and the canonical name stored instead.
  */
-export function anonymizeTrustRequest(value, { publicDemo = false, counter = 0 } = {}) {
-  if (!publicDemo) return { ...value, anonymized: false };
+export function anonymizeTrustRequest(value, { publicDemo = false, counter = 0, canonicalDocument = null } = {}) {
+  const document = canonicalDocument || value.document;
+  if (!publicDemo) return { ...value, document, anonymized: false };
   return {
     name: 'Demo visitor',
     email: `visitor-${counter}@example.invalid`,
     company: 'Demonstration request',
-    document: value.document,
+    document,
     anonymized: true,
   };
 }

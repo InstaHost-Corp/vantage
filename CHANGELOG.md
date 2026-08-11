@@ -39,8 +39,12 @@ published on GitHub under the MIT licence.
   then re-proves the same claims through the public hostname, including that
   `/api/dashboard` still answers 401 anonymously, and any failure, exception or
   interrupt triggers a retrying, read-back-confirmed restoration of the gate.
-  `publishctl.py regate` puts the gate back in one step, and `rollback` now
-  verifies each of its own mutations instead of reporting success blindly.
+  The expected version and release commit are **required**, not optional, and
+  a build reporting no release commit is refused. `publishctl.py regate` puts
+  the gate back in one step, and `rollback` now verifies each of its own
+  mutations instead of reporting success blindly. `tests/test_publishctl.py`
+  covers the restoration path against API rejection, transport failure,
+  interruption and a disagreeing readback.
 - **`SECURITY.md`** with a private vulnerability-reporting route and an honest
   statement of what the hosted demonstration is and is not.
 
@@ -73,13 +77,17 @@ has a regression test proven to fail without it:
   given — and anyone can sign in to the shared workspace and read that queue.
   On the public deployment the submission is now accepted, the identifying
   fields discarded, and an anonymous demonstration request recorded instead.
-  The form says so before you type. A self-hosted instance is a real workflow
-  and keeps the requester it was given.
+  The requested document is resolved against the published catalogue rather
+  than stored as typed, so the last free-text field cannot smuggle an identity
+  into the queue either. The form says so before you type. A self-hosted
+  instance is a real workflow and keeps the requester it was given.
 - **The public Trust Center no longer lets a reader derive what is failing.**
   Control status is published as *verified* or *not yet verified* only, so a
   failing control is indistinguishable from one with no automated test behind
   it; previously the third state made the failing set recoverable by
-  subtraction.
+  subtraction. The published aggregate now counts controls rather than tests,
+  so its complement is that same merged bucket rather than the live failing
+  count.
 - **Readiness detail is no longer public.** `/readyz` is now reachable without
   an identity gate, so database paths, driver error text and row counts are
   served only to origin monitoring on loopback (or with

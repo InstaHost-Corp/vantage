@@ -225,16 +225,18 @@ app.get('/api/public/trust', (req, res) => {
     code: c.code, name: c.name, category: c.category, description: c.description,
     status: publicStatus(statuses.get(c.id)?.status || 'no_tests'),
   }));
-  const raw = overallPosture();
-  // Publish coverage, never a live count of what is currently failing. The
-  // per-control status is already coarsened above; the aggregate must match.
-  const posture = {
-    controls_monitored: raw.tests_total,
-    controls_verified: raw.tests_passing,
-    coverage_percent: raw.tests_total ? Math.round((raw.tests_passing / raw.tests_total) * 100) : 0,
-  };
   const grouped = {};
   for (const c of controls) (grouped[c.category] ||= []).push(c);
+  // The aggregate must not disclose more than the per-control publication
+  // above. Counting controls — not tests — makes the complement of "verified"
+  // exactly the merged failing-and-untested bucket the page already shows,
+  // rather than a number a reader can subtract to recover the failing count.
+  const verified = controls.filter((c) => c.status === 'verified').length;
+  const posture = {
+    controls_monitored: controls.length,
+    controls_verified: verified,
+    coverage_percent: controls.length ? Math.round((verified / controls.length) * 100) : 0,
+  };
   res.json({
     company, trust, frameworks,
     control_groups: Object.entries(grouped).map(([category, items]) => ({ category, items })),
@@ -248,6 +250,11 @@ app.get('/api/public/trust', (req, res) => {
 app.post('/api/public/trust/request', (req, res) => {
   const { ok, value, errors } = sanitizeTrustRequest(req.body || {});
   if (!ok) return res.status(400).json({ error: errors[0], errors });
+  // Resolve the requested document against the published catalogue. Storing
+  // the caller's own text would leave a free-text field in a queue that every
+  // visitor can read, which is exactly what anonymising the rest prevents.
+  const document = get('SELECT name FROM trust_documents WHERE name = ?', value.document);
+  if (!document) return res.status(400).json({ error: 'Unknown document' });
   // The only table an anonymous visitor can write to. Cap the backlog so it
   // cannot be used to grow the demonstration database without limit.
   const pending = get("SELECT COUNT(*) AS n FROM trust_requests WHERE status = 'pending'").n;
@@ -259,6 +266,7 @@ app.post('/api/public/trust/request', (req, res) => {
   const stored = anonymizeTrustRequest(value, {
     publicDemo: PUBLIC_MODE.publicDemo,
     counter: get('SELECT COUNT(*) AS n FROM trust_requests').n + 1,
+    canonicalDocument: document.name,
   });
   run('INSERT INTO trust_requests (name, email, company, document, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
     stored.name, stored.email, stored.company, stored.document, 'pending', new Date().toISOString());

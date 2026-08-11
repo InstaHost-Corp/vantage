@@ -38,6 +38,7 @@
   ],
   "validate": [
    "node --test tests/*.test.mjs",
+   "python3 -m unittest discover -s tests -p 'test_*.py'",
    "node scripts/verify-invariants.mjs",
    "npm --prefix web run build",
    "docker run --rm --platform linux/amd64 -v \"$PWD\":/app:ro -w /app node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 node --test tests/http.test.mjs tests/api.test.mjs tests/public-mode.test.mjs"
@@ -54,7 +55,7 @@
   "deploy": [
    "rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' --exclude 'release-evidence' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/",
    "ssh nas1 \"midclt call -j app.update <payload pinning the new release directory and the 1.1.0 environment>\"",
-   "python3 scripts/publishctl.py apply --stage public --confirm --expect-version 1.1.0 --expect-sha <sha>"
+   "python3 scripts/publishctl.py apply --stage public --confirm --expect-version 1.1.0 --expect-sha <40-char sha>"
   ],
   "health": [
    "ssh nas1 'curl -s http://127.0.0.1:30002/healthz'"
