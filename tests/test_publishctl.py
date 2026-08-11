@@ -171,6 +171,48 @@ class UngateStageTests(unittest.TestCase):
         self.assertIn("ungate reverted", str(caught.exception))
         self.assertEqual(len(restored), 1, "the gate must be restored exactly once")
 
+    def test_a_failed_restoration_is_reported_as_still_public(self):
+        """The operator must never be told "reverted" when the gate is in fact
+        still gone: that is the difference between an incident and a quiet
+        outage nobody investigates."""
+        patches = self._edge_present() + [
+            mock.patch.object(publishctl, "origin_guards_live", return_value=(True, "origin ok")),
+            mock.patch.object(publishctl, "find_app", return_value={"id": "app-id"}),
+            mock.patch.object(publishctl, "call", return_value=(200, {"success": True})),
+            mock.patch.object(publishctl, "public_guards_live", return_value=(False, "missing security header")),
+            mock.patch.object(publishctl, "restore_gate_or_die", return_value=False),
+            mock.patch.object(publishctl.time, "sleep"),
+        ]
+        for p in patches:
+            p.start()
+        self.addCleanup(lambda: [p.stop() for p in patches])
+        err = io.StringIO()
+        with redirect_stderr(err), self.assertRaises(SystemExit) as caught:
+            publishctl.cmd_apply("token", "public", confirm=True,
+                                 expect_version="1.1.0", expect_sha="a" * 40)
+        message = str(caught.exception)
+        self.assertIn("NOT REVERTED", message)
+        self.assertIn("PUBLIC and unverified", message)
+        self.assertNotIn("ungate reverted", message)
+
+    def test_a_failed_restoration_after_an_interrupt_is_reported(self):
+        patches = self._edge_present() + [
+            mock.patch.object(publishctl, "origin_guards_live", return_value=(True, "origin ok")),
+            mock.patch.object(publishctl, "find_app", return_value={"id": "app-id"}),
+            mock.patch.object(publishctl, "call", return_value=(200, {"success": True})),
+            mock.patch.object(publishctl, "public_guards_live", side_effect=KeyboardInterrupt()),
+            mock.patch.object(publishctl, "restore_gate_or_die", return_value=False),
+            mock.patch.object(publishctl.time, "sleep"),
+        ]
+        for p in patches:
+            p.start()
+        self.addCleanup(lambda: [p.stop() for p in patches])
+        err = io.StringIO()
+        with redirect_stderr(err), self.assertRaises(SystemExit) as caught:
+            publishctl.cmd_apply("token", "public", confirm=True,
+                                 expect_version="1.1.0", expect_sha="a" * 40)
+        self.assertIn("ABORTED AND UNPROTECTED", str(caught.exception))
+
     def test_an_interrupt_during_verification_restores_the_gate(self):
         restored = []
         patches = self._edge_present() + [

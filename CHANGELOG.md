@@ -42,9 +42,11 @@ published on GitHub under the MIT licence.
   The expected version and release commit are **required**, not optional, and
   a build reporting no release commit is refused. `publishctl.py regate` puts
   the gate back in one step, and `rollback` now verifies each of its own
-  mutations instead of reporting success blindly. `tests/test_publishctl.py`
-  covers the restoration path against API rejection, transport failure,
-  interruption and a disagreeing readback.
+  mutations instead of reporting success blindly, and a restoration that
+  exhausts its attempts is reported as *still public* rather than as a clean
+  revert. `tests/test_publishctl.py` covers the restoration path against API
+  rejection, transport failure, interruption, a disagreeing readback and a
+  restoration that never succeeds.
 - **`SECURITY.md`** with a private vulnerability-reporting route and an honest
   statement of what the hosted demonstration is and is not.
 

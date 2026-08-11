@@ -387,7 +387,9 @@ def cmd_apply(token, stage, confirm=False, expect_version=None, expect_sha=None)
             print(f"deleted Access application {app['id'][:8]}... — {HOSTNAME} is now open")
 
         # Edge state takes a moment to propagate; poll rather than guess. Any
-        # failure — including an exception or an interrupt — restores the gate.
+        # failure — including an exception or an interrupt — restores the gate,
+        # and whether that restoration actually succeeded decides what the
+        # operator is told. "Reverted" is a claim, not a hope.
         ok, detail = False, "not probed"
         try:
             for _ in range(20):
@@ -396,12 +398,20 @@ def cmd_apply(token, stage, confirm=False, expect_version=None, expect_sha=None)
                     break
                 time.sleep(6)
         except BaseException as e:  # noqa: BLE001 - including KeyboardInterrupt
-            restore_gate_or_die(token, f"verification aborted: {str(e)[:200]}")
+            if not restore_gate_or_die(token, f"verification aborted: {str(e)[:200]}"):
+                raise SystemExit(
+                    f"ABORTED AND UNPROTECTED: verification was interrupted ({type(e).__name__}) and the "
+                    f"Access application could NOT be restored. {HOSTNAME} is PUBLIC and unverified — "
+                    f"restore the gate by hand or remove its tunnel ingress rule now.") from e
             raise
 
         if not ok:
             print(f"VERIFICATION FAILED: {detail}", file=sys.stderr)
-            restore_gate_or_die(token, "public verification failed")
+            if not restore_gate_or_die(token, "public verification failed"):
+                raise SystemExit(
+                    f"NOT REVERTED: verification failed ({detail}) and the Access application could NOT "
+                    f"be restored. {HOSTNAME} is PUBLIC and unverified — restore the gate by hand or "
+                    f"remove its tunnel ingress rule now.")
             raise SystemExit("ungate reverted: the deployed build did not prove its guards live")
 
         print(f"verified live: {detail}")
