@@ -32,8 +32,20 @@ export const PUBLIC_MODE = publicModeConfig();
 // let a restart postpone the reset for another whole interval, so the service
 // would quietly stop keeping the promise it makes on its own sign-in page.
 const RESET_MARKER = 'demo_reset';
+// A marker is only useful if it is believable. A corrupt value left in place
+// would be truthy, would never be repaired, and every restart would silently
+// re-anchor the daily clock — which is the exact fault this marker exists to
+// prevent. A far-future value would postpone the reset indefinitely. Both are
+// treated as missing and repaired.
+const FUTURE_SKEW_MS = 5 * 60_000;
 const readLastReset = () => {
-  try { return setting(RESET_MARKER)?.at || null; } catch { return null; }
+  let raw;
+  try { raw = setting(RESET_MARKER)?.at; } catch { return null; }
+  if (!raw) return null;
+  const at = new Date(raw).getTime();
+  if (!Number.isFinite(at)) return null;
+  if (at > Date.now() + FUTURE_SKEW_MS) return null;
+  return new Date(at).toISOString();
 };
 const persistLastReset = (at) => {
   try { setSetting(RESET_MARKER, { at }); } catch (err) { console.error('[vantage] could not persist the reset marker:', err?.message || err); }
@@ -51,7 +63,9 @@ const resetSchedule = createResetSchedule({
   last: readLastReset(),
 });
 if (resetSchedule.enabled) {
-  if (!readLastReset()) persistLastReset(resetSchedule.last_reset_at);
+  // Repair a missing, corrupt or future-dated marker with the anchor actually
+  // in use, so the stored value and the live schedule never disagree.
+  if (readLastReset() !== resetSchedule.last_reset_at) persistLastReset(resetSchedule.last_reset_at);
   // Catch up immediately when the deadline passed while the service was down.
   if (resetSchedule.due()) {
     try {
@@ -1078,6 +1092,13 @@ if (existsSync(dist)) {
 } else {
   app.get('/', (req, res) => res.status(503).send('<h1>Vantage</h1><p>Frontend not built. Run <code>npm run build</code>.</p>'));
 }
+
+// Nothing derived from a sign-in attempt may outlive its window, including on a
+// service nobody is currently using: sweeping only on the next attempt would
+// leave the last visitor's entry in memory until someone else signs in.
+setInterval(() => {
+  sweepExpired(loginAttempts, Date.now(), LOGIN_WINDOW_MS, LOGIN_MAX_TRACKED_KEYS);
+}, 60_000).unref?.();
 
 // Continuous monitoring: re-evaluate every test on a schedule, like the real agent.
 const INTERVAL_MINUTES = Number(process.env.VANTAGE_SCAN_MINUTES || 60);

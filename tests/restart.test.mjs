@@ -53,6 +53,19 @@ async function stop(child) {
   if (current === child) current = null;
 }
 
+const markerOf = () => {
+  const db = new DatabaseSync(DB);
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'demo_reset'").get();
+  db.close();
+  return row ? JSON.parse(row.value) : null;
+};
+
+const setMarker = (value) => {
+  const db = new DatabaseSync(DB);
+  db.prepare("UPDATE settings SET value = ? WHERE key = 'demo_reset'").run(JSON.stringify(value));
+  db.close();
+};
+
 const signIn = async () => (await (await fetch(`${BASE}/api/auth/login`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
@@ -106,5 +119,37 @@ test('the daily reset survives a restart and catches up when it is overdue', asy
   const after_ = await (await fetch(`${BASE}/api/public/config`)).json();
   assert.ok(new Date(after_.demo.next_reset_at).getTime() > Date.now(),
     'the next reset must be rescheduled from the reset that just happened');
+  await stop(server.child);
+});
+
+test('a corrupt or future-dated reset marker is repaired rather than trusted', async () => {
+  let server = await boot();
+  await stop(server.child);
+
+  // A truthy but unparseable marker is the dangerous case: it is not "missing",
+  // so a naive check leaves it in place, and every restart then re-anchors the
+  // daily clock — silently recreating the fault the marker exists to prevent.
+  setMarker({ at: 'not-a-date' });
+  server = await boot();
+  const repaired = markerOf();
+  assert.ok(Number.isFinite(new Date(repaired.at).getTime()),
+    `a corrupt marker must be repaired, found ${JSON.stringify(repaired)}`);
+  assert.ok(Math.abs(new Date(repaired.at).getTime() - Date.now()) < 5 * 60_000,
+    'the repaired marker should be anchored to now');
+  await stop(server.child);
+
+  // A far-future marker would postpone the reset indefinitely.
+  const future = new Date(Date.now() + 400 * 86400000).toISOString();
+  setMarker({ at: future });
+  server = await boot();
+  const corrected = markerOf();
+  assert.notEqual(corrected.at, future, 'a future-dated marker must not be trusted');
+  assert.ok(new Date(corrected.at).getTime() <= Date.now() + 5 * 60_000,
+    'the corrected marker must not be in the future');
+
+  const config = await (await fetch(`${BASE}/api/public/config`)).json();
+  const nextReset = new Date(config.demo.next_reset_at).getTime();
+  assert.ok(nextReset - Date.now() <= 1441 * 60_000,
+    'the next reset must be within a day, not four hundred days out');
   await stop(server.child);
 });

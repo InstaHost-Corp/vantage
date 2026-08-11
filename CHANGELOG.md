@@ -33,7 +33,10 @@ one: it resets **daily**, and it keeps nothing a visitor types.
   start and never written down, so any restart before the deadline postponed the
   reset by another full day while the page kept promising "daily". The last
   reset is now persisted, the schedule is anchored to it, and a reset that fell
-  due while the service was down happens at boot.
+  due while the service was down happens at boot. The stored marker is validated
+  rather than trusted: an unparseable or future-dated value is treated as
+  missing and repaired, so a corrupt marker cannot quietly re-anchor the clock
+  on every restart.
 - **No token is left on a visitor's device.** `sessionStorage` has no
   `localStorage` fallback — the fallback is memory — and any token left in
   `localStorage` by an earlier version is removed on load, since nothing else
@@ -45,8 +48,9 @@ one: it resets **daily**, and it keeps nothing a visitor types.
   only in memory. A plain digest would have been pseudonymous rather than
   private — anyone holding this source could confirm a guessed address by
   hashing it — and a keyed one cannot be reproduced or linked across restarts.
-  Entries are also swept on a cadence rather than only when the map grows large,
-  so the fifteen-minute window is the real retention period.
+  Entries are also swept on a timer rather than only when a later sign-in
+  happens to arrive, so the fifteen-minute window is the real retention period
+  even on an idle service.
 - Confirmed by test rather than by inspection: nothing a visitor types at
   sign-in reaches the activity feed, the user list or any other surface a later
   visitor can read, and a successful sign-in records the account name only,

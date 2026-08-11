@@ -72,6 +72,8 @@ three findings were fixed; none was waived.
 | The daily reset was measured from process start and never persisted, so a restart before the deadline postponed it by another full day while the UI kept promising "daily" | MEDIUM | The last reset is persisted in the settings table, the schedule is anchored to it, and an overdue reset runs at boot. Proven by a restart test that fails when the anchor is removed |
 | `sessionStorage` fell back to `localStorage`, and tokens written by 1.1.0 were never cleaned up, so a bearer token could still outlive the tab | LOW | The fallback is memory, and the legacy `localStorage` key is removed on load |
 | Throttle digests were unsalted and swept only when the map grew past 5,000 keys, so a guessed address could be confirmed and entries could outlive the stated window | LOW | HMAC under a process-random key, and a time-based sweep |
+| Second round: the sweep still ran only on sign-in traffic, so on an idle service the last visitor's entry stayed in memory until somebody else signed in | LOW | An unreferenced 60-second timer sweeps regardless of traffic |
+| Second round: a corrupt marker was truthy, so it was never repaired and every restart re-anchored the daily clock — the original fault, reintroduced through the repair path. A far-future marker would have postponed the reset indefinitely | MEDIUM | The marker is validated on read: unparseable or future-dated values are treated as missing and repaired with the anchor actually in use. Two restart tests cover both, and fail against the naive check |
 
 ### Already true before this release, and re-verified
 
