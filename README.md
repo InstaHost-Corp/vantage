@@ -172,8 +172,10 @@ Nothing sits in front of the hosted instance, so the application defends itself:
   form are discarded and an anonymous demonstration request is recorded instead. The requested
   document is resolved against the published catalogue rather than stored as typed, so no free-text
   field survives. A self-hosted instance keeps the requester it was given.
-* **A public Trust Center that discloses only coverage.** Control status is published as verified or
-  not yet verified, so a failing control is indistinguishable from an untested one.
+* **A public Trust Center that discloses only coverage.** Control status is published as exactly two
+  values — `verified` and `in_progress` — so a failing control is indistinguishable from an untested
+  one, and the published aggregate counts controls rather than tests so its complement cannot be
+  subtracted back into a live failing count.
 * **Role separation.** Auditor accounts are read-only; tenant reset, policy approval, framework
   enablement, settings and Trust Center configuration require an administrator.
 * **A self-healing tenant.** The shared workspace reseeds every six hours, so no visitor can leave
@@ -205,11 +207,17 @@ POST   /api/demo/reset                      → restore the seeded baseline
 2. Open **Monitoring → Failing**, pick *AWS IAM users have MFA enabled*, and read the two
    non-compliant IAM users with the exact reason each failed.
 3. Hit **Fix all** — the test flips to passing and the deadline clears.
-4. Go back to the dashboard: passing tests and framework readiness have both moved.
-5. Open **Questionnaires → Security review — renewal** and press **Auto-answer**.
-6. Visit `/trust` in a private window, request the SOC 2 report, then approve it under
-   **Trust Center**.
-7. **Settings → Reset demo data** puts everything back.
+4. Go back to the dashboard: the passing-test count has moved, but framework readiness has **not**.
+   That is the control weighting working, not a bug: readiness counts controls, and *AC-02
+   Multi-factor authentication enforced* still has a second failing test — *Identity provider
+   accounts enforce MFA* — so the control is still failing.
+5. Fix that one too and readiness moves. Or try *Endpoints have disk encryption enabled*, the only
+   test on its control, where a single fix moves readiness immediately.
+6. Open **Questionnaires → Security review — renewal** and press **Auto-answer**.
+7. Visit `/trust` in a private window, request the SOC 2 report, then approve it under
+   **Trust Center**. On the hosted demonstration the details you type are discarded — the queue
+   records an anonymous request.
+8. **Settings → Reset demo data** puts everything back.
 
 ## Deployment
 
