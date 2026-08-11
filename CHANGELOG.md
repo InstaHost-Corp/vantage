@@ -19,9 +19,11 @@ published on GitHub under the MIT licence.
 - **Open source under the MIT licence.** `LICENSE` is added and the repository
   is public, so anyone can read it, fork it, self-host it or take pieces of it.
 - **`GET /api/public/config`.** An unauthenticated endpoint describing the
-  environment: version, whether it is the shared public demonstration, the
-  demonstration accounts, the reset cadence and the source URL. The sign-in
-  page and the application shell render from it.
+  environment: version, release commit, whether it is the shared public
+  demonstration, which guards are enabled, the demonstration accounts, the
+  reset cadence and the source URL. The sign-in page, Trust Center and
+  application shell render from it, and the ungate tooling verifies against
+  it.
 - **Self-healing shared demonstration.** Because everyone shares one workspace,
   the tenant restores itself to the seeded baseline every six hours
   (`VANTAGE_DEMO_RESET_MINUTES`). A visitor can no longer leave the
@@ -30,11 +32,15 @@ published on GitHub under the MIT licence.
   and new copy on the sign-in page state that the workspace is shared, when it
   next resets, and where the source lives.
 - **`publishctl.py apply --stage public`.** Ungating is now an executable,
-  reversible operation that **fails closed**: after removing the Access
-  application it proves against the live public hostname that the deployed
-  build reports `public_demo` and serves the security headers, and restores the
-  gate automatically if it does not. `publishctl.py regate` puts the gate back
-  in one step.
+  reversible operation that fails closed. It proves the deployed build at the
+  **origin first**, while the gate is still up — public-demo mode on, every
+  guard enabled, and the expected version and release commit — so the Access
+  application is only ever deleted for a build already known to be safe. It
+  then re-proves the same claims through the public hostname, including that
+  `/api/dashboard` still answers 401 anonymously, and any failure, exception or
+  interrupt triggers a retrying, read-back-confirmed restoration of the gate.
+  `publishctl.py regate` puts the gate back in one step, and `rollback` now
+  verifies each of its own mutations instead of reporting success blindly.
 - **`SECURITY.md`** with a private vulnerability-reporting route and an honest
   statement of what the hosted demonstration is and is not.
 
@@ -62,6 +68,27 @@ has a regression test proven to fail without it:
 - **Sign-in throttling keyed on address and account** rather than the account
   alone, so rotating the email field no longer buys an unlimited attempt
   budget. Expired sessions are deleted whenever a new one is issued.
+- **No visitor identity is stored on the public demonstration.** The Trust
+  Center access-request form previously kept the name, email and company it was
+  given — and anyone can sign in to the shared workspace and read that queue.
+  On the public deployment the submission is now accepted, the identifying
+  fields discarded, and an anonymous demonstration request recorded instead.
+  The form says so before you type. A self-hosted instance is a real workflow
+  and keeps the requester it was given.
+- **The public Trust Center no longer lets a reader derive what is failing.**
+  Control status is published as *verified* or *not yet verified* only, so a
+  failing control is indistinguishable from one with no automated test behind
+  it; previously the third state made the failing set recoverable by
+  subtraction.
+- **Readiness detail is no longer public.** `/readyz` is now reachable without
+  an identity gate, so database paths, driver error text and row counts are
+  served only to origin monitoring on loopback (or with
+  `VANTAGE_READYZ_DETAIL=1`). Anonymous callers get the ready/not-ready result
+  for each component and nothing else.
+- **Reseeding is atomic.** The scheduled reset wipes and refills 25 tables
+  while requests are in flight, so it now runs in a single transaction with
+  deferred foreign keys: a crash or a concurrent read can never observe a
+  half-wiped tenant.
 
 ### Behaviour changes
 
@@ -77,7 +104,8 @@ has a regression test proven to fail without it:
 
 - New environment variables: `VANTAGE_PUBLIC_DEMO`, `VANTAGE_TRUST_PROXY`,
   `VANTAGE_RATE_LIMIT`, `VANTAGE_HSTS`, `VANTAGE_DEMO_RESET_MINUTES`,
-  `VANTAGE_MAX_PENDING_TRUST_REQUESTS`, `VANTAGE_SOURCE_URL`.
+  `VANTAGE_MAX_PENDING_TRUST_REQUESTS`, `VANTAGE_SOURCE_URL`,
+  `VANTAGE_READYZ_DETAIL`.
 - No schema or data migration. The application seeds itself idempotently.
 
 ### Known issues and residual risks

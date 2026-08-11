@@ -265,7 +265,18 @@ test('SEC-4: the public trust payload does not disclose which controls are faili
   const body = await fetch(`${BASE}/api/public/trust`).then((r) => r.json());
   const statuses = new Set(body.control_groups.flatMap((g) => g.items.map((i) => i.status)));
   assert.ok(!statuses.has('failing'), `public payload leaked raw status: ${[...statuses]}`);
-  for (const status of statuses) assert.ok(['verified', 'in_progress', 'documented'].includes(status), `unexpected public status ${status}`);
+  // Only two public states exist, so a failing control is indistinguishable
+  // from one with no automated test behind it. A third state would let a
+  // reader subtract and recover the live failing count.
+  for (const status of statuses) assert.ok(['verified', 'in_progress'].includes(status), `unexpected public status ${status}`);
+  const authed = await api('/api/controls').then((r) => r.json());
+  const failing = authed.filter((c) => c.status === 'failing').map((c) => c.code);
+  const noTests = authed.filter((c) => c.status === 'no_tests').map((c) => c.code);
+  assert.ok(failing.length > 0, 'the fixture must contain a failing control for this test to mean anything');
+  const publicByCode = new Map(body.control_groups.flatMap((g) => g.items).map((i) => [i.code, i.status]));
+  for (const code of [...failing, ...noTests]) {
+    assert.equal(publicByCode.get(code), 'in_progress', `control ${code} is publicly distinguishable`);
+  }
   // The aggregate must be coarsened too, or the per-control coarsening is defeated.
   assert.deepEqual(Object.keys(body.posture).sort(), ['controls_monitored', 'controls_verified', 'coverage_percent']);
   const rawPosture = JSON.stringify(body.posture);
@@ -350,4 +361,47 @@ test('PUB-5: a signed-in visitor is told the workspace is shared and when it res
   assert.equal(body.public_demo, true);
   assert.ok(new Date(body.next_reset_at).getTime() > Date.now());
   assert.ok(body.source_url.startsWith('https://github.com/'));
+});
+
+test('PUB-6: a visitor identity submitted to the public demo is discarded, not stored', async () => {
+  const res = await fetch(`${BASE}/api/public/trust/request`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.120' },
+    body: JSON.stringify({
+      name: 'Jamie Realperson', email: 'jamie@realcompany.example', company: 'Real Company Ltd',
+      document: 'SOC 2 Type II Report',
+    }),
+  });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.anonymized, true);
+  assert.match(body.message, /discarded/);
+
+  // The queue is readable by anyone holding the published demonstration
+  // credentials, so prove the identity is not in it — nor in the activity feed.
+  const queue = JSON.stringify(await api('/api/trust').then((r) => r.json()));
+  const activity = JSON.stringify(await api('/api/activity').then((r) => r.json()));
+  for (const personal of ['Jamie Realperson', 'jamie@realcompany.example', 'Real Company Ltd']) {
+    assert.ok(!queue.includes(personal), `submitted identity reached the shared queue: ${personal}`);
+    assert.ok(!activity.includes(personal), `submitted identity reached the activity feed: ${personal}`);
+  }
+  assert.ok(queue.includes('Demo visitor'), 'the workflow must still record a request to approve');
+});
+
+test('PUB-7: readiness detail is not disclosed to an anonymous public caller', async () => {
+  // The suite connects over loopback, which is the origin-monitoring path, so
+  // detail is expected here; readinessDetailAllowed covers the public case and
+  // is unit-tested against tunnel and internet addresses.
+  const body = await fetch(`${BASE}/readyz`).then((r) => r.json());
+  assert.equal(body.ready, true);
+  assert.match(body.checks.database.detail, /quick_check=ok/, 'origin monitoring must keep full detail');
+  assert.ok(body.checks.frontend_build.detail.includes('dist'));
+});
+
+test('PUB-8: the public config reports the guard state the ungate tooling verifies', async () => {
+  const body = await fetch(`${BASE}/api/public/config`).then((r) => r.json());
+  assert.equal(body.release_sha, SHA);
+  for (const guard of ['rate_limit', 'security_headers', 'anonymous_writes_anonymized', 'auto_reset']) {
+    assert.equal(body.guards[guard], true, `guard ${guard} not reported`);
+  }
 });

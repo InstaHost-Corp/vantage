@@ -149,6 +149,7 @@ web/
 | `VANTAGE_HSTS` | `0` | Always send HSTS, rather than only when the request arrived over TLS |
 | `VANTAGE_MAX_PENDING_TRUST_REQUESTS` | `200` | Cap on the anonymous Trust Center request backlog |
 | `VANTAGE_SOURCE_URL` | this repository | "Source on GitHub" link shown in the UI |
+| `VANTAGE_READYZ_DETAIL` | `0` | Serve full `/readyz` diagnostics to every caller. By default paths, driver errors and row counts go only to loopback monitoring |
 | `VANTAGE_ALLOW_DEMO_RESET` | `1` | Set to `0` to refuse tenant resets entirely |
 
 ## Public access and abuse resistance
@@ -164,6 +165,12 @@ Nothing sits in front of the hosted instance, so the application defends itself:
 * **Bounded anonymous writes.** The Trust Center access-request form is the only table an anonymous
   visitor can write to: fields are length-capped, the address validated, the backlog capped, and the
   JSON body limit is 256 kB.
+* **No visitor identity is stored.** Anyone can sign in to the shared workspace and read the
+  access-request queue, so on the public demonstration the name, email and company submitted to that
+  form are discarded and an anonymous demonstration request is recorded instead. A self-hosted
+  instance keeps the requester it was given.
+* **A public Trust Center that discloses only coverage.** Control status is published as verified or
+  not yet verified, so a failing control is indistinguishable from an untested one.
 * **Role separation.** Auditor accounts are read-only; tenant reset, policy approval, framework
   enablement, settings and Trust Center configuration require an administrator.
 * **A self-healing tenant.** The shared workspace reseeds every six hours, so no visitor can leave
@@ -226,8 +233,8 @@ hostname as well as the origin:
 
 ```sh
 curl -s https://vantage.insta.host/healthz          # version, release SHA, source digest
-curl -s https://vantage.insta.host/readyz           # database, schema, engine, build; 503 when not ready
-ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # the same, from the origin
+curl -s https://vantage.insta.host/readyz           # per-component ready/not ready; 503 when not ready
+ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # the same plus full diagnostics, from the origin
 ```
 
 `/readyz` returns `503` if the database is unreachable, the schema is not
@@ -241,14 +248,18 @@ routing:
 
 ```sh
 python3 scripts/publishctl.py status
-python3 scripts/publishctl.py apply --stage public --confirm   # remove the identity gate
+python3 scripts/publishctl.py apply --stage public --confirm \
+        --expect-version 1.1.0 --expect-sha <release-sha>     # remove the identity gate
 python3 scripts/publishctl.py regate                           # put it back
 ```
 
-The `public` stage fails **closed**: after deleting the Access application it
-proves against the live public hostname that the deployed build reports
-`public_demo` and serves the security headers, and restores the gate
-automatically if it does not.
+The `public` stage fails **closed**. It proves the deployed build at the origin
+first, while the gate is still up — public-demo mode on, every guard enabled,
+and the expected version and release commit — so the Access application is only
+ever deleted for a build already known to be safe. It then re-proves the same
+claims through the public hostname, including that `/api/dashboard` still
+answers 401 anonymously, and any failure, exception or interrupt triggers a
+retrying, read-back-confirmed restoration of the gate.
 
 ### Release process
 

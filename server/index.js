@@ -7,7 +7,8 @@ import { db, all, get, run, setting, setSetting, logActivity, DB_PATH } from './
 import { runTests, controlStatuses, frameworkReadiness, overallPosture } from './engine.js';
 import { seed, verifyPassword } from './seed.js';
 import {
-  createResetSchedule, clientIp, publicModeConfig, rateLimit, sanitizeTrustRequest, securityHeaders,
+  anonymizeTrustRequest, createResetSchedule, clientIp, publicModeConfig, rateLimit,
+  readinessDetailAllowed, sanitizeTrustRequest, securityHeaders,
 } from './public-mode.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -50,7 +51,15 @@ app.get('/healthz', (req, res) => {
 app.get('/readyz', (req, res) => {
   const checks = {};
   let ready = true;
-  const record = (name, ok, detail) => { checks[name] = { ok, detail }; if (!ok) ready = false; };
+  // /readyz is now publicly reachable. Monitoring runs against the origin on
+  // loopback, so full diagnostics stay available where they are used while an
+  // anonymous caller is told only whether each component is ready. Paths and
+  // raw driver errors are not public reconnaissance material.
+  const detailed = readinessDetailAllowed(req);
+  const record = (name, ok, detail) => {
+    checks[name] = { ok, detail: detailed ? detail : (ok ? 'ok' : 'not ready') };
+    if (!ok) ready = false;
+  };
 
   try {
     // A real query, not an assertion: proves the database file is open and readable.
@@ -207,12 +216,11 @@ app.get('/api/public/trust', (req, res) => {
     return { slug: f.slug, name: f.name, short_name: f.short_name, color: f.color, category: f.category, readiness: r.readiness, audit_status: f.audit_status };
   });
   // Published posture is deliberately coarse. A public page must not hand a
-  // reader a live map of which specific controls are currently failing.
-  const publicStatus = (status) => {
-    if (status === 'passing') return 'verified';
-    if (status === 'failing') return 'in_progress';
-    return 'documented';
-  };
+  // reader a live map of which specific controls are currently failing — and
+  // "not verified" must mean exactly that, so a failing control is reported
+  // identically to one with no automated test behind it. Otherwise the
+  // complement of the verified count discloses the failing count.
+  const publicStatus = (status) => (status === 'passing' ? 'verified' : 'in_progress');
   const controls = all('SELECT * FROM controls ORDER BY code').map((c) => ({
     code: c.code, name: c.name, category: c.category, description: c.description,
     status: publicStatus(statuses.get(c.id)?.status || 'no_tests'),
@@ -246,20 +254,41 @@ app.post('/api/public/trust/request', (req, res) => {
   if (pending >= PUBLIC_MODE.maxPendingTrustRequests) {
     return res.status(429).json({ error: 'The access-request queue is full on this shared demonstration. Try again later.' });
   }
+  // Anyone can sign in to the shared demonstration and read this queue, so a
+  // real visitor's identity must never reach it.
+  const stored = anonymizeTrustRequest(value, {
+    publicDemo: PUBLIC_MODE.publicDemo,
+    counter: get('SELECT COUNT(*) AS n FROM trust_requests').n + 1,
+  });
   run('INSERT INTO trust_requests (name, email, company, document, status, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    value.name, value.email, value.company, value.document, 'pending', new Date().toISOString());
-  logActivity('trust_center', value.company, `${value.name} requested access to "${value.document}"`);
-  res.json({ ok: true, message: 'Request received. You will receive an email once it is approved.' });
+    stored.name, stored.email, stored.company, stored.document, 'pending', new Date().toISOString());
+  logActivity('trust_center', stored.company, `${stored.name} requested access to "${stored.document}"`);
+  res.json({
+    ok: true,
+    anonymized: stored.anonymized,
+    message: stored.anonymized
+      ? 'Request received. This is a shared public demonstration, so your name, email and company were discarded rather than stored — the queue shows an anonymous demonstration request.'
+      : 'Request received. You will receive an email once it is approved.',
+  });
 });
 
 // Lets the interface tell a visitor what kind of environment they are in —
 // free, shared, open source and periodically reset — without an account.
+// The ungate tooling also reads it to prove the deployed build is the one whose
+// guards make an ungated deployment safe, so the guard states are reported too.
 app.get('/api/public/config', (req, res) => {
   res.json({
     service: RELEASE.service,
     version: RELEASE.version,
+    release_sha: RELEASE.release_sha,
     public_demo: PUBLIC_MODE.publicDemo,
     source_url: PUBLIC_MODE.sourceUrl,
+    guards: {
+      rate_limit: PUBLIC_MODE.rateLimit,
+      security_headers: true,
+      anonymous_writes_anonymized: PUBLIC_MODE.publicDemo,
+      auto_reset: resetSchedule.enabled,
+    },
     demo: {
       shared: PUBLIC_MODE.publicDemo,
       password: 'vantage123',

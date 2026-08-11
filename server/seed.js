@@ -297,14 +297,30 @@ const questionnaireData = [
 export function seed({ force = false } = {}) {
   const existing = get('SELECT COUNT(*) AS n FROM frameworks');
   if (existing.n > 0 && !force) return { skipped: true };
+  // Reseeding wipes 25 tables and refills them. On the public deployment it
+  // runs on a timer while requests are in flight, so it has to be atomic: a
+  // crash or a concurrent read must never observe a half-wiped tenant.
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    // PRAGMA foreign_keys is a no-op inside a transaction; defer_foreign_keys
+    // is the transaction-scoped equivalent, so the wipe can delete parents
+    // before children while constraints are still enforced at COMMIT.
+    db.exec('PRAGMA defer_foreign_keys = ON');
+    const result = seedTables();
+    db.exec('COMMIT');
+    return result;
+  } catch (err) {
+    try { db.exec('ROLLBACK'); } catch { /* the transaction is already gone */ }
+    throw err;
+  }
+}
 
+function seedTables() {
   const wipe = ['test_entities', 'tests', 'control_requirements', 'controls', 'requirements', 'frameworks',
     'resources', 'integrations', 'policy_acceptances', 'policies', 'devices', 'personnel', 'vendors', 'risks',
     'audit_requests', 'audits', 'evidence', 'trust_documents', 'trust_requests', 'questionnaire_items',
     'questionnaires', 'activity', 'sessions', 'users', 'settings'];
-  db.exec('PRAGMA foreign_keys = OFF');
   for (const table of wipe) db.exec(`DELETE FROM ${table}`);
-  db.exec('PRAGMA foreign_keys = ON');
 
   // Users
   for (const [email, name, role, title] of users) {

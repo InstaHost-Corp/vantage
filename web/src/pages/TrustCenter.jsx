@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BadgeCheck, CheckCircle2, ChevronDown, Clock3, FileText, Lock, MinusCircle, ShieldCheck } from 'lucide-react';
 import { api } from '../api.js';
 import { useApi } from '../api.js';
@@ -10,7 +10,17 @@ export default function TrustCenter() {
   const [request, setRequest] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', company: '' });
   const [sent, setSent] = useState(false);
+  const [sentMessage, setSentMessage] = useState(null);
+  const [config, setConfig] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    api('/public/config', { auth: false })
+      .then((c) => alive && setConfig(c))
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   if (loading || !data) return <Loading label="Loading Trust Center" />;
   const { company, trust, frameworks, control_groups: groups, documents, subprocessors, posture } = data;
@@ -19,14 +29,17 @@ export default function TrustCenter() {
     e.preventDefault();
     setError(null);
     try {
-      await api('/public/trust/request', { method: 'POST', auth: false, body: { ...form, document: request.name } });
+      const result = await api('/public/trust/request', { method: 'POST', auth: false, body: { ...form, document: request.name } });
+      setSentMessage(result?.message || null);
       setSent(true);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // The public API publishes coarse status only: verified, in_progress or documented.
+  // The public API publishes coarse status only: verified, or not yet verified.
+  // A control that is failing is deliberately indistinguishable from one with
+  // no automated test behind it.
   const controlIcon = (status) => {
     if (status === 'verified') return <CheckCircle2 size={16} className="shrink-0 text-emerald-500" />;
     if (status === 'in_progress') return <Clock3 size={16} className="shrink-0 text-amber-500" />;
@@ -188,11 +201,17 @@ export default function TrustCenter() {
       <Modal open={!!request} onClose={() => setRequest(null)} title={sent ? 'Request received' : `Request ${request?.name}`}>
         {sent ? (
           <p className="text-sm text-ink-700">
-            Thanks — our security team reviews requests within one business day. You will receive the document by email once approved.
+            {sentMessage || 'Thanks — our security team reviews requests within one business day. You will receive the document by email once approved.'}
           </p>
         ) : (
           <form onSubmit={submit} className="space-y-3">
             <p className="text-sm text-ink-500">This document is shared under NDA. Tell us who you are and we will send it over.</p>
+            {config?.public_demo && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <strong>This is a public demonstration.</strong> Nothing is emailed and no document exists. Please do not
+                enter real details: what you type is discarded and the queue records an anonymous demonstration request.
+              </p>
+            )}
             {['name', 'email', 'company'].map((field) => (
               <label key={field} className="block">
                 <span className="mb-1 block text-xs uppercase tracking-wide text-ink-500">{field}</span>

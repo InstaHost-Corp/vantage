@@ -5,8 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  classify, clientIp, createRateLimiter, createResetSchedule, publicModeConfig,
-  sanitizeTrustRequest, securityHeaders,
+  anonymizeTrustRequest, classify, clientIp, createRateLimiter, createResetSchedule,
+  publicModeConfig, readinessDetailAllowed, sanitizeTrustRequest, securityHeaders,
 } from '../server/public-mode.js';
 
 const fakeRes = () => {
@@ -119,4 +119,35 @@ test('the one anonymous write path is bounded and validated', () => {
   });
   assert.equal(oversized.ok, false);
   assert.match(oversized.errors[0], /characters or fewer/);
+});
+
+test('a real visitor identity never reaches the shared queue', () => {
+  const submitted = { name: 'Jamie Fox', email: 'jamie@realcompany.com', company: 'Real Company Ltd', document: 'SOC 2 Type II Report' };
+
+  const onDemo = anonymizeTrustRequest(submitted, { publicDemo: true, counter: 7 });
+  assert.equal(onDemo.anonymized, true);
+  assert.equal(onDemo.document, 'SOC 2 Type II Report', 'the requested document is not personal data and must survive');
+  const stored = JSON.stringify(onDemo);
+  for (const personal of ['Jamie Fox', 'jamie@realcompany.com', 'Real Company Ltd']) {
+    assert.ok(!stored.includes(personal), `submitted identity leaked into the shared queue: ${personal}`);
+  }
+  assert.match(onDemo.email, /@example\.invalid$/);
+
+  // Negative control: a private self-hosted instance is a real workflow and
+  // must keep the requester it was given.
+  const selfHosted = anonymizeTrustRequest(submitted, { publicDemo: false });
+  assert.equal(selfHosted.anonymized, false);
+  assert.equal(selfHosted.name, 'Jamie Fox');
+  assert.equal(selfHosted.email, 'jamie@realcompany.com');
+});
+
+test('readiness detail is served to origin monitoring and withheld from the public', () => {
+  const from = (address) => ({ socket: { remoteAddress: address } });
+  assert.equal(readinessDetailAllowed(from('127.0.0.1'), {}), true);
+  assert.equal(readinessDetailAllowed(from('::ffff:127.0.0.1'), {}), true);
+  assert.equal(readinessDetailAllowed(from('::1'), {}), true);
+  // Anything arriving through the tunnel is an anonymous public caller.
+  assert.equal(readinessDetailAllowed(from('172.16.41.1'), {}), false);
+  assert.equal(readinessDetailAllowed(from('203.0.113.9'), {}), false);
+  assert.equal(readinessDetailAllowed(from('203.0.113.9'), { VANTAGE_READYZ_DETAIL: '1' }), true);
 });

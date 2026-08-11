@@ -54,7 +54,7 @@
   "deploy": [
    "rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' --exclude 'release-evidence' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/",
    "ssh nas1 \"midclt call -j app.update <payload pinning the new release directory and the 1.1.0 environment>\"",
-   "python3 scripts/publishctl.py apply --stage public --confirm"
+   "python3 scripts/publishctl.py apply --stage public --confirm --expect-version 1.1.0 --expect-sha <sha>"
   ],
   "health": [
    "ssh nas1 'curl -s http://127.0.0.1:30002/healthz'"

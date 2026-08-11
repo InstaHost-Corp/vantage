@@ -14,10 +14,14 @@ deliberately not an identity-gated system:
   hours.
 * Do not put real, personal or confidential information into it. Anything you
   type into the demonstration should be treated as public and disposable.
+* The one form that asks for your identity — the Trust Center document request
+  — **discards it**. On the public demonstration your name, email and company
+  are not stored; the queue records an anonymous demonstration request instead.
+  Nothing is emailed, and no document is sent.
 
-The application enforces per-client rate limits, bounded anonymous writes,
-browser security headers and role separation, but the deployment carries no
-availability commitment of any kind.
+The application enforces per-client rate limits, bounded and anonymised
+anonymous writes, browser security headers and role separation, but the
+deployment carries no availability commitment of any kind.
 
 ## Reporting a vulnerability
 

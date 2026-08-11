@@ -42,7 +42,9 @@ it.
 - **In-product honesty**: a banner in the shell and sign-in copy stating that
   the workspace is shared, when it resets, and where the source lives.
 - **`publishctl.py apply --stage public`** — ungating as a verified, reversible
-  operation that fails closed, plus `publishctl.py regate` to restore the gate.
+  operation that proves the build at the origin before removing the gate and
+  restores it on any failure, plus `publishctl.py regate` to put the gate back
+  in one step.
 
 ## Security changes
 
@@ -59,6 +61,27 @@ has a regression test that was **proven to fail** with the guard removed.
 | CSP, `frame-ancestors 'none'`, `X-Frame-Options`, `nosniff`, referrer policy, permissions policy, cross-origin isolation, HSTS over TLS | Clickjacking, MIME confusion, referrer leakage, injected third-party content |
 | Length-capped, validated anonymous Trust Center requests, capped pending backlog, JSON body limit 1 MB → 256 kB | The one anonymous write path being used to grow the database without limit |
 | Sign-in throttle keyed on address **and** account; expired sessions deleted on each new sign-in | An unlimited attempt budget from rotating the email field; unbounded session accumulation |
+| Anonymous Trust Center submissions anonymised before storage on the public demo | A real visitor's name, email and employer being handed to everyone who signs in to the shared workspace |
+| Public control status reduced to verified / not yet verified | A reader deriving the live failing-control set by subtraction from the published totals |
+| `/readyz` detail restricted to origin monitoring on loopback | Publishing database paths, driver error text and row counts to anonymous callers |
+| Reseeding wrapped in one transaction with deferred foreign keys | A crash or a concurrent request observing a half-wiped tenant |
+
+### Findings fixed from the mandatory pre-deployment reviews
+
+The independent security lane returned **BLOCK** and the principal engineering
+lane **REVISE** on the first candidate. Both were re-reviewed after these
+fixes; nothing was waived.
+
+| Finding | Severity | Fix |
+|---|---|---|
+| SEC-1 The public Trust Center collected a real visitor's name, email and company and exposed them to anyone holding the published demo credentials | MEDIUM | On the public deployment the submission is accepted and the identifying fields are discarded; the queue records an anonymous demonstration request, and the form says so before you type |
+| SEC-2 The ungate verifier accepted any build reporting `public_demo`, without checking version, release commit or whether the guards were actually enabled | MEDIUM | `/api/public/config` now reports release SHA and per-guard state; the verifier requires the expected version and commit, every guard enabled, the security headers, and `/api/dashboard` answering 401 anonymously |
+| SEC-3 The ungate deleted the Access application *before* verifying anything, so an interrupt or transport failure could leave the service open | MEDIUM | The build is proven at the origin first, while the gate is still up; post-delete verification is wrapped so that any failure, exception or interrupt triggers a retrying, read-back-confirmed restoration |
+| SEC-4 `/readyz` published database paths, `dist` path, raw SQLite error text and row counts anonymously | LOW | Detail is served to loopback monitoring only, or with `VANTAGE_READYZ_DETAIL=1` |
+| SEC-5 Public control status had three states, so the failing set was recoverable by subtraction | LOW | Two states only: verified, or not yet verified |
+| ENG-1 `seed()` wiped and refilled 25 tables outside a transaction while the reset timer could fire mid-request | NON-BLOCKING | One `BEGIN IMMEDIATE` transaction with `PRAGMA defer_foreign_keys`, rolled back on failure |
+| ENG-2 `publishctl rollback` ignored the result of its own Cloudflare mutations and printed success regardless | NON-BLOCKING | Every rollback mutation is checked and read back; an incomplete rollback exits non-zero and says what is still live |
+| ENG-3 Rate-limit budgets could leak between tests sharing a client address | SUGGESTION | Each rate-limit test uses its own `CF-Connecting-IP` |
 
 Role separation from 1.0.0 is unchanged and still enforced: auditor accounts
 remain read-only, and tenant reset, policy approval, framework enablement,
@@ -129,7 +152,8 @@ ssh nas1 "curl -s http://127.0.0.1:30002/api/public/config"
 
 # 5. remove the identity gate (fails closed and self-reverts if the deployed
 #    build is not the public-mode build)
-python3 scripts/publishctl.py apply --stage public --confirm
+python3 scripts/publishctl.py apply --stage public --confirm \
+        --expect-version 1.1.0 --expect-sha <release-sha>
 ```
 
 ## Rollback

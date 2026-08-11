@@ -339,21 +339,23 @@
    "version": "Cloudflare API v4, application id 31bde92e... on domain vantage.insta.host",
    "reject_conditions": [
     "The Access application cannot be read or deleted with the stored credential",
+    "The deployed build does not prove public_demo, every guard enabled, and the expected version and release commit at the ORIGIN before the gate is removed",
     "Removing the application would leave the service unreachable because tunnel ingress or DNS is absent",
-    "The deployed build does not prove the public-mode guards live after the gate is removed",
+    "The deployed build does not re-prove the same claims through the public hostname after the gate is removed",
+    "An authenticated route answers anything other than 401 to an anonymous public caller",
     "The verifier cannot distinguish a gated service from an ungated one"
    ],
    "validation_command": "python3 -c \"import importlib.util; spec=importlib.util.spec_from_file_location('p','scripts/publishctl.py'); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); print(m.public_guards_live())\"",
    "result": "PASS",
-   "evidence": "GET of the live application id answers HTTP 200 with domain vantage.insta.host; the fail-closed verifier public_guards_live() answered (False, '/api/public/config did not return JSON') against the still-gated service, because Cloudflare Access served its sign-in page instead. The ungate therefore cannot silently succeed against a build that lacks the guards, and --stage public recreates the Access application when verification fails.",
+   "evidence": "GET of the live application id answers HTTP 200 with domain vantage.insta.host. Both verifier halves were proven to fail before deployment: origin_guards_live('1.1.0') answered (False, 'the deployed build does not report public_demo at the origin') against the running 1.0.0 build, and public_guards_live() answered (False, '/api/public/config did not return JSON') against the still-gated hostname because Cloudflare Access served its sign-in page. The gate is therefore only ever deleted for a build already proven at the origin, and any post-delete failure, exception or interrupt runs a retrying, read-back-confirmed restoration.",
    "live_probe": {
-    "command": "GET /accounts/{account}/access/apps/{id} for the real application, then for 00000000-0000-0000-0000-000000000000; plus publishctl.public_guards_live() against the live hostname",
-    "observed_at": "2026-08-11T15:12:00+10:00",
+    "command": "GET /accounts/{account}/access/apps/{id} for the real application and for 00000000-0000-0000-0000-000000000000; publishctl.origin_guards_live() over ssh against the origin; publishctl.public_guards_live() against the live hostname",
+    "observed_at": "2026-08-11T16:05:00+10:00",
     "observed_semantics": "A real application id answers HTTP 200 success=true carrying domain vantage.insta.host, which is the identity the delete call targets.",
     "ran_against_production_dependency": true,
     "negative_control": {
-     "input": "The same GET for application id 00000000-0000-0000-0000-000000000000, and the ungate verifier run while the service is still gated",
-     "observed_result": "HTTP 404 success=false code 12045 access.api.error.invalid_application_id, clearly different from the 200/domain answer. The ungate verifier returned False against the gated service, proving it can fail.",
+     "input": "The GET for application id 00000000-0000-0000-0000-000000000000; origin_guards_live('1.1.0') against the deployed 1.0.0 build; public_guards_live() while the service is still gated",
+     "observed_result": "HTTP 404 success=false code 12045 access.api.error.invalid_application_id, clearly different from the 200/domain answer. origin_guards_live returned False naming the missing public_demo report, and public_guards_live returned False because Access served HTML. Both halves of the ungate guard are therefore proven able to fail.",
      "distinguishes_success": true
     }
    }
@@ -463,22 +465,22 @@
    ],
    "validation_command": "node --test tests/public-mode.test.mjs tests/api.test.mjs",
    "result": "PASS",
-   "evidence": "43 tests pass. The API suite boots the server with VANTAGE_PUBLIC_DEMO=1, the exact shape production runs. Mutation run: disabling the rate limiter, removing the security-headers middleware and removing the trust-request field validation failed exactly five tests (PUB-2, PUB-3, PUB-4, the trust-request contract test and the sanitiser unit test) and no others; restoring the guards returned the suite to green.",
+   "evidence": "48 tests pass, and inside the pinned production image with the source mounted read-only. The API suite boots the server with VANTAGE_PUBLIC_DEMO=1, the exact shape production runs. Two mutation runs were performed. Round one: disabling the rate limiter, removing the security-headers middleware and removing trust-request validation failed exactly PUB-2, PUB-3, PUB-4, the trust-request contract test and the sanitiser unit test. Round two, covering the review fixes: disabling request anonymisation, restoring the three-state public control status and always allowing readiness detail failed exactly SEC-4, PUB-6 and the two corresponding unit tests. Restoring the guards returned the suite to green each time.",
    "live_probe": {
     "command": "Mutation run of the three guards, then restore",
-    "observed_at": "2026-08-11T14:55:00+10:00",
+    "observed_at": "2026-08-11T16:00:00+10:00",
     "observed_semantics": "Each guard has at least one test that fails for the intended reason when the guard is absent.",
     "ran_against_production_dependency": false,
     "negative_control": {
-     "input": "Guards removed from server/index.js and server/public-mode.js",
-     "observed_result": "5 failures out of 32 executed tests, naming the specific missing guard in each assertion",
+     "input": "Each guard removed in turn: rate limiter, security headers, field validation, request anonymisation, public status coarsening, readiness redaction",
+     "observed_result": "Every guard has at least one test that fails for the intended reason when it is absent (5 failures in round one, 4 in round two); no other test changed state",
      "distinguishes_success": true
     }
    },
    "invariant": {
     "authoritative_source": "The guard implementations in server/public-mode.js and their wiring in server/index.js",
     "derived_representation": "The behaviour an anonymous client observes: 429 with Retry-After over budget, security headers on every response, 400 on an oversized anonymous write, and public_demo reported by /api/public/config and /api/me",
-    "recompute_command": "node --test tests/public-mode.test.mjs tests/api.test.mjs",
+    "recompute_command": "node --test tests/*.test.mjs",
     "compares_to_authoritative_source": true
    }
   }

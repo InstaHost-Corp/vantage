@@ -38,7 +38,9 @@ ACCOUNT = "ab479cdd65b082569c7aafaae35e971d"
 TUNNEL = "40cd9ce8-5c37-4b72-afe4-698c57cd8b65"
 ZONE_NAME = "insta.host"
 HOSTNAME = "vantage.insta.host"
-ORIGIN = "http://192.168.100.116:30002"
+ORIGIN_PORT = 30002
+ORIGIN = f"http://192.168.100.116:{ORIGIN_PORT}"
+SSH_ALIAS = "nas1"
 APP_NAME = "Vantage - Trust and Compliance"
 SESSION_DURATION = "8h"
 
@@ -196,12 +198,16 @@ def probe_public(path, timeout=15):
         return 0, {}, str(e).encode()
 
 
-def public_guards_live():
+def public_guards_live(expect_version=None, expect_sha=None):
     """Prove the deployed build is the ungated-safe one. Returns (ok, detail).
 
     Removing the identity gate is only safe if the application itself is
-    enforcing the public-mode guards, so this reads them from the live service
-    rather than assuming the deployment shipped them.
+    enforcing the public-mode guards, so every claim here is read from the live
+    service rather than assumed from the deployment. It checks, in order:
+    the public config is reachable and reports public_demo; every guard it
+    reports is enabled; the running version and release commit are the ones
+    intended; the browser security headers are present; and an authenticated
+    route still refuses an anonymous caller.
     """
     status, headers, body = probe_public("/api/public/config")
     if status != 200 or not body:
@@ -212,6 +218,19 @@ def public_guards_live():
         return False, "/api/public/config did not return JSON"
     if not cfg.get("public_demo"):
         return False, "the deployed build does not report public_demo"
+
+    guards = cfg.get("guards") or {}
+    if not guards:
+        return False, "the deployed build reports no guard state; it predates the public-mode release"
+    for guard in ("rate_limit", "security_headers", "anonymous_writes_anonymized", "auto_reset"):
+        if not guards.get(guard):
+            return False, f"guard {guard} is not enabled on the deployed build"
+
+    if expect_version and cfg.get("version") != expect_version:
+        return False, f"deployed version {cfg.get('version')!r} is not the expected {expect_version!r}"
+    if expect_sha and cfg.get("release_sha") != expect_sha:
+        return False, f"deployed release_sha {str(cfg.get('release_sha'))[:12]!r} is not the expected {expect_sha[:12]!r}"
+
     lower = {k.lower(): v for k, v in headers.items()}
     for header, expected in (("x-content-type-options", "nosniff"),
                              ("x-frame-options", "DENY")):
@@ -219,9 +238,76 @@ def public_guards_live():
             return False, f"missing security header {header}"
     if "frame-ancestors" not in lower.get("content-security-policy", ""):
         return False, "missing content-security-policy"
-    detail = (f"public_demo=true version={cfg.get('version')} "
-              f"reset_every={(cfg.get('demo') or {}).get('reset_interval_minutes')}min, headers present")
+
+    # Negative control on the live service: an authenticated route must still
+    # refuse an anonymous caller once the identity gate is gone.
+    auth_status, _, _ = probe_public("/api/dashboard")
+    if auth_status != 401:
+        return False, f"/api/dashboard answered {auth_status} anonymously; expected 401"
+
+    detail = (f"public_demo=true version={cfg.get('version')} release_sha={str(cfg.get('release_sha'))[:12]} "
+              f"guards={sorted(k for k, v in guards.items() if v)} "
+              f"reset_every={(cfg.get('demo') or {}).get('reset_interval_minutes')}min, "
+              f"headers present, /api/dashboard 401")
     return True, detail
+
+
+def origin_guards_live(expect_version=None, expect_sha=None):
+    """Run the same guard check against the origin over SSH, before the gate is
+    removed. Proving the deployed build first means the Access application is
+    only ever deleted for a build already known to be safe."""
+    try:
+        out = subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=25", "-o", "BatchMode=yes", SSH_ALIAS,
+             f"curl -s -m 10 http://127.0.0.1:{ORIGIN_PORT}/api/public/config"],
+            capture_output=True, text=True, check=False, timeout=90)
+    except Exception as e:  # noqa: BLE001 - a transport failure is a probe result
+        return False, f"origin probe transport failed: {e}"
+    if out.returncode != 0 or not out.stdout.strip():
+        return False, f"origin probe returned no body (ssh exit {out.returncode})"
+    try:
+        cfg = json.loads(out.stdout)
+    except ValueError:
+        return False, "origin /api/public/config did not return JSON"
+    if not cfg.get("public_demo"):
+        return False, "the deployed build does not report public_demo at the origin"
+    guards = cfg.get("guards") or {}
+    missing = [g for g in ("rate_limit", "security_headers", "anonymous_writes_anonymized", "auto_reset")
+               if not guards.get(g)]
+    if missing:
+        return False, f"origin build has guards disabled: {', '.join(missing)}"
+    if expect_version and cfg.get("version") != expect_version:
+        return False, f"origin version {cfg.get('version')!r} is not the expected {expect_version!r}"
+    if expect_sha and cfg.get("release_sha") != expect_sha:
+        return False, f"origin release_sha {str(cfg.get('release_sha'))[:12]!r} is not the expected {expect_sha[:12]!r}"
+    return True, (f"origin reports public_demo=true version={cfg.get('version')} "
+                  f"release_sha={str(cfg.get('release_sha'))[:12]} guards all enabled")
+
+
+def restore_gate_or_die(token, reason):
+    """Put the Access application back, retrying until a readback confirms it.
+
+    Deleting the gate before verification would otherwise mean a crash, a
+    credential failure or a transport error leaves the service open. This is
+    the guaranteed-restoration half of that: it retries, reads the application
+    and its policy back, and only gives up after exhausting its attempts — at
+    which point it says exactly what an operator must do by hand.
+    """
+    print(f"restoring the Access application: {reason}", file=sys.stderr)
+    for attempt in range(1, 7):
+        try:
+            create_access_app(token)
+            app = find_app(token)
+            if app and policy_matches(live_policy(token, app["id"])):
+                print(f"gate restored and read back on attempt {attempt}", file=sys.stderr)
+                return True
+        except Exception as e:  # noqa: BLE001 - keep retrying through any failure
+            print(f"restore attempt {attempt} failed: {str(e)[:200]}", file=sys.stderr)
+        time.sleep(min(30, 3 * attempt))
+    print("CRITICAL: could not restore the Access application. The service is "
+          "PUBLIC and unverified. Restore it by hand immediately, or remove the "
+          "tunnel ingress rule for the hostname to take it offline.", file=sys.stderr)
+    return False
 
 
 def cmd_status(token):
@@ -243,14 +329,15 @@ def cmd_status(token):
     return 0
 
 
-def cmd_apply(token, stage, confirm=False):
+def cmd_apply(token, stage, confirm=False, expect_version=None, expect_sha=None):
     if stage == "access":
         create_access_app(token)
         return 0
 
     if stage == "public":
         # Removing the identity gate is the one operation here that *reduces*
-        # protection, so it is explicit, verified live, and self-reverting.
+        # protection, so it is explicit, verified before and after, and
+        # self-reverting.
         if not confirm:
             raise SystemExit("refusing: --stage public requires --confirm")
         _, ingress = ingress_rules(token)
@@ -258,6 +345,14 @@ def cmd_apply(token, stage, confirm=False):
             raise SystemExit(f"refusing: no tunnel ingress rule for {HOSTNAME}")
         if not dns_record(token, zone_id(token)):
             raise SystemExit(f"refusing: no DNS record for {HOSTNAME}")
+
+        # Prove the deployed build first, at the origin, while the gate is
+        # still up. The Access application is only ever deleted for a build
+        # already known to carry the guards.
+        ok, detail = origin_guards_live(expect_version, expect_sha)
+        if not ok:
+            raise SystemExit(f"refusing: {detail}")
+        print(f"origin precondition met: {detail}")
 
         app = find_app(token)
         if not app:
@@ -268,19 +363,23 @@ def cmd_apply(token, stage, confirm=False):
                 raise SystemExit(f"access app delete failed: {json.dumps(d.get('errors'))[:300]}")
             print(f"deleted Access application {app['id'][:8]}... — {HOSTNAME} is now open")
 
-        # Edge state takes a moment to propagate; poll rather than guess.
+        # Edge state takes a moment to propagate; poll rather than guess. Any
+        # failure — including an exception or an interrupt — restores the gate.
         ok, detail = False, "not probed"
-        for _ in range(20):
-            ok, detail = public_guards_live()
-            if ok:
-                break
-            time.sleep(6)
+        try:
+            for _ in range(20):
+                ok, detail = public_guards_live(expect_version, expect_sha)
+                if ok:
+                    break
+                time.sleep(6)
+        except BaseException as e:  # noqa: BLE001 - including KeyboardInterrupt
+            restore_gate_or_die(token, f"verification aborted: {str(e)[:200]}")
+            raise
 
         if not ok:
             print(f"VERIFICATION FAILED: {detail}", file=sys.stderr)
-            print("restoring the Access application (fail closed)", file=sys.stderr)
-            create_access_app(token)
-            raise SystemExit("ungate reverted: the deployed build is not the public-mode build")
+            restore_gate_or_die(token, "public verification failed")
+            raise SystemExit("ungate reverted: the deployed build did not prove its guards live")
 
         print(f"verified live: {detail}")
         print(f"{HOSTNAME} is publicly reachable, free to use, with no identity gate")
@@ -345,31 +444,47 @@ def cmd_apply(token, stage, confirm=False):
 def cmd_rollback(token, confirm):
     if not confirm:
         raise SystemExit("refusing: rollback requires --confirm")
+    failures = []
     zid = zone_id(token)
-    # Reverse of the publication order: DNS, then ingress, then Access.
+    # Reverse of the publication order: DNS, then ingress, then Access. Every
+    # mutation is checked and read back: a rollback that silently failed while
+    # reporting success is worse than one that refuses.
     record = dns_record(token, zid)
     if record:
-        call(f"/zones/{zid}/dns_records/{record['id']}", "DELETE", token=token)
-        print("deleted DNS record")
+        _, d = call(f"/zones/{zid}/dns_records/{record['id']}", "DELETE", token=token)
+        if not d.get("success") or dns_record(token, zid):
+            failures.append("DNS record still present")
+        else:
+            print("deleted DNS record")
     cfg, ingress = ingress_rules(token)
     if any(i.get("hostname") == HOSTNAME for i in ingress):
         remaining = [i for i in ingress if i.get("hostname") != HOSTNAME]
-        call(f"/accounts/{ACCOUNT}/cfd_tunnel/{TUNNEL}/configurations", "PUT",
-             {"config": {**cfg, "ingress": remaining}}, token=token)
-        print("removed ingress rule")
+        _, d = call(f"/accounts/{ACCOUNT}/cfd_tunnel/{TUNNEL}/configurations", "PUT",
+                    {"config": {**cfg, "ingress": remaining}}, token=token)
+        _, readback = ingress_rules(token)
+        if not d.get("success") or any(i.get("hostname") == HOSTNAME for i in readback):
+            failures.append("tunnel ingress rule still present")
+        else:
+            print("removed ingress rule")
     app = find_app(token)
     if app:
-        call(f"/accounts/{ACCOUNT}/access/apps/{app['id']}", "DELETE", token=token)
-        print("deleted Access application and its policies")
+        _, d = call(f"/accounts/{ACCOUNT}/access/apps/{app['id']}", "DELETE", token=token)
+        if not d.get("success") or find_app(token):
+            failures.append("Access application still present")
+        else:
+            print("deleted Access application and its policies")
+    if failures:
+        raise SystemExit("ROLLBACK INCOMPLETE — the service may still be reachable: " + "; ".join(failures))
     print("rollback complete; the origin is no longer publicly routable")
     return 0
 
 
 def cmd_regate(token):
     """Put the identity gate back in front of the service in one step."""
-    create_access_app(token)
+    if not restore_gate_or_die(token, "operator requested regate"):
+        raise SystemExit("regate failed; restore the Access application by hand")
     status, _, _ = probe_public("/api/public/config")
-    print(f"public probe now answers {status} (302 to the identity provider means the gate is live)")
+    print(f"public probe now answers {status} (a redirect to the identity provider means the gate is live)")
     return 0
 
 
@@ -380,6 +495,8 @@ def main():
     apply_parser = sub.add_parser("apply")
     apply_parser.add_argument("--stage", required=True, choices=["access", "network", "public"])
     apply_parser.add_argument("--confirm", action="store_true")
+    apply_parser.add_argument("--expect-version", help="version the deployed build must report before the gate is removed")
+    apply_parser.add_argument("--expect-sha", help="release commit the deployed build must report before the gate is removed")
     sub.add_parser("regate")
     rollback_parser = sub.add_parser("rollback")
     rollback_parser.add_argument("--confirm", action="store_true")
@@ -389,7 +506,8 @@ def main():
     if args.command == "status":
         return cmd_status(token)
     if args.command == "apply":
-        return cmd_apply(token, args.stage, args.confirm)
+        return cmd_apply(token, args.stage, args.confirm,
+                         getattr(args, "expect_version", None), getattr(args, "expect_sha", None))
     if args.command == "regate":
         return cmd_regate(token)
     if args.command == "rollback":
