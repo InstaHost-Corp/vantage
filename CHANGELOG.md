@@ -92,9 +92,13 @@ has a regression test proven to fail without it:
   count.
 - **Readiness detail is no longer public.** `/readyz` is now reachable without
   an identity gate, so database paths, driver error text and row counts are
-  served only to origin monitoring on loopback (or with
-  `VANTAGE_READYZ_DETAIL=1`). Anonymous callers get the ready/not-ready result
-  for each component and nothing else.
+  served only to a loopback caller, or with `VANTAGE_READYZ_DETAIL=1`. Every
+  other caller gets a stable reason code per component —
+  `data_volume_not_writable`, `schema_not_seeded`, `frontend_build_missing` and
+  so on — which keeps the endpoint diagnosable without publishing filesystem
+  paths. This matters operationally as well as publicly: the container is
+  reached through a published port, so even a probe run on the deployment host
+  arrives from the bridge gateway rather than loopback.
 - **Reseeding is atomic.** The scheduled reset wipes and refills 25 tables
   while requests are in flight, so it now runs in a single transaction with
   deferred foreign keys: a crash or a concurrent read can never observe a

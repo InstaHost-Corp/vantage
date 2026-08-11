@@ -151,7 +151,7 @@ web/
 | `VANTAGE_HSTS` | `0` | Always send HSTS, rather than only when the request arrived over TLS |
 | `VANTAGE_MAX_PENDING_TRUST_REQUESTS` | `200` | Cap on the anonymous Trust Center request backlog |
 | `VANTAGE_SOURCE_URL` | this repository | "Source on GitHub" link shown in the UI |
-| `VANTAGE_READYZ_DETAIL` | `0` | Serve full `/readyz` diagnostics to every caller. By default paths, driver errors and row counts go only to loopback monitoring |
+| `VANTAGE_READYZ_DETAIL` | `0` | Serve full `/readyz` diagnostics to every caller. By default paths, driver errors and row counts go only to a loopback caller; everyone else gets a reason code such as `data_volume_not_writable` |
 | `VANTAGE_ALLOW_DEMO_RESET` | `1` | Set to `0` to refuse tenant resets entirely |
 
 ## Public access and abuse resistance
@@ -244,8 +244,9 @@ hostname as well as the origin:
 
 ```sh
 curl -s https://vantage.insta.host/healthz          # version, release SHA, source digest
-curl -s https://vantage.insta.host/readyz           # per-component ready/not ready; 503 when not ready
-ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # the same plus full diagnostics, from the origin
+curl -s https://vantage.insta.host/readyz           # per-component state and reason code; 503 when not ready
+ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # the same: the container is reached through a
+                                                    # published port, so this is not a loopback caller either
 ```
 
 `/readyz` returns `503` if the database is unreachable, the schema is not

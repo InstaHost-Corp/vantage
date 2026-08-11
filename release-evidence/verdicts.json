@@ -38,5 +38,20 @@
     "lane": "release_publish",
     "reviewer": "Principal Platform SRE and Release Engineer (independent, claude-opus-4.8)",
     "verdict": "GO_PUBLISH"
+  },
+  {
+    "lane": "senior_review",
+    "reviewer": "Principal Software Engineer (independent agent)",
+    "verdict": "APPROVE"
+  },
+  {
+    "lane": "senior_review",
+    "reviewer": "Senior Security and Privacy Lead (independent agent)",
+    "verdict": "APPROVE"
+  },
+  {
+    "lane": "independent_qa",
+    "reviewer": "Senior QA and Test Lead (independent agent)",
+    "verdict": "PASS"
   }
 ]

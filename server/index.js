@@ -51,36 +51,44 @@ app.get('/healthz', (req, res) => {
 app.get('/readyz', (req, res) => {
   const checks = {};
   let ready = true;
-  // /readyz is now publicly reachable. Monitoring runs against the origin on
-  // loopback, so full diagnostics stay available where they are used while an
-  // anonymous caller is told only whether each component is ready. Paths and
-  // raw driver errors are not public reconnaissance material.
+  // /readyz is publicly reachable. Verbose detail — filesystem paths, driver
+  // error text, row counts — is operational reconnaissance, so it is served
+  // only where it is actually used. Every caller still gets a stable reason
+  // code, because a readiness endpoint that says nothing but "not ready" is
+  // useless to whoever has to fix it: in this deployment the container is
+  // reached through a published port, so even the origin monitoring path
+  // arrives from the bridge gateway rather than loopback.
   const detailed = readinessDetailAllowed(req);
-  const record = (name, ok, detail) => {
-    checks[name] = { ok, detail: detailed ? detail : (ok ? 'ok' : 'not ready') };
+  const record = (name, ok, reason, detail) => {
+    checks[name] = { ok, detail: detailed ? detail : reason };
     if (!ok) ready = false;
   };
 
   try {
     // A real query, not an assertion: proves the database file is open and readable.
     const integrity = get('PRAGMA quick_check');
-    record('database', Object.values(integrity || {})[0] === 'ok', `${DB_PATH} quick_check=${Object.values(integrity || {})[0]}`);
+    const result = Object.values(integrity || {})[0];
+    record('database', result === 'ok', result === 'ok' ? 'ok' : 'integrity_check_failed',
+      `${DB_PATH} quick_check=${result}`);
   } catch (err) {
-    record('database', false, String(err.message));
+    record('database', false, 'database_unreadable', String(err.message));
   }
   try {
     const frameworks = get('SELECT COUNT(*) AS n FROM frameworks').n;
     const tests = get('SELECT COUNT(*) AS n FROM tests').n;
     const users = get('SELECT COUNT(*) AS n FROM users').n;
-    record('schema_seeded', frameworks > 0 && tests > 0 && users > 0, `${frameworks} frameworks, ${tests} tests, ${users} users`);
+    const seeded = frameworks > 0 && tests > 0 && users > 0;
+    record('schema_seeded', seeded, seeded ? 'ok' : 'schema_not_seeded',
+      `${frameworks} frameworks, ${tests} tests, ${users} users`);
     const scan = get('SELECT MAX(last_run) AS t FROM tests').t;
     // During the first two minutes after boot a missing scan is warm-up, not a
     // fault; after that it means the engine is genuinely not running.
     const warmingUp = process.uptime() < 120;
     record('monitoring_engine', !!scan || warmingUp,
+      scan ? 'ok' : warmingUp ? 'warming_up' : 'no_scan_recorded',
       scan ? `last scan ${scan}` : warmingUp ? 'warming up, no scan yet' : 'no scan recorded');
   } catch (err) {
-    record('schema_seeded', false, String(err.message));
+    record('schema_seeded', false, 'schema_query_failed', String(err.message));
   }
   try {
     // Prove the data volume actually accepts writes. A read cannot detect a
@@ -90,11 +98,14 @@ app.get('/readyz', (req, res) => {
     db.exec('CREATE TABLE IF NOT EXISTS readiness_probe (id INTEGER PRIMARY KEY CHECK (id = 1), marker TEXT NOT NULL)');
     run('INSERT INTO readiness_probe (id, marker) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET marker = excluded.marker', probe);
     const stored = get('SELECT marker FROM readiness_probe WHERE id = 1');
-    record('database_writable', stored?.marker === probe, 'write and read back succeeded on the data volume');
+    const wrote = stored?.marker === probe;
+    record('database_writable', wrote, wrote ? 'ok' : 'write_readback_mismatch',
+      'write and read back succeeded on the data volume');
   } catch (err) {
-    record('database_writable', false, String(err.message));
+    record('database_writable', false, 'data_volume_not_writable', String(err.message));
   }
-  record('frontend_build', existsSync(join(dist, 'index.html')), dist);
+  const built = existsSync(join(dist, 'index.html'));
+  record('frontend_build', built, built ? 'ok' : 'frontend_build_missing', dist);
 
   res.status(ready ? 200 : 503).json({ ready, service: RELEASE.service, version: RELEASE.version, release_sha: RELEASE.release_sha, checks });
 });

@@ -398,13 +398,20 @@ test('PUB-6: a visitor identity submitted to the public demo is discarded, not s
 });
 
 test('PUB-7: readiness detail is not disclosed to an anonymous public caller', async () => {
-  // The suite connects over loopback, which is the origin-monitoring path, so
+  // The suite connects over loopback, which is the detail-allowed path, so
   // detail is expected here; readinessDetailAllowed covers the public case and
   // is unit-tested against tunnel and internet addresses.
   const body = await fetch(`${BASE}/readyz`).then((r) => r.json());
   assert.equal(body.ready, true);
-  assert.match(body.checks.database.detail, /quick_check=ok/, 'origin monitoring must keep full detail');
+  assert.match(body.checks.database.detail, /quick_check=ok/, 'a detail-allowed caller must keep full detail');
   assert.ok(body.checks.frontend_build.detail.includes('dist'));
+  // Every check must carry a reason code as well, because in production the
+  // container is reached through a published port and even the origin probe
+  // arrives from the bridge gateway — a redacted body still has to say what
+  // is wrong.
+  for (const name of ['database', 'schema_seeded', 'monitoring_engine', 'database_writable', 'frontend_build']) {
+    assert.equal(typeof body.checks[name].detail, 'string', `${name} lost its detail`);
+  }
 });
 
 test('PUB-8: the public config reports the guard state the ungate tooling verifies', async () => {
