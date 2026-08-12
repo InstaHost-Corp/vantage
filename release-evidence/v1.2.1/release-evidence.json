@@ -38,7 +38,7 @@
     "current_version": "1.2.0 (911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08)"
   },
   "code": {
-    "release_commit": "ce45ce42b47213d7fa470e0861441de549a3ac07",
+    "release_commit": "3203b99f392fbb60f491b28b47823c01539cd95c",
     "changed_files": [
       "CHANGELOG.md",
       "CONTRIBUTING.md",
@@ -66,7 +66,7 @@
     ],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
-    "source_digest": "sha256:dc3065377fe3cb4954701b7355e1996576a7f9be019c2957b576d4528350416d",
+    "source_digest": "sha256:dff025441c922d77e2e72ebd4698457b97fba8f510e004dee8d46a6de3f543d6",
     "configuration_digest": "pending",
     "source_artifact": {
       "definition": "Release commit tree excluding .git, node_modules, tests, release-evidence, __pycache__ and data",
