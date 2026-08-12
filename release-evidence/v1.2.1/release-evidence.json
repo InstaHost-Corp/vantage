@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1",
   "framework_version": "3.0.0",
-  "state": "QA_PASSED",
-  "outcome": "READY_FOR_RELEASE",
+  "state": "PUBLISHED",
+  "outcome": "RELEASED_PRIVATE",
   "release": {
     "id": "vantage-1.2.1",
     "product": "Vantage",
@@ -111,11 +111,11 @@
       "evidence": ""
     },
     "publish": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "PUBLISH",
+      "reviewer": "Principal Platform/SRE Release Engineer",
+      "at": "2026-08-12T04:05:31Z",
+      "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
+      "evidence": "Repository privatized before push; authenticated private=true; anonymous GitHub page/API/raw source and immutable-commit raw all return 404 (Fastly CDN purge confirmed); main fast-forwarded ecc4d71..ab95fda without force."
     }
   },
   "deployment": {
@@ -128,8 +128,8 @@
   },
   "runtime": {
     "configured_identity": "GitHub repository visibility will be private; history and refs are preserved.",
-    "active_identity": "Pre-mutation repository is public and authenticated principal has administration permission.",
-    "health": "GitHub repository page returned HTTP 200 before containment.",
+    "active_identity": "GitHub repository visibility is private=true; history and refs preserved; main fast-forwarded to ab95fda.",
+    "health": "Anonymous GitHub repository page, API, raw main source and immutable-commit raw all return HTTP 404 after containment.",
     "readiness": "Candidate is clean, zero commits behind and four commits ahead of origin/main.",
     "logs": "No application deployment is in scope."
   },
@@ -149,7 +149,7 @@
     "identity_contract": "PASS",
     "release_base_alignment": "PASS",
     "production_platform_build": "not_applicable",
-    "public_edge_verification": "PENDING: verify anonymous GitHub access becomes 404 after privatization",
+    "public_edge_verification": "PASS: anonymous page=404, api=404, raw main/README.md=404 (after Fastly CDN purge), raw commit 3211caf=404; authenticated private=true.",
     "cleanup_manifest": "PASS: temporary credential config and payload files are mode 0600 and removed after use"
   },
   "assurance": {
@@ -162,7 +162,7 @@
   },
   "recovery": {
     "pre_release_snapshot": "origin/main ecc4d7157e10de697675f5d8482d4c00045f551b",
-    "post_release_snapshot": "pending",
+    "post_release_snapshot": "private main ab95fdab32441c2ea553543c6c9f55fdc7f25cfe (fast-forward from ecc4d71)",
     "last_known_good": "origin/main ecc4d7157e10de697675f5d8482d4c00045f551b",
     "rollback_command": "Revert the source commits on private main; do not make the repository public or rewrite history.",
     "rollback_limitations": "Privatization cannot recall prior clones, caches or archival copies."
@@ -170,9 +170,9 @@
   "publication": {
     "repository_uses_github": true,
     "tag": "v1.2.1",
-    "tag_target": "final evidence commit",
+    "tag_target": "post-mutation evidence commit on private main (final evidence commit)",
     "evidence_binding_base": "79517936e4d0d1926221c45aa93f02f0244a2597",
-    "github_release": "pending",
+    "github_release": "private release at https://github.com/phamid/vantage/releases/tag/v1.2.1 (created from RELEASE_NOTES.md)",
     "release_notes": "RELEASE_NOTES.md"
   },
   "incident": null,
@@ -185,7 +185,7 @@
     "deploy_started_at": "",
     "deploy_completed_at": "",
     "live_qa_completed_at": "",
-    "published_at": "",
+    "published_at": "2026-08-12T04:05:31Z",
     "corrective_iterations": 1,
     "approval_retries": 0,
     "external_wait_minutes": 0,
@@ -233,6 +233,13 @@
       "at": "2026-08-12T04:01:31.488251+00:00",
       "actor": "Senior QA/Test Lead",
       "reason": "PASS"
+    },
+    {
+      "from": "QA_PASSED",
+      "to": "PUBLISHED",
+      "at": "2026-08-12T04:05:31Z",
+      "actor": "Principal Platform/SRE Release Engineer",
+      "reason": "Privatize-first containment executed: private=true, anonymous 404, non-force fast-forward push to main; annotated v1.2.1 tag and private Release to follow on this evidence commit."
     }
   ]
 }
