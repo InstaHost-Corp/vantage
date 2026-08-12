@@ -15,7 +15,7 @@
     "release_phase": "R3 RELEASE",
     "intent": "PRODUCTION_BOUND",
     "evidence_level": "L3 STATEFUL_SECURITY",
-    "reason": "User-facing positioning, vulnerability-response commitments, generated frontend assets and public access containment change.",
+    "reason": "Make the GitHub source private before publishing the remediated 1.2.1 source, preserving history and preventing further anonymous access.",
     "emergency_reason": null
   },
   "applicability": {
@@ -31,14 +31,14 @@
   "target": {
     "repository": "phamid/vantage",
     "branch": "copilot/compliance-remediation-20260812",
-    "host": "nas1.insta.host",
-    "application": "vantage",
-    "public_endpoint": "https://vantage.insta.host",
+    "host": "github.com",
+    "application": "phamid/vantage repository",
+    "public_endpoint": "https://github.com/phamid/vantage",
     "deployment_profile": "release-evidence/deployment-profile.json",
-    "current_version": "1.2.0 (911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08)"
+    "current_version": "public origin/main ecc4d7157e10de697675f5d8482d4c00045f551b"
   },
   "code": {
-    "release_commit": "3203b99f392fbb60f491b28b47823c01539cd95c",
+    "release_commit": "cbd760a5195215af63c26e23de28bc170e885a9d",
     "changed_files": [
       "CHANGELOG.md",
       "CONTRIBUTING.md",
@@ -66,7 +66,7 @@
     ],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
-    "source_digest": "sha256:dff025441c922d77e2e72ebd4698457b97fba8f510e004dee8d46a6de3f543d6",
+    "source_digest": "sha256:dcaf451cfb47d5c8874b5dff3bd9c43cfef77b65d0116a8b828cf0258b20f2ac",
     "configuration_digest": "pending",
     "source_artifact": {
       "definition": "Release commit tree excluding .git, node_modules, tests, release-evidence, __pycache__ and data",
@@ -126,49 +126,50 @@
     "stability_result": ""
   },
   "runtime": {
-    "configured_identity": "Production remains on 1.2.0; Cloudflare Access restored before candidate preparation.",
-    "active_identity": "Public paths independently verified HTTP 302 to Cloudflare Access.",
-    "health": "Last public pre-gate health reported 1.2.0 release 911bbfa; origin recheck blocked by unavailable SSH gateway.",
-    "readiness": "Origin recheck pending SSH transport restoration.",
-    "logs": "No application mutation has occurred."
+    "configured_identity": "GitHub repository visibility will be private; history and refs are preserved.",
+    "active_identity": "Pre-mutation repository is public and authenticated principal has administration permission.",
+    "health": "GitHub repository page returned HTTP 200 before containment.",
+    "readiness": "Candidate is clean, zero commits behind and four commits ahead of origin/main.",
+    "logs": "No application deployment is in scope."
   },
   "validation": {
     "pre_deploy_summary": "58/58 Node tests, 19/19 Python tests and frontend build PASS",
-    "contract_matrix": "PENDING",
+    "contract_matrix": "PASS",
     "review_consolidation": "not_applicable",
-    "functional_smoke": "PENDING",
+    "functional_smoke": "PASS: 58 Node tests, 19 Python tests, frontend build and 5 invariants",
     "asset_graph": "PASS",
     "visual_style_contract": "DEVIATION: pre-existing surface lacks the current estate token/theme contract; this patch changes wording only and records the full migration separately",
-    "assigned_user_journey": "PENDING",
+    "assigned_user_journey": "not_applicable",
     "restart_or_reboot": "not_applicable",
     "data_reconciliation": "not_applicable",
-    "secret_artifact_sweep": "PENDING",
+    "secret_artifact_sweep": "PASS: common credential signatures absent from the local all-ref scan; no secret-bearing output included",
     "invariant_contracts": "PASS: 5/5 repository invariants hold against the committed candidate",
-    "dependency_live_probe": "BLOCKED: off-LAN SSH alias timed out twice",
-    "identity_contract": "PASS for public Access containment; deployment identity pending",
-    "release_base_alignment": "PASS: deployed 911bbfa is an ancestor of origin/main ecc4d715",
-    "production_platform_build": "PASS: pinned Node 24 runtime exposes stable node:sqlite",
-    "public_edge_verification": "PASS for containment: /, /api/public/config and /api/dashboard return 302",
-    "cleanup_manifest": "not_applicable before deployment"
+    "dependency_live_probe": "PASS: GitHub admin permission, repo scope, zero forks and zero network members verified",
+    "identity_contract": "PASS: repository admin principal verified without displaying the credential",
+    "release_base_alignment": "PASS: origin/main is an ancestor of candidate HEAD; non-force fast-forward is valid",
+    "production_platform_build": "not_applicable",
+    "public_edge_verification": "PENDING: verify anonymous GitHub access becomes 404 after privatization",
+    "cleanup_manifest": "PASS: temporary credential config and payload files are mode 0600 and removed after use"
   },
   "assurance": {
     "architecture_delta": "PASS",
     "workflow_health": "PASS",
     "security_posture": "PASS",
     "test_traceability": "PASS",
-    "observability_baseline": "PENDING",
+    "observability_baseline": "PASS",
     "exceptions": []
   },
   "recovery": {
-    "pre_release_snapshot": "pending",
+    "pre_release_snapshot": "origin/main ecc4d7157e10de697675f5d8482d4c00045f551b",
     "post_release_snapshot": "pending",
-    "last_known_good": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
-    "rollback_command": "Pin application source back to /mnt/TailsPool/vantage/releases/911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08 and keep Cloudflare Access in place.",
-    "rollback_limitations": "Rollback and deployment cannot be proven until the recorded SSH gateway is restored."
+    "last_known_good": "origin/main ecc4d7157e10de697675f5d8482d4c00045f551b",
+    "rollback_command": "Revert the source commits on private main; do not make the repository public or rewrite history.",
+    "rollback_limitations": "Privatization cannot recall prior clones, caches or archival copies."
   },
   "publication": {
     "repository_uses_github": true,
     "tag": "v1.2.1",
+    "tag_target": "cbd760a5195215af63c26e23de28bc170e885a9d",
     "github_release": "pending",
     "release_notes": "RELEASE_NOTES.md"
   },

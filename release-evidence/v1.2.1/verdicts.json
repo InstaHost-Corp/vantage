@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "lane": "senior_review",
+    "reviewer": "Principal Software Engineer",
+    "verdict": "REVISE",
+    "at": "2026-08-12T03:41:00Z",
+    "release_commit": "3203b99f392fbb60f491b28b47823c01539cd95c",
+    "evidence": "Required source-only scope, GitHub administration verification, gate recording and explicit tag target."
+  },
+  {
+    "lane": "independent_qa",
+    "reviewer": "Senior QA/Test Lead",
+    "verdict": "PASS",
+    "at": "2026-08-12T03:41:00Z",
+    "release_commit": "3203b99f392fbb60f491b28b47823c01539cd95c",
+    "evidence": "58 Node tests, 19 Python tests, build, invariants, fast-forward ancestry and tag absence independently verified."
+  },
+  {
+    "lane": "senior_review",
+    "reviewer": "Principal Software Engineer",
+    "verdict": "REVISE",
+    "at": "2026-08-12T03:44:00Z",
+    "release_commit": "3203b99f392fbb60f491b28b47823c01539cd95c",
+    "evidence": "README requirements changed during review; refreeze and reissue all gates against the replacement content."
+  }
+]

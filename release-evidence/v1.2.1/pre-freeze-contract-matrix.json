@@ -42,26 +42,26 @@
       }
     },
     {
-      "id": "truenas-release-transport",
+      "id": "github-repository-administration",
       "category": "external_api",
-      "authoritative_source": "SSH gateway ssh-nas1.insta.host and TrueNAS midclt",
-      "version": "Cloudflare tunnel reports healthy with one active connection and ssh://192.168.100.116:22 ingress",
+      "authoritative_source": "GitHub REST API for phamid/vantage",
+      "version": "GitHub API 2022-11-28",
       "reject_conditions": [
-        "The SSH alias cannot reach nas1",
-        "Rollback cannot be executed over the same transport",
-        "Origin health and capacity cannot be read before deployment"
+        "The authenticated principal lacks repository administration permission",
+        "The credential lacks classic repo scope or equivalent fine-grained administration permission",
+        "The repository has a public fork or network member that privatization will not contain"
       ],
-      "validation_command": "ssh -o ConnectTimeout=25 -o BatchMode=yes nas1 \"midclt call system.ready\"",
-      "result": "PENDING",
-      "evidence": "The alias timed out twice on 2026-08-12. Cloudflare control-plane inspection found the tunnel healthy and ingress present, but no Access application exists for ssh-nas1.insta.host. Deployment is blocked pending an approved gateway repair.",
+      "validation_command": "Authenticated GET /repos/phamid/vantage parsed without displaying the credential",
+      "result": "PASS",
+      "evidence": "Authenticated response reported admin=true, classic repo scope present, forks_count=0 and network_count=0.",
       "live_probe": {
-        "command": "SSH through the recorded off-LAN alias with a 25-second timeout.",
-        "observed_at": "2026-08-12T03:25:00Z",
-        "observed_semantics": "The gateway timed out and produced no TrueNAS response.",
+        "command": "Authenticated GET for phamid/vantage and unauthenticated GET for a known-nonexistent repository.",
+        "observed_at": "2026-08-12T03:40:00Z",
+        "observed_semantics": "The real repository returns authenticated metadata including permissions and network counts.",
         "ran_against_production_dependency": true,
         "negative_control": {
-          "input": "Cloudflare control-plane read of the real tunnel and SSH ingress",
-          "observed_result": "Tunnel status healthy, one active connection and exact ssh://192.168.100.116:22 ingress, distinguishable from the missing end-to-end SSH response.",
+          "input": "GET /repos/phamid/vantage-definitely-not-a-repository",
+          "observed_result": "HTTP 404 rather than the authenticated 200 metadata response for the real repository.",
           "distinguishes_success": true
         }
       }
