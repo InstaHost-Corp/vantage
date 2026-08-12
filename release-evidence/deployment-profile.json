@@ -6,12 +6,12 @@
   "host": "nas1.insta.host",
   "address": "192.168.100.116",
   "ssh_identity": "operator-managed (~/.ssh/copilot-northsydney)",
-  "ssh_transport": "estate LAN direct via ssh alias 'nas1'; alias also carries ProxyCommand cloudflared access ssh --hostname ssh-nas1.insta.host for off-LAN use",
+  "ssh_transport": "off-LAN alias 'nas1' uses cloudflared access ssh --hostname ssh-nas1.insta.host; the 2026-08-12 release attempt is blocked because the SSH hostname has tunnel ingress but no Access application and the gateway timed out twice",
   "access_position": "off estate LAN (workstation 10.253.241.58); reached through the ssh alias nas1",
   "application": "vantage",
   "public_endpoint": "https://vantage.insta.host",
   "runtime": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 with release source bind-mounted read-only",
-  "ingress": "Cloudflare tunnel instahost-nas1 (40cd9ce8-5c37-4b72-afe4-698c57cd8b65) -> http://192.168.100.116:30002, no identity gate from 1.1.0 (Access application removed so the tool is free to use)",
+  "ingress": "Cloudflare tunnel instahost-nas1 (40cd9ce8-5c37-4b72-afe4-698c57cd8b65) -> http://192.168.100.116:30002, protected by Cloudflare Access while governance review is pending",
   "source_path": "/mnt/TailsPool/vantage/releases/<commit-sha>",
   "data_paths": [
    "/mnt/TailsPool/vantage/data"
@@ -54,7 +54,7 @@
   ],
   "deploy": [
    "rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' --exclude 'release-evidence' --exclude '__pycache__' --exclude 'data' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/",
-   "ssh nas1 \"midclt call -j app.update vantage <payload pinning the new release directory, APP_VERSION=1.2.0, VANTAGE_DEMO_RESET_MINUTES=1440 and VANTAGE_SESSION_DAYS=1>\""
+   "ssh nas1 \"midclt call -j app.update vantage <payload pinning the new release directory, APP_VERSION=1.2.1, VANTAGE_DEMO_RESET_MINUTES=1440 and VANTAGE_SESSION_DAYS=1>\""
   ],
   "health": [
    "ssh nas1 'curl -s http://127.0.0.1:30002/healthz'"

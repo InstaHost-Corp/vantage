@@ -1,0 +1,214 @@
+{
+  "schema_version": "2.1",
+  "framework_version": "3.0.0",
+  "state": "IMPLEMENTING",
+  "outcome": "READY_FOR_RELEASE",
+  "release": {
+    "id": "vantage-1.2.1",
+    "product": "Vantage",
+    "version": "1.2.1",
+    "type": "patch",
+    "date": "2026-08-12"
+  },
+  "routing": {
+    "implementation_route": "R2 SENIOR",
+    "release_phase": "R3 RELEASE",
+    "intent": "PRODUCTION_BOUND",
+    "evidence_level": "L3 STATEFUL_SECURITY",
+    "reason": "User-facing positioning, vulnerability-response commitments, generated frontend assets and public access containment change.",
+    "emergency_reason": null
+  },
+  "applicability": {
+    "business_rules": false,
+    "ui_or_content": true,
+    "data_migration": false,
+    "identity": true,
+    "secrets_or_sensitive_data": false,
+    "infrastructure_lifecycle": false,
+    "external_gate": true,
+    "incident": false
+  },
+  "target": {
+    "repository": "phamid/vantage",
+    "branch": "copilot/compliance-remediation-20260812",
+    "host": "nas1.insta.host",
+    "application": "vantage",
+    "public_endpoint": "https://vantage.insta.host",
+    "deployment_profile": "release-evidence/deployment-profile.json",
+    "current_version": "1.2.0 (911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08)"
+  },
+  "code": {
+    "release_commit": "pending",
+    "changed_files": [
+      "CHANGELOG.md",
+      "CONTRIBUTING.md",
+      "PROVENANCE.md",
+      "README.md",
+      "RELEASE_NOTES.md",
+      "SECURITY.md",
+      "package.json",
+      "server/index.js",
+      "tests/compliance-positioning.test.mjs",
+      "web/dist/index.html",
+      "web/dist/assets/index-B1JfeWZg.js",
+      "web/package-lock.json",
+      "web/package.json",
+      "web/src/App.jsx",
+      "web/src/api.js",
+      "web/src/pages/Login.jsx",
+      "web/src/pages/Monitoring.jsx",
+      "web/src/pages/Questionnaires.jsx",
+      "web/src/pages/TrustCenter.jsx",
+      "release-evidence/deployment-profile.json",
+      "release-evidence/v1.2.1/pre-freeze-contract-matrix.json",
+      "release-evidence/v1.2.1/release-evidence.json",
+      "release-evidence/v1.2.1/verdicts.json"
+    ],
+    "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+    "migration_image": null,
+    "source_digest": "pending",
+    "configuration_digest": "pending",
+    "source_artifact": {
+      "definition": "Release commit tree excluding .git, node_modules, tests, release-evidence, __pycache__ and data",
+      "exclusions": [
+        ".git",
+        "node_modules",
+        "tests",
+        "release-evidence",
+        "__pycache__",
+        "data"
+      ]
+    }
+  },
+  "gates": {
+    "engineering": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "qa": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "deploy": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "live_qa": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "publish": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    }
+  },
+  "deployment": {
+    "started_at": "",
+    "completed_at": "",
+    "job_ids": [],
+    "migration_result": null,
+    "stability_policy": "SHORT",
+    "stability_result": ""
+  },
+  "runtime": {
+    "configured_identity": "Production remains on 1.2.0; Cloudflare Access restored before candidate preparation.",
+    "active_identity": "Public paths independently verified HTTP 302 to Cloudflare Access.",
+    "health": "Last public pre-gate health reported 1.2.0 release 911bbfa; origin recheck blocked by unavailable SSH gateway.",
+    "readiness": "Origin recheck pending SSH transport restoration.",
+    "logs": "No application mutation has occurred."
+  },
+  "validation": {
+    "pre_deploy_summary": "58/58 Node tests, 19/19 Python tests and frontend build PASS",
+    "contract_matrix": "PENDING",
+    "review_consolidation": "not_applicable",
+    "functional_smoke": "PENDING",
+    "asset_graph": "PASS",
+    "visual_style_contract": "DEVIATION: pre-existing surface lacks the current estate token/theme contract; this patch changes wording only and records the full migration separately",
+    "assigned_user_journey": "PENDING",
+    "restart_or_reboot": "not_applicable",
+    "data_reconciliation": "not_applicable",
+    "secret_artifact_sweep": "PENDING",
+    "invariant_contracts": "PENDING until the committed dist tree is checked",
+    "dependency_live_probe": "BLOCKED: off-LAN SSH alias timed out twice",
+    "identity_contract": "PASS for public Access containment; deployment identity pending",
+    "release_base_alignment": "PASS: deployed 911bbfa is an ancestor of origin/main ecc4d715",
+    "production_platform_build": "PASS: pinned Node 24 runtime exposes stable node:sqlite",
+    "public_edge_verification": "PASS for containment: /, /api/public/config and /api/dashboard return 302",
+    "cleanup_manifest": "not_applicable before deployment"
+  },
+  "assurance": {
+    "architecture_delta": "PASS",
+    "workflow_health": "PASS",
+    "security_posture": "PASS",
+    "test_traceability": "PASS",
+    "observability_baseline": "PENDING",
+    "exceptions": []
+  },
+  "recovery": {
+    "pre_release_snapshot": "pending",
+    "post_release_snapshot": "pending",
+    "last_known_good": "911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08",
+    "rollback_command": "Pin application source back to /mnt/TailsPool/vantage/releases/911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08 and keep Cloudflare Access in place.",
+    "rollback_limitations": "Rollback and deployment cannot be proven until the recorded SSH gateway is restored."
+  },
+  "publication": {
+    "repository_uses_github": true,
+    "tag": "v1.2.1",
+    "github_release": "pending",
+    "release_notes": "RELEASE_NOTES.md"
+  },
+  "incident": null,
+  "latency": {
+    "baseline_started_at": "2026-08-12T03:07:00Z",
+    "implementation_started_at": "2026-08-12T03:16:00Z",
+    "code_frozen_at": "",
+    "engineering_completed_at": "",
+    "qa_completed_at": "",
+    "deploy_started_at": "",
+    "deploy_completed_at": "",
+    "live_qa_completed_at": "",
+    "published_at": "",
+    "corrective_iterations": 1,
+    "approval_retries": 0,
+    "external_wait_minutes": 0,
+    "avoidable_delays": [
+      "The off-LAN SSH gateway timed out twice after the Cloudflare tunnel reported healthy."
+    ],
+    "process_improvements": [
+      "Verify local, publication and deployed state separately before attributing compliance triggers.",
+      "Require consumer-position confirmation after identity control-plane changes."
+    ],
+    "learning_record": "Recorded in the personal-work-compliance private learning backlog as vantage-2026-08-12."
+  },
+  "state_history": [
+    {
+      "from": "DRAFT",
+      "to": "BASELINED",
+      "at": "2026-08-12T03:07:00Z",
+      "actor": "release-manager",
+      "reason": "Clean publication worktree created from fetched origin/main and production 1.2.0 identified."
+    },
+    {
+      "from": "BASELINED",
+      "to": "IMPLEMENTING",
+      "at": "2026-08-12T03:16:00Z",
+      "actor": "release-manager",
+      "reason": "Governance containment and source remediation implementation started."
+    }
+  ]
+}

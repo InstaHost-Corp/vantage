@@ -201,14 +201,14 @@ export default function TrustCenter() {
       <Modal open={!!request} onClose={() => setRequest(null)} title={sent ? 'Request received' : `Request ${request?.name}`}>
         {sent ? (
           <p className="text-sm text-ink-700">
-            {sentMessage || 'Thanks — our security team reviews requests within one business day. You will receive the document by email once approved.'}
+            {sentMessage || 'This demonstration request was recorded. No response, review or delivery timeframe is promised.'}
           </p>
         ) : (
           <form onSubmit={submit} className="space-y-3">
             <p className="text-sm text-ink-500">This document is shared under NDA. Tell us who you are and we will send it over.</p>
             {config?.public_demo && (
               <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                <strong>This is a public demonstration.</strong> Nothing is emailed and no document exists. Please do not
+                <strong>This is a shared fictional demonstration.</strong> Nothing is emailed and no document exists. Please do not
                 enter real details: what you type is discarded and the queue records an anonymous demonstration request.
               </p>
             )}

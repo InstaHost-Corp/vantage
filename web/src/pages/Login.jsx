@@ -15,9 +15,9 @@ function resetPhrase(minutes) {
 }
 
 const HIGHLIGHTS = [
-  ['49 automated tests', 'Continuously evaluate cloud, identity, endpoint and people data against your controls.'],
-  ['7 frameworks', 'SOC 2, ISO 27001, HIPAA, GDPR, PCI DSS, NIST CSF and ISO 42001 mapped to one control set.'],
-  ['Audit-ready evidence', 'Collect evidence automatically and share it with your auditor in one workspace.'],
+  ['49 simulated tests', 'Evaluate fictional cloud, identity, endpoint and people records against example controls.'],
+  ['7 framework baselines', 'Explore how public framework structures can map to a shared control set.'],
+  ['Evidence workflow', 'Organise fictional evidence and questionnaire drafts for human review.'],
 ];
 
 export default function Login() {
@@ -66,8 +66,8 @@ export default function Login() {
           <h1 className="text-2xl font-semibold tracking-tight">Sign in to your workspace</h1>
           <p className="mt-1 text-sm text-ink-500">
             {publicDemo
-              ? 'A free, open-source trust management platform. Sign in with any demonstration account below — no signup, no cost.'
-              : 'Automate compliance and prove trust continuously.'}
+              ? 'A shared fictional compliance-readiness sandbox. Use an authorized demonstration account below.'
+              : 'Explore compliance-readiness workflows with fictional data.'}
           </p>
 
           {/* autoComplete is off throughout: this is a shared demonstration with a
@@ -130,7 +130,7 @@ export default function Login() {
             )}
           </Card>
           <p className="mt-4 text-center text-xs text-ink-500">
-            Looking for our public security posture? <a href="/trust" className="font-medium text-brand-600 hover:underline">Visit the Trust Center</a>
+            Looking for the fictional security profile? <a href="/trust" className="font-medium text-brand-600 hover:underline">Visit the demonstration Trust Center</a>
           </p>
           <p className="mt-2 text-center text-xs text-ink-500">
             <a href={sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">
@@ -142,11 +142,11 @@ export default function Login() {
 
       <div className="hidden bg-gradient-to-br from-brand-600 via-brand-500 to-violet-500 p-12 lg:flex lg:flex-col lg:justify-center">
         <div className="max-w-md text-white">
-          <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Trust management platform</p>
-          <h2 className="mt-3 text-3xl font-semibold leading-tight tracking-tight">Compliance that proves itself, every hour.</h2>
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Fictional readiness sandbox</p>
+          <h2 className="mt-3 text-3xl font-semibold leading-tight tracking-tight">Explore control baselining without connecting real systems.</h2>
           <p className="mt-3 text-sm text-white/80">
-            Vantage connects to the systems you already use, tests your controls continuously and turns the results into
-            audit evidence, questionnaire answers and a public Trust Center.
+            Vantage evaluates seeded demonstration records and shows how tests, controls, evidence drafts,
+            questionnaire drafts and a Trust Center can fit together.
           </p>
           <div className="mt-10 space-y-5">
             {HIGHLIGHTS.map(([title, body]) => (

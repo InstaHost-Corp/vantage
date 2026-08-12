@@ -60,7 +60,7 @@ export default function Monitoring() {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Monitoring"
-        description="Every test runs continuously against live data from your connected systems. Failing tests create a remediation task with a severity-based deadline."
+        description="Every test runs against fictional demonstration records. Failing tests create an example task with a severity-based target date."
         actions={<Button variant="secondary" onClick={async () => { await post('/tests/run'); setVersion((v) => v + 1); toast('All tests re-run'); }}><Play size={14} /> Run all tests</Button>}
       />
 

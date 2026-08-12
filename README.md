@@ -7,12 +7,15 @@
 > supported by Microsoft. Nothing in this project constitutes Microsoft
 > support, a warranty, or a commitment. See the [project notice](PROJECT_NOTICE.md).
 
-**Free, open source, and live at [vantage.insta.host](https://vantage.insta.host) — no signup, no cost.**
+**Open source under the MIT licence.** The hosted demonstration at
+[vantage.insta.host](https://vantage.insta.host) is temporarily access-restricted
+while the project's governance and outside-work position are reviewed.
 
-Vantage is an independent compliance automation and trust management platform. It connects to the
-systems a company already uses, continuously tests security controls against live configuration,
-maps the results to compliance frameworks, and organises supporting evidence, questionnaire drafts
-and a public Trust Center for internal readiness work.
+Vantage is an independent, fictional compliance-readiness sandbox. It models how
+controls, test results, framework mappings, evidence drafts, questionnaires and
+a Trust Center can fit together. The included integrations are simulated records:
+this repository does not connect to Microsoft 365, Microsoft Purview, Azure,
+AWS or any other live customer environment.
 
 Vantage is intended for internal, ongoing compliance baselining—not as a one-time compliance
 claim. It helps teams maintain their posture, identify gaps and prepare evidence before a formal
@@ -20,15 +23,15 @@ engagement. Independent third-party verification is still required for SOC, ISO 
 frameworks; Vantage does not provide certification or replace independent assurance, but gives
 teams a head start before that engagement begins.
 
-Everything here is functional — the monitoring engine really evaluates data, remediation really
-changes state, and readiness percentages really recompute.
+The local engine evaluates its fictional SQLite dataset, applies simulated target
+states and recomputes internal readiness indicators. Those indicators are not a
+Microsoft Compliance Score, certification result, audit opinion, legal assessment
+or statement that an organization complies with any framework.
 
-## Try it, free
+## Hosted demonstration
 
-Open **<https://vantage.insta.host>** and sign in with **ada@northwind.io / vantage123** (also
-`marcus@northwind.io`, `sofia@northwind.io`, `dan@northwind.io`, and `auditor@keeling-cpa.com` for
-a read-only external-auditor view). The public Trust Center is at
-[`/trust`](https://vantage.insta.host/trust) and needs no account at all.
+Access is currently restricted. Authorized visitors can use the fictional
+demonstration accounts documented on the sign-in page.
 
 That instance is a **shared** demonstration containing entirely fictional data. Anything you change
 is visible to everyone else, and the whole workspace is restored to its seeded baseline **daily**.
@@ -41,7 +44,7 @@ and your session ends when you close the tab. Do not put anything real into it.
 git clone https://github.com/phamid/vantage.git && cd vantage
 npm run setup     # install frontend build tooling and build web/dist
 npm start         # http://localhost:4173
-npm test          # 49 tests, no network required
+npm test          # no network required
 ```
 
 The server has **no runtime dependencies** — it runs on Node 24+ using only
@@ -60,18 +63,32 @@ putting one on a network.
 | --- | --- |
 | **Frameworks** | 7 framework baselines — SOC 2 Type II, ISO 27001:2022, HIPAA Security Rule, GDPR, PCI DSS v4.0, NIST CSF 2.0 and ISO 42001 — with 159 requirements mapped to a single shared control set for internal gap assessment. Enable or disable any framework. |
 | **Controls** | 62 controls, each owned, described, mapped to every requirement it satisfies across all frameworks, and linked to the tests that evidence it. |
-| **Continuous monitoring** | 49 automated tests evaluate live resource data every hour. Failing tests open a remediation task with a severity-based SLA (critical 3d, high 7d, medium 14d, low 30d). |
-| **Remediation** | One-click "Fix" applies the configured target state to the failing entity, re-runs the test, and the control, internal framework-readiness indicator and Trust Center all update immediately. |
+| **Simulated monitoring** | 49 automated tests evaluate fictional resource records every hour. Failing tests create demonstration tasks with example target dates. |
+| **Simulated remediation** | One-click "Fix" changes the fictional record to its configured target state, re-runs the test, and recomputes the internal indicator. |
 | **Policies** | 22 versioned policies with approval workflow, annual review dates, per-person acceptance tracking and reminders. |
 | **Personnel** | HR-synced roster with security training, background checks, policy acceptance and offboarding access revocation. |
 | **Devices** | Endpoint posture from MDM: disk encryption, screen lock, anti-malware, OS currency, check-in recency. |
 | **Vendors** | Third-party inventory with risk tiering, sub-processor flags, SOC 2 / ISO 27001 assurance and recurring security reviews. |
 | **Risk register** | Inherent vs residual scoring, a residual risk heat map, treatment decisions, owners and due-date tracking. |
 | **Engagement preparation** | Third-party engagements with verifier details, observation windows, a PBC evidence-request list with statuses, and a supporting-evidence library. |
-| **Questionnaires** | Security questionnaire answers drafted from your live control set and approved policies, with per-answer confidence scores and review flags before use. |
-| **Trust Center** | A public, self-serve security page generated from live monitoring, with public and NDA-gated documents, a sub-processor list and an access-request queue. |
-| **Integrations** | 20 integrations (AWS, GitHub, Okta, Kandji, Rippling, Datadog, PagerDuty, Jira, Slack, GCP, Azure, Snyk, Cloudflare…) that can be connected, synced and disconnected. |
+| **Questionnaires** | Example security-questionnaire drafts generated from fictional controls and policies, always requiring human review. |
+| **Trust Center** | A demonstration security page generated from fictional monitoring data, with example documents and requests. |
+| **Integrations** | 20 simulated connector records used to demonstrate inventory and workflow concepts; no external API is called. |
 | **Inventory** | Every discovered resource with the exact configuration attributes the tests evaluate. |
+
+## Scope boundaries
+
+Vantage deliberately does not:
+
+* ingest Microsoft 365, Purview, Defender for Cloud or Azure Policy signals;
+* provide Microsoft-managed or shared-responsibility control results;
+* reproduce Microsoft Compliance Manager templates, guidance or scoring;
+* provide regulatory, legal, certification or audit advice;
+* connect to customer systems in this repository; or
+* promise support, maintenance, fixes, response times, features or availability.
+
+See [PROVENANCE.md](PROVENANCE.md) and [CONTRIBUTING.md](CONTRIBUTING.md) for
+source and contribution boundaries.
 
 ## How the monitoring engine works
 
@@ -164,7 +181,7 @@ web/
 | `VANTAGE_HSTS` | `0` | Always send HSTS, rather than only when the request arrived over TLS |
 | `VANTAGE_MAX_PENDING_TRUST_REQUESTS` | `200` | Cap on the anonymous Trust Center request backlog |
 | `VANTAGE_SOURCE_URL` | this repository | "Source on GitHub" link shown in the UI |
-| `VANTAGE_SESSION_DAYS` | `14` | Session lifetime. The public demonstration uses `1`, so a session never outlives the data it was issued against |
+| `VANTAGE_SESSION_DAYS` | `14` | Session lifetime. The shared demonstration uses `1`, so a session never outlives the data it was issued against |
 | `VANTAGE_READYZ_DETAIL` | `0` | Serve full `/readyz` diagnostics to every caller. By default paths, driver errors and row counts go only to a loopback caller; everyone else gets a reason code such as `data_volume_not_writable` |
 | `VANTAGE_ALLOW_DEMO_RESET` | `1` | Set to `0` to refuse tenant resets entirely |
 
@@ -182,11 +199,11 @@ Nothing sits in front of the hosted instance, so the application defends itself:
   visitor can write to: fields are length-capped, the address validated, the backlog capped, and the
   JSON body limit is 256 kB.
 * **No visitor identity is stored.** Anyone can sign in to the shared workspace and read the
-  access-request queue, so on the public demonstration the name, email and company submitted to that
+  access-request queue, so in shared-demo mode the name, email and company submitted to that
   form are discarded and an anonymous demonstration request is recorded instead. The requested
   document is resolved against the published catalogue rather than stored as typed, so no free-text
   field survives. A self-hosted instance keeps the requester it was given.
-* **A public Trust Center that discloses only coverage.** Control status is published as exactly two
+* **A demonstration Trust Center that discloses only coverage.** Control status is published as exactly two
   values — `verified` and `in_progress` — so a failing control is indistinguishable from an untested
   one, and the published aggregate counts controls rather than tests so its complement cannot be
   subtracted back into a live failing count.
@@ -250,7 +267,7 @@ Vantage runs on the InstaHost estate at **https://vantage.insta.host**.
 | Source | `/mnt/TailsPool/vantage/releases/<commit-sha>` |
 | Data | `/mnt/TailsPool/vantage/data` (SQLite, the only writable path) |
 | Ingress | Cloudflare tunnel `instahost-nas1` → `http://192.168.100.116:30002` |
-| Identity | **None.** The service is deliberately open so it is free to use |
+| Identity | Cloudflare Access restricts the hosted demonstration while governance review is pending |
 
 There is no build step on the host and no container image to build: `web/dist`
 is committed, the server has no dependencies, and the release commit SHA is the
@@ -258,12 +275,10 @@ immutable artifact identity.
 
 ### Health and readiness
 
-Since 1.1.0 there is no identity gate, so health can be read from the public
-hostname as well as the origin:
+Cloudflare Access protects every public path. Read health and readiness from the
+origin through the recorded SSH transport:
 
 ```sh
-curl -s https://vantage.insta.host/healthz          # version, release SHA, source digest
-curl -s https://vantage.insta.host/readyz           # per-component state and reason code; 503 when not ready
 ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # the same: the container is reached through a
                                                     # published port, so this is not a loopback caller either
 ```
@@ -280,11 +295,12 @@ routing:
 ```sh
 python3 scripts/publishctl.py status
 python3 scripts/publishctl.py apply --stage public --confirm \
-        --expect-version 1.1.0 --expect-sha <release-sha>     # remove the identity gate
+        --expect-version <version> --expect-sha <release-sha> # only after written review permits public access
 python3 scripts/publishctl.py regate                           # put it back
 ```
 
-The `public` stage fails **closed**. It proves the deployed build at the origin
+Do not run the `public` stage while governance review is pending. When public
+access is authorized, the stage fails **closed**. It proves the deployed build at the origin
 first, while the gate is still up — public-demo mode on, every guard enabled,
 and the expected version and release commit — so the Access application is only
 ever deleted for a build already known to be safe. It then re-proves the same

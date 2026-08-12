@@ -2,11 +2,11 @@
 
 ## The hosted demonstration
 
-`https://vantage.insta.host` is a **free, shared, public demonstration**. It is
-deliberately not an identity-gated system:
+`https://vantage.insta.host` is a shared demonstration with access restricted
+while the project's governance and outside-work position are reviewed:
 
-* Everyone signs in with the same published demonstration accounts and the
-  password `vantage123`. Those credentials are documented, not leaked.
+* Authorized visitors use the same demonstration accounts and the published
+  password `vantage123`. Those credentials protect no real data.
 * All data is fictional. There is no real company, no real personnel and no
   real customer data in it.
 * The workspace is shared. Anything you change is visible to every other
@@ -18,15 +18,15 @@ deliberately not an identity-gated system:
   written to the database or the logs, and the abuse throttle keys on a digest
   rather than on the address you typed.
 * Do not put real, personal or confidential information into it. Anything you
-  type into the demonstration should be treated as public and disposable.
+  type into the demonstration should be treated as shared and disposable.
 * The one form that asks for your identity — the Trust Center document request
-  — **discards it**. On the public demonstration your name, email and company
+  — **discards it**. In shared-demo mode your name, email and company
   are not stored; the queue records an anonymous demonstration request instead.
   Nothing is emailed, and no document is sent.
 
-The application enforces per-client rate limits, bounded and anonymised
-anonymous writes, browser security headers and role separation, but the
-deployment carries no availability commitment of any kind.
+The application enforces per-client rate limits, bounded and anonymised writes,
+browser security headers and role separation, but the deployment carries no
+availability, response, remediation, maintenance or support commitment.
 
 ## Reporting a vulnerability
 
@@ -42,12 +42,14 @@ against the hosted demonstration is welcome, but please do not run automated
 scanners, volumetric load or anything destructive against it — it is one small
 shared instance, and denial of service is not an interesting finding.
 
-An acknowledgement will be sent within seven days. This is a personal
-open-source project with no paid support and no bug bounty.
+Reports are reviewed on a best-effort basis. No acknowledgement, response,
+remediation or disclosure timeline is promised. This personal open-source
+project has no paid support and no bug bounty.
 
 ## Supported versions
 
-Only the latest released version receives fixes.
+There is no supported-version or maintenance commitment. Fixes may be published
+for the latest release on a best-effort basis.
 
 ## Running it yourself
 

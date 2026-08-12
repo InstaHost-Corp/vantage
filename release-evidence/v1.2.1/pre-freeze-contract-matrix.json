@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.2",
+  "release_id": "vantage-1.2.1",
+  "invariant_review": "declared",
+  "invariant_review_justification": "The release changes committed generated frontend assets and adds executable personal-project positioning boundaries.",
+  "contracts": [
+    {
+      "id": "pinned-node-runtime",
+      "category": "other",
+      "authoritative_source": "Pinned production Node image",
+      "version": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "reject_conditions": [
+        "node:sqlite is unavailable or experimental",
+        "The candidate does not run on linux/amd64"
+      ],
+      "validation_command": "docker run --rm --platform linux/amd64 -v \"$PWD\":/app:ro -w /app node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 node -e \"const {DatabaseSync}=require('node:sqlite'); console.log(process.version, typeof DatabaseSync)\"",
+      "result": "PASS",
+      "evidence": "Node v24.19.0 reported DatabaseSync as a function without an experimental warning."
+    },
+    {
+      "id": "cloudflare-access-containment",
+      "category": "external_api",
+      "authoritative_source": "Cloudflare Access control plane and public edge",
+      "version": "Cloudflare API v4",
+      "reject_conditions": [
+        "The Access application or allow policy does not match intent",
+        "Any protected public path serves the application anonymously"
+      ],
+      "validation_command": "python3 scripts/publishctl.py status && curl -sS -o /dev/null -w '%{http_code}' https://vantage.insta.host/",
+      "result": "PASS",
+      "evidence": "Access application and policy read back matching intent; /, /api/public/config and /api/dashboard independently returned HTTP 302.",
+      "live_probe": {
+        "command": "Probe the protected public hostname and compare with the previously observed ungated 200 response.",
+        "observed_at": "2026-08-12T03:16:10Z",
+        "observed_semantics": "The protected edge returns HTTP 302 to Cloudflare Access rather than application content.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "Immediate pre-convergence probe after Access control-plane creation",
+          "observed_result": "HTTP 200 from the application, distinguishable from the converged HTTP 302; the release waited for external enforcement.",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "truenas-release-transport",
+      "category": "external_api",
+      "authoritative_source": "SSH gateway ssh-nas1.insta.host and TrueNAS midclt",
+      "version": "Cloudflare tunnel reports healthy with one active connection and ssh://192.168.100.116:22 ingress",
+      "reject_conditions": [
+        "The SSH alias cannot reach nas1",
+        "Rollback cannot be executed over the same transport",
+        "Origin health and capacity cannot be read before deployment"
+      ],
+      "validation_command": "ssh -o ConnectTimeout=25 -o BatchMode=yes nas1 \"midclt call system.ready\"",
+      "result": "PENDING",
+      "evidence": "The alias timed out twice on 2026-08-12. Cloudflare control-plane inspection found the tunnel healthy and ingress present, but no Access application exists for ssh-nas1.insta.host. Deployment is blocked pending an approved gateway repair.",
+      "live_probe": {
+        "command": "SSH through the recorded off-LAN alias with a 25-second timeout.",
+        "observed_at": "2026-08-12T03:25:00Z",
+        "observed_semantics": "The gateway timed out and produced no TrueNAS response.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "Cloudflare control-plane read of the real tunnel and SSH ingress",
+          "observed_result": "Tunnel status healthy, one active connection and exact ssh://192.168.100.116:22 ingress, distinguishable from the missing end-to-end SSH response.",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "frontend-build-parity",
+      "category": "invariant",
+      "authoritative_source": "web/src and Vite build configuration",
+      "version": "Vite lockfile versions in web/package-lock.json",
+      "reject_conditions": [
+        "A clean rebuild changes committed web/dist",
+        "Published HTML references an absent content-hashed asset"
+      ],
+      "validation_command": "node scripts/verify-invariants.mjs",
+      "result": "PENDING",
+      "evidence": "Frontend build succeeds; final parity check waits for the immutable candidate commit.",
+      "invariant": {
+        "authoritative_source": "web/src and build configuration",
+        "derived_representation": "Committed web/dist served in production",
+        "recompute_command": "node scripts/verify-invariants.mjs",
+        "compares_to_authoritative_source": true
+      }
+    },
+    {
+      "id": "personal-project-boundaries",
+      "category": "invariant",
+      "authoritative_source": "PROJECT_NOTICE.md, README.md, SECURITY.md and approved scope boundaries",
+      "version": "1.2.1",
+      "reject_conditions": [
+        "Donation surfaces appear",
+        "Microsoft affiliation is implied",
+        "Support or fix timelines are promised",
+        "The fictional sandbox is described as connected to live systems"
+      ],
+      "validation_command": "node --test tests/compliance-positioning.test.mjs",
+      "result": "PASS",
+      "evidence": "The executable guard passes and is included in the 58-test Node suite.",
+      "invariant": {
+        "authoritative_source": "Personal project notice and release scope boundaries",
+        "derived_representation": "README, SECURITY and application copy",
+        "recompute_command": "node --test tests/compliance-positioning.test.mjs",
+        "compares_to_authoritative_source": true
+      }
+    }
+  ]
+}

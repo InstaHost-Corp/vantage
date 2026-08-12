@@ -148,7 +148,7 @@ function Topbar({ lastRun, onScan, scanning, onOpenNav }) {
 function DemoBanner({ nextResetAt, sourceUrl }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-b border-brand-200 bg-brand-50 px-4 py-1.5 text-center text-[11px] text-brand-800">
-      <span className="font-semibold">Free public demo.</span>
+      <span className="font-semibold">Shared fictional demo.</span>
       <span>
         Everything you change is shared with every other visitor
         {nextResetAt ? <> and resets {timeAgo(nextResetAt)}</> : null}.

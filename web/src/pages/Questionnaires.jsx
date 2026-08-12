@@ -11,7 +11,7 @@ export default function Questionnaires() {
     <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Security questionnaires"
-        description="Answer inbound security reviews in minutes. Vantage drafts answers from your live control set and approved policies, and flags anything that needs a human."
+        description="Explore questionnaire drafting from fictional controls and policies. Every answer requires human review before any real use."
       />
 
       <div className="grid gap-5 md:grid-cols-2">

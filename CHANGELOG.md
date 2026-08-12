@@ -5,6 +5,21 @@ All notable changes to Vantage are documented here. This project follows
 
 ## Unreleased
 
+## [1.2.1] - 2026-08-12
+
+- Restricted the hosted demonstration behind Cloudflare Access while the
+  project's governance and outside-work position are reviewed.
+- Reframed Vantage as a fictional compliance-readiness sandbox with simulated
+  connectors rather than a live compliance service.
+- Documented explicit boundaries from Microsoft Purview Compliance Manager,
+  Microsoft-managed controls, regulatory advice, certification and compliance
+  scoring.
+- Removed vulnerability-response and fix-time commitments in favour of
+  best-effort wording.
+- Added public provenance and contribution boundaries.
+- Added an executable regression test preventing donation surfaces, implied
+  Microsoft affiliation, support commitments and overstated product claims.
+
 - Repositioned Vantage as an independent, continuous internal compliance
   baselining and engagement-preparation tool.
 - Clarified that Vantage does not provide certification or replace independent

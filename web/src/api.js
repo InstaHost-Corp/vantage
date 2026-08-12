@@ -1,6 +1,6 @@
 const TOKEN_KEY = 'vantage.token';
 
-// sessionStorage only: this is a shared public demonstration, so the session
+// sessionStorage only: this is a shared demonstration, so the session
 // must not outlive the browser tab. When sessionStorage is unavailable the
 // fallback is memory, never localStorage — a fallback that quietly persisted
 // the token would defeat the whole point.
