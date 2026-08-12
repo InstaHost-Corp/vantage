@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "3.0.0",
-  "state": "ENGINEERING_APPROVED",
+  "state": "QA_PASSED",
   "outcome": "READY_FOR_RELEASE",
   "release": {
     "id": "vantage-1.2.1",
@@ -90,11 +90,11 @@
       "evidence": "Tests, ancestry, README truthfulness, source-only notes, history preservation and privacy-first sequencing independently verified."
     },
     "qa": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "PASS",
+      "reviewer": "Senior QA/Test Lead",
+      "at": "2026-08-12T03:56:00Z",
+      "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
+      "evidence": "58 Node tests, 19 Python tests, frontend build, five invariants, positioning guard, ancestry and tag absence independently verified."
     },
     "deploy": {
       "verdict": "",
@@ -226,6 +226,13 @@
       "at": "2026-08-12T03:56:58.848910+00:00",
       "actor": "Principal Software Engineer",
       "reason": "APPROVE"
+    },
+    {
+      "from": "ENGINEERING_APPROVED",
+      "to": "QA_PASSED",
+      "at": "2026-08-12T04:01:31.488251+00:00",
+      "actor": "Senior QA/Test Lead",
+      "reason": "PASS"
     }
   ]
 }
