@@ -1,72 +1,66 @@
-# Vantage 1.2.1 - governance containment
+# Vantage 1.2.1 - private source containment
 
 | | |
 |---|---|
 | **Release** | 1.2.1 |
-| **Type** | Patch - positioning, governance and access containment |
-| **Service** | `vantage` |
-| **Endpoint** | https://vantage.insta.host |
-| **Target** | `nas1.insta.host`, application `vantage` |
-| **Previous release** | 1.2.0 (`911bbfa...`) |
+| **Type** | Patch - source positioning and repository containment |
+| **Repository** | `phamid/vantage` |
+| **Publication model** | Private GitHub repository |
+| **Previous public main** | `ecc4d7157e10de697675f5d8482d4c00045f551b` |
 
 ## What changed
 
-- The hosted demonstration is restricted behind Cloudflare Access while the
-  project's outside-work, ownership and competition position is reviewed.
-- Public documentation and application copy now describe Vantage as a
-  fictional compliance-readiness sandbox. Its connectors are simulated and do
-  not call Microsoft 365, Purview, Azure, AWS or customer systems.
-- Scope boundaries distinguish the project from Microsoft Purview Compliance
-  Manager: no Microsoft-managed/shared controls, Purview templates, Microsoft
-  Compliance Score, regulatory advice, certification or audit opinion.
-- `SECURITY.md` no longer promises acknowledgement or fix timelines.
-- `PROVENANCE.md` and `CONTRIBUTING.md` establish public source and contribution
-  boundaries.
-- A regression test prevents donation surfaces, support commitments, implied
-  Microsoft affiliation and overstated live-product claims from returning.
+- Repositioned Vantage as an open-source compliance-readiness, baselining and
+  educational reference implementation that complements enterprise governance
+  platforms such as Microsoft Purview.
+- Made the current implementation boundaries explicit: fictional seeded data,
+  simulated connectors, no live Microsoft or customer integration, and no
+  Microsoft-managed/shared controls or Microsoft Compliance Score.
+- Removed hosted-demo promotion and deployment details from the README.
+- Removed vulnerability-response and fix-time commitments.
+- Added public provenance and contribution boundaries.
+- Added an executable regression test preventing donation surfaces, implied
+  Microsoft affiliation, support commitments and inaccurate live-system claims.
 
-## Behaviour changes
+## Repository containment
 
-- Anonymous visitors are redirected to Cloudflare Access.
-- Authorized visitors see clearer fictional/simulated wording throughout the
-  sign-in, monitoring, questionnaire and Trust Center journeys.
-- No API, schema, seeded data or remediation behavior changes.
+The repository is made private before the remediated commits are pushed to
+`main`. Existing Git history is preserved; there is no force push, commit
+deletion or evidence rewriting.
 
-## Security and privacy
+After privatization:
 
-- Containment preserves Git and deployment history; no evidence was deleted.
-- No credential, identity-provider or customer data changes are included.
-- Vulnerability reporting remains private and best effort, with no response,
-  remediation, support or maintenance commitment.
+- anonymous repository and source access must return `404`;
+- authenticated metadata must report `private=true`;
+- `main` must fast-forward to the reviewed evidence tip;
+- the annotated `v1.2.1` tag and GitHub Release remain private.
 
-## Deployment
+## Validation
 
-Deploy the immutable release commit using the existing read-only source mount,
-with `APP_VERSION=1.2.1`, the existing reset/session settings and the Access
-application left in place.
+- 58 Node tests pass.
+- 19 Python tests pass.
+- The frontend build succeeds.
+- All five repository invariants pass.
+- The source-positioning regression guard passes.
+- The candidate is a non-force fast-forward from the previous public `main`.
+- GitHub administration permission, repository scope, zero forks and zero
+  network members were verified before containment.
+
+## Application deployment
+
+No application deployment is included in this source release. The separately
+hosted service remains access-gated on its existing application version.
 
 ## Rollback
 
-Pin the application to release `911bbfa1e75cf59d992e05fc6bb12d34ad8e9d08`.
-Keep Cloudflare Access in place independently of application rollback.
+Keep the repository private. If source behavior must be reverted, create normal
+revert commits on private `main`; do not make the repository public, force-push
+or rewrite history.
 
-## Remaining external gate
+## Residual risk
 
-This release reduces exposure and product-positioning risk. It does not resolve
-Employee Agreement ownership, outside-work permission, competition, provenance
-or conflict-of-interest questions. Written guidance from the appropriate
-manager, AskHR/outside-work channel and CELA remains required before public
-ungating, promotion, customer-specific work, compensation or support promises.
-
-Production deployment is also blocked off-LAN: the recorded `ssh-nas1.insta.host`
-tunnel ingress is healthy, but the hostname has no Cloudflare Access application
-and the SSH alias timed out twice. Repairing or creating that administrative
-gateway requires separate infrastructure approval.
-
-## Known release deviation
-
-The existing application predates the current InstaHost visual token contract.
-`stylectl.py web/dist/index.html` reports the pre-existing missing theme/token
-system. This patch changes wording only, not color, layout, navigation or
-responsive structure. A full visual-system migration is intentionally not folded
-into a governance-containment patch.
+Repository privatization prevents future anonymous GitHub access but cannot
+recall clones, downloads, browser/search caches, archives or screenshots made
+while the repository was public. Any previously exposed secret would require
+rotation rather than relying on privatization; no common credential signatures
+were found in the local all-ref scan.

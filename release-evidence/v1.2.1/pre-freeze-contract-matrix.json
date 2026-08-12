@@ -18,30 +18,6 @@
       "evidence": "Node v24.19.0 reported DatabaseSync as a function without an experimental warning."
     },
     {
-      "id": "cloudflare-access-containment",
-      "category": "external_api",
-      "authoritative_source": "Cloudflare Access control plane and public edge",
-      "version": "Cloudflare API v4",
-      "reject_conditions": [
-        "The Access application or allow policy does not match intent",
-        "Any protected public path serves the application anonymously"
-      ],
-      "validation_command": "python3 scripts/publishctl.py status && curl -sS -o /dev/null -w '%{http_code}' https://vantage.insta.host/",
-      "result": "PASS",
-      "evidence": "Access application and policy read back matching intent; /, /api/public/config and /api/dashboard independently returned HTTP 302.",
-      "live_probe": {
-        "command": "Probe the protected public hostname and compare with the previously observed ungated 200 response.",
-        "observed_at": "2026-08-12T03:16:10Z",
-        "observed_semantics": "The protected edge returns HTTP 302 to Cloudflare Access rather than application content.",
-        "ran_against_production_dependency": true,
-        "negative_control": {
-          "input": "Immediate pre-convergence probe after Access control-plane creation",
-          "observed_result": "HTTP 200 from the application, distinguishable from the converged HTTP 302; the release waited for external enforcement.",
-          "distinguishes_success": true
-        }
-      }
-    },
-    {
       "id": "github-repository-administration",
       "category": "external_api",
       "authoritative_source": "GitHub REST API for phamid/vantage",
