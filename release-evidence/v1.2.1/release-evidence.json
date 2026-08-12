@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "3.0.0",
-  "state": "IMPLEMENTING",
+  "state": "ENGINEERING_APPROVED",
   "outcome": "READY_FOR_RELEASE",
   "release": {
     "id": "vantage-1.2.1",
@@ -67,9 +67,10 @@
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
     "source_digest": "sha256:c48df7701ee73f661aa8d8a0067b3dae775ad7cb288c15914f242c9a5094d8ab",
-    "configuration_digest": "pending",
+    "configuration_digest": "not_applicable - source-only GitHub release",
     "source_artifact": {
       "definition": "Release commit tree excluding .git, node_modules, tests, release-evidence, __pycache__ and data",
+      "recompute_command": "git ls-tree -r --name-only <source-commit> | filter exclusions; hash each git object with SHA-256; sort the manifest; hash the manifest with SHA-256",
       "exclusions": [
         ".git",
         "node_modules",
@@ -82,11 +83,11 @@
   },
   "gates": {
     "engineering": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "APPROVE",
+      "reviewer": "Principal Software Engineer",
+      "at": "2026-08-12T03:52:00Z",
+      "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
+      "evidence": "Tests, ancestry, README truthfulness, source-only notes, history preservation and privacy-first sequencing independently verified."
     },
     "qa": {
       "verdict": "",
@@ -135,7 +136,7 @@
   "validation": {
     "pre_deploy_summary": "58/58 Node tests, 19/19 Python tests and frontend build PASS",
     "contract_matrix": "PASS",
-    "review_consolidation": "not_applicable",
+    "review_consolidation": "PASS",
     "functional_smoke": "PASS: 58 Node tests, 19 Python tests, frontend build and 5 invariants",
     "asset_graph": "PASS",
     "visual_style_contract": "DEVIATION: pre-existing surface lacks the current estate token/theme contract; this patch changes wording only and records the full migration separately",
@@ -143,10 +144,10 @@
     "restart_or_reboot": "not_applicable",
     "data_reconciliation": "not_applicable",
     "secret_artifact_sweep": "PASS: common credential signatures absent from the local all-ref scan; no secret-bearing output included",
-    "invariant_contracts": "PASS: 5/5 repository invariants hold against the committed candidate",
-    "dependency_live_probe": "PASS: GitHub admin permission, repo scope, zero forks and zero network members verified",
-    "identity_contract": "PASS: repository admin principal verified without displaying the credential",
-    "release_base_alignment": "PASS: origin/main is an ancestor of candidate HEAD; non-force fast-forward is valid",
+    "invariant_contracts": "PASS",
+    "dependency_live_probe": "PASS",
+    "identity_contract": "PASS",
+    "release_base_alignment": "PASS",
     "production_platform_build": "not_applicable",
     "public_edge_verification": "PENDING: verify anonymous GitHub access becomes 404 after privatization",
     "cleanup_manifest": "PASS: temporary credential config and payload files are mode 0600 and removed after use"
@@ -170,6 +171,7 @@
     "repository_uses_github": true,
     "tag": "v1.2.1",
     "tag_target": "final evidence commit",
+    "evidence_binding_base": "79517936e4d0d1926221c45aa93f02f0244a2597",
     "github_release": "pending",
     "release_notes": "RELEASE_NOTES.md"
   },
@@ -210,6 +212,20 @@
       "at": "2026-08-12T03:16:00Z",
       "actor": "release-manager",
       "reason": "Governance containment and source remediation implementation started."
+    },
+    {
+      "from": "IMPLEMENTING",
+      "to": "CODE_FROZEN",
+      "at": "2026-08-12T03:56:58.798166+00:00",
+      "actor": "release-manager",
+      "reason": "Final source commit 3211caf validated; contract matrix and evidence checks pass"
+    },
+    {
+      "from": "CODE_FROZEN",
+      "to": "ENGINEERING_APPROVED",
+      "at": "2026-08-12T03:56:58.848910+00:00",
+      "actor": "Principal Software Engineer",
+      "reason": "APPROVE"
     }
   ]
 }
