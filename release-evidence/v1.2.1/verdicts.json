@@ -46,5 +46,21 @@
     "at": "2026-08-12T03:56:00Z",
     "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
     "evidence": "Final source candidate, README truthfulness, tests, build, invariants, fast-forward ancestry and tag absence independently verified."
+  },
+  {
+    "lane": "release_deploy",
+    "reviewer": "Principal Platform/SRE Release Engineer",
+    "verdict": "GO_DEPLOY",
+    "at": "2026-08-12T04:05:00Z",
+    "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
+    "evidence": "Privacy-first GitHub mutation approved and executed without force push, deletion or history rewrite."
+  },
+  {
+    "lane": "live_qa",
+    "reviewer": "Independent Live QA Lead",
+    "verdict": "PASS_LIVE",
+    "at": "2026-08-12T04:14:00Z",
+    "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
+    "evidence": "Private visibility, anonymous 404, authenticated metadata, main/tag identity, release state and linear history independently verified."
   }
 ]
