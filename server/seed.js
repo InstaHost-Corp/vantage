@@ -81,7 +81,7 @@ const integrations = [
   ['jira', 'Jira', 'Ticketing', 'Links change tickets and remediation tasks to controls.', 'connected', 'northwind.atlassian.net'],
   ['snyk', 'Snyk', 'Vulnerability management', 'Imports dependency and container vulnerability findings with SLA tracking.', 'available', null],
   ['cloudflare', 'Cloudflare', 'Network & CDN', 'Checks WAF, TLS configuration and DDoS protection settings.', 'available', null],
-  ['vanta-agent', 'Vantage Agent', 'Endpoint agent', 'Lightweight agent reporting endpoint posture for unmanaged and BYOD machines.', 'connected', '19 installs'],
+  ['vantage-agent', 'Vantage Agent', 'Endpoint agent', 'Lightweight agent reporting endpoint posture for unmanaged and BYOD machines.', 'connected', '19 installs'],
   ['slack', 'Slack', 'Collaboration', 'Delivers control failure alerts and policy acceptance reminders.', 'connected', 'northwind.slack.com'],
   ['1password', '1Password', 'Secrets management', 'Verifies vault membership, master password policy and shared item hygiene.', 'available', null],
   ['stripe', 'Stripe', 'Payments', 'Monitors API key hygiene and account access for the payments environment.', 'available', null],
@@ -122,7 +122,7 @@ const resources = [
   R('aws', 'aws_ec2_instance', 'i-0f45a2', 'build-runner-1', 'us-east-1c', 'Engineering', { ebs_encrypted: true, imdsv2_required: true, public_ip: false }),
   // RDS
   R('aws', 'aws_rds_instance', 'northwind-prod-pg', 'northwind-prod-pg', 'us-east-1', 'Platform', { encrypted: true, backup_retention_days: 30, publicly_accessible: false, multi_az: true }),
-  R('aws', 'aws_rds_instance', 'northwind-prod-replica', 'northwind-prod-replica', 'us-west-2', 'Platform', { encrypted: true, backup_retention_days: 14, publicly_accessible: false, multi_az: true }),
+  R('aws', 'aws_rds_instance', 'northwind-prod-standby', 'northwind-prod-standby', 'us-west-2', 'Platform', { encrypted: true, backup_retention_days: 14, publicly_accessible: false, multi_az: true }),
   R('aws', 'aws_rds_instance', 'northwind-analytics-pg', 'northwind-analytics-pg', 'us-east-1', 'Data', { encrypted: true, backup_retention_days: 3, publicly_accessible: false, multi_az: true }),
   R('aws', 'aws_rds_instance', 'northwind-staging-pg', 'northwind-staging-pg', 'us-east-2', 'Engineering', { encrypted: true, backup_retention_days: 7, publicly_accessible: false, multi_az: true }),
   // Network

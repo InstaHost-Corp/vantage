@@ -3,6 +3,8 @@
   "private": true,
   "version": "1.2.0",
   "type": "module",
+  "author": "Patrick Hamid",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

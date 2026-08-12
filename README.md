@@ -1,13 +1,24 @@
-# Vantage — Trust Management Platform
+# Vantage — Continuous Compliance Baselining
 
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-6558f5.svg)](LICENSE)
 
+> **Independent personal project.** Vantage is created and maintained by
+> **Patrick Hamid**. It is not endorsed by, sponsored by, affiliated with, or
+> supported by Microsoft. Nothing in this project constitutes Microsoft
+> support, a warranty, or a commitment. See the [project notice](PROJECT_NOTICE.md).
+
 **Free, open source, and live at [vantage.insta.host](https://vantage.insta.host) — no signup, no cost.**
 
-A working replica of [vanta.com](https://www.vanta.com): a compliance automation and trust
-management platform. Vantage connects to the systems a company already uses, continuously tests
-its security controls against live configuration, maps the results to compliance frameworks, and
-turns them into audit evidence, questionnaire answers and a public Trust Center.
+Vantage is an independent compliance automation and trust management platform. It connects to the
+systems a company already uses, continuously tests security controls against live configuration,
+maps the results to compliance frameworks, and organises supporting evidence, questionnaire drafts
+and a public Trust Center for internal readiness work.
+
+Vantage is intended for internal, ongoing compliance baselining—not as a one-time compliance
+claim. It helps teams maintain their posture, identify gaps and prepare evidence before a formal
+engagement. Independent third-party verification is still required for SOC, ISO and similar
+frameworks; Vantage does not provide certification or replace independent assurance, but gives
+teams a head start before that engagement begins.
 
 Everything here is functional — the monitoring engine really evaluates data, remediation really
 changes state, and readiness percentages really recompute.
@@ -47,17 +58,17 @@ putting one on a network.
 
 | Area | Capability |
 | --- | --- |
-| **Frameworks** | 7 frameworks — SOC 2 Type II, ISO 27001:2022, HIPAA Security Rule, GDPR, PCI DSS v4.0, NIST CSF 2.0 and ISO 42001 — with 159 requirements mapped to a single shared control set. Enable or disable any framework. |
+| **Frameworks** | 7 framework baselines — SOC 2 Type II, ISO 27001:2022, HIPAA Security Rule, GDPR, PCI DSS v4.0, NIST CSF 2.0 and ISO 42001 — with 159 requirements mapped to a single shared control set for internal gap assessment. Enable or disable any framework. |
 | **Controls** | 62 controls, each owned, described, mapped to every requirement it satisfies across all frameworks, and linked to the tests that evidence it. |
 | **Continuous monitoring** | 49 automated tests evaluate live resource data every hour. Failing tests open a remediation task with a severity-based SLA (critical 3d, high 7d, medium 14d, low 30d). |
-| **Remediation** | One-click "Fix" applies the compliant configuration to the failing entity, re-runs the test, and the control, framework readiness and Trust Center all update immediately. |
+| **Remediation** | One-click "Fix" applies the configured target state to the failing entity, re-runs the test, and the control, internal framework-readiness indicator and Trust Center all update immediately. |
 | **Policies** | 22 versioned policies with approval workflow, annual review dates, per-person acceptance tracking and reminders. |
 | **Personnel** | HR-synced roster with security training, background checks, policy acceptance and offboarding access revocation. |
 | **Devices** | Endpoint posture from MDM: disk encryption, screen lock, anti-malware, OS currency, check-in recency. |
 | **Vendors** | Third-party inventory with risk tiering, sub-processor flags, SOC 2 / ISO 27001 assurance and recurring security reviews. |
 | **Risk register** | Inherent vs residual scoring, a residual risk heat map, treatment decisions, owners and due-date tracking. |
-| **Audit hub** | Audits with auditor details, observation windows, a PBC evidence-request list with statuses, and an evidence library. |
-| **Questionnaires** | Security questionnaires answered automatically from your live control set and approved policies, with per-answer confidence scores and review flags. |
+| **Engagement preparation** | Third-party engagements with verifier details, observation windows, a PBC evidence-request list with statuses, and a supporting-evidence library. |
+| **Questionnaires** | Security questionnaire answers drafted from your live control set and approved policies, with per-answer confidence scores and review flags before use. |
 | **Trust Center** | A public, self-serve security page generated from live monitoring, with public and NDA-gated documents, a sub-processor list and an access-request queue. |
 | **Integrations** | 20 integrations (AWS, GitHub, Okta, Kandji, Rippling, Datadog, PagerDuty, Jira, Slack, GCP, Azure, Snyk, Cloudflare…) that can be connected, synced and disconnected. |
 | **Inventory** | Every discovered resource with the exact configuration attributes the tests evaluate. |
@@ -89,9 +100,10 @@ reason, sets the test status, and assigns or clears the remediation deadline. St
 entity result → test status → control status → requirement status → framework readiness
 ```
 
-Framework readiness is control-weighted — the share of a framework's mapped controls that are not
-failing — which is how compliance platforms report it. A requirement is "at risk" if any control
-mapped to it is failing.
+The internal framework-readiness indicator is control-weighted — the share of a framework's mapped
+controls that are not failing. It is an operational baseline for finding and tracking gaps, not a
+certification result, audit opinion or statement of conformity. A requirement is "at risk" if any
+control mapped to it is failing.
 
 Adding a new test is a single row: give it a control, a severity, an integration and a rule.
 
@@ -212,7 +224,7 @@ POST   /api/demo/reset                      → restore the seeded baseline
 
 1. Sign in and note the readiness ring on the dashboard (~73%).
 2. Open **Monitoring → Failing**, pick *AWS IAM users have MFA enabled*, and read the two
-   non-compliant IAM users with the exact reason each failed.
+   IAM users that do not meet the configured MFA rule, with the exact reason each failed.
 3. Hit **Fix all** — the test flips to passing and the deadline clears.
 4. Go back to the dashboard: the passing-test count has moved, but framework readiness has **not**.
    That is the control weighting working, not a bug: readiness counts controls, and *AC-02
@@ -221,7 +233,7 @@ POST   /api/demo/reset                      → restore the seeded baseline
 5. Fix that one too and readiness moves. Or try *Endpoints have disk encryption enabled*, the only
    test on its control, where a single fix moves readiness immediately.
 6. Open **Questionnaires → Security review — renewal** and press **Auto-answer**.
-7. Visit `/trust` in a private window, request the SOC 2 report, then approve it under
+7. Visit `/trust` in a private window, request the demonstration SOC 2 report, then approve it under
    **Trust Center**. On the hosted demonstration the details you type are discarded — the queue
    records an anonymous request.
 8. **Settings → Reset demo data** puts everything back.

@@ -3,7 +3,9 @@
   "version": "1.2.0",
   "private": true,
   "type": "module",
-  "description": "Vantage - automated trust and compliance management platform",
+  "description": "Continuous internal compliance baselining and preparation for independent SOC and ISO verification",
+  "author": "Patrick Hamid",
+  "license": "MIT",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",

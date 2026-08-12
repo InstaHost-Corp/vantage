@@ -3,6 +3,17 @@
 All notable changes to Vantage are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+- Repositioned Vantage as an independent, continuous internal compliance
+  baselining and engagement-preparation tool.
+- Clarified that Vantage does not provide certification or replace independent
+  third-party SOC, ISO or similar assurance.
+- Added a project notice identifying Vantage as Patrick Hamid's personal
+  project and stating that it is not Microsoft-endorsed and does not constitute
+  Microsoft support, a warranty, or a commitment.
+- Removed product-comparison language and related seeded identifiers.
+
 ## [1.2.0] - 2026-08-11
 
 The hosted instance is a demonstration, and this release makes it behave like
