@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1",
   "framework_version": "3.0.0",
-  "state": "LIVE_QA_PASSED",
-  "outcome": "DEPLOYED_NOT_PUBLISHED",
+  "state": "PUBLISHED",
+  "outcome": "RELEASED",
   "release": {
     "id": "vantage-1.2.1",
     "product": "Vantage",
@@ -111,11 +111,11 @@
       "evidence": "Anonymous page/API/raw/release surfaces return 404; authenticated repo is private with zero forks/network members; main, annotated tag and private Release resolve to 3079a8b."
     },
     "publish": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "GO_PUBLISH",
+      "reviewer": "Principal Platform/SRE Release Engineer",
+      "at": "2026-08-12T04:18:00Z",
+      "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
+      "evidence": "Private visibility, anonymous 404 containment, stable annotated tag/private Release, unchanged source and PASS_LIVE evidence verified."
     }
   },
   "deployment": {
@@ -185,7 +185,7 @@
     "deploy_started_at": "",
     "deploy_completed_at": "",
     "live_qa_completed_at": "",
-    "published_at": "",
+    "published_at": "2026-08-12T04:18:00Z",
     "corrective_iterations": 1,
     "approval_retries": 0,
     "external_wait_minutes": 0,
@@ -261,6 +261,20 @@
       "at": "2026-08-12T04:14:00Z",
       "actor": "Independent Live QA Lead",
       "reason": "PASS_LIVE"
+    },
+    {
+      "from": "LIVE_QA_PASSED",
+      "to": "GO_PUBLISH",
+      "at": "2026-08-12T04:11:45.494944+00:00",
+      "actor": "Principal Platform/SRE Release Engineer",
+      "reason": "GO_PUBLISH"
+    },
+    {
+      "from": "GO_PUBLISH",
+      "to": "PUBLISHED",
+      "at": "2026-08-12T04:11:45.545865+00:00",
+      "actor": "release-manager",
+      "reason": "Private v1.2.1 tag and GitHub Release verified; anonymous source unavailable"
     }
   ]
 }

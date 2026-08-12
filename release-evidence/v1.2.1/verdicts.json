@@ -62,5 +62,13 @@
     "at": "2026-08-12T04:14:00Z",
     "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
     "evidence": "Private visibility, anonymous 404, authenticated metadata, main/tag identity, release state and linear history independently verified."
+  },
+  {
+    "lane": "release_publish",
+    "reviewer": "Principal Platform/SRE Release Engineer",
+    "verdict": "GO_PUBLISH",
+    "at": "2026-08-12T04:18:00Z",
+    "release_commit": "3211caf5eaa53db017340ac93524ea0cdfbda9f2",
+    "evidence": "Stable private tag and Release, evidence-only post-tag commit, anonymous containment and PASS_LIVE verified."
   }
 ]
