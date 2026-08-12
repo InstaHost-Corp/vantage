@@ -25,7 +25,7 @@ test('personal-project boundaries stay explicit', () => {
 
   assert.match(notice, /personal project/i);
   assert.match(notice, /not endorsed by, sponsored by, affiliated with, or supported by\s+Microsoft/i);
-  assert.match(readme, /fictional compliance-readiness sandbox/i);
+  assert.match(readme, /current\s+repository uses a fictional, seeded SQLite dataset/i);
   assert.match(readme, /does not connect to Microsoft 365, Microsoft Purview, Azure/i);
   assert.match(security, /best-effort basis/i);
 
