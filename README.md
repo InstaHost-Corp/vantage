@@ -7,9 +7,7 @@
 > supported by Microsoft. Nothing in this project constitutes Microsoft
 > support, a warranty, or a commitment. See the [project notice](PROJECT_NOTICE.md).
 
-**Open source under the MIT licence.** The hosted demonstration at
-[vantage.insta.host](https://vantage.insta.host) is temporarily access-restricted
-while the project's governance and outside-work position are reviewed.
+**Open source under the MIT licence.**
 
 Vantage is an independent, fictional compliance-readiness sandbox. It models how
 controls, test results, framework mappings, evidence drafts, questionnaires and
@@ -28,16 +26,6 @@ states and recomputes internal readiness indicators. Those indicators are not a
 Microsoft Compliance Score, certification result, audit opinion, legal assessment
 or statement that an organization complies with any framework.
 
-## Hosted demonstration
-
-Access is currently restricted. Authorized visitors can use the fictional
-demonstration accounts documented on the sign-in page.
-
-That instance is a **shared** demonstration containing entirely fictional data. Anything you change
-is visible to everyone else, and the whole workspace is restored to its seeded baseline **daily**.
-Nothing you type is stored: the credentials are pre-filled, the browser is asked not to save them,
-and your session ends when you close the tab. Do not put anything real into it.
-
 ## Run your own
 
 ```
@@ -51,7 +39,7 @@ The server has **no runtime dependencies** — it runs on Node 24+ using only
 `node:` builtins, including `node:sqlite`. `npm install` at the root installs
 nothing; only the frontend build needs packages.
 
-A self-hosted instance is private by default: no public-demo banner and **no**
+A local instance is private by default: no shared-sandbox banner and **no**
 scheduled data reset. Change the seeded passwords in `server/seed.js` before
 putting one on a network.
 
@@ -139,7 +127,7 @@ server/
   db.js               schema + helpers (node:sqlite, no native deps)
   engine.js           rule evaluation, status roll-up, readiness maths
   seed-frameworks.js  frameworks, requirements, controls, test definitions
-  seed.js             demo tenant: people, devices, cloud resources, vendors, risks, audits
+  seed.js             sandbox tenant: people, devices, cloud resources, vendors, risks, audits
   index.js            REST API, auth, remediation actions, static hosting, hourly scan loop
 web/
   src/ui.jsx          design system (cards, pills, donut, tables, drawers, toasts)
@@ -164,7 +152,7 @@ web/
 | `npm start` | Run the app on `PORT` (default 4173) |
 | `npm run dev` | Run the API with file watching |
 | `npm run build` | Rebuild the frontend |
-| `npm run seed` | Reset the database to the seeded demo tenant |
+| `npm run seed` | Reset the database to the seeded sandbox tenant |
 | `npm --prefix web run dev` | Vite dev server on 5173, proxying `/api` to 4173 |
 
 ### Environment
@@ -174,20 +162,20 @@ web/
 | `PORT` | `4173` | HTTP port |
 | `VANTAGE_DB` | `data/vantage.db` | SQLite file location |
 | `VANTAGE_SCAN_MINUTES` | `60` | Continuous monitoring interval |
-| `VANTAGE_PUBLIC_DEMO` | `0` | Announce a free shared demonstration in the UI and default the reset cadence on |
-| `VANTAGE_DEMO_RESET_MINUTES` | `1440` (daily) when public, else `0` | Reseed the whole tenant on this cadence. **Destructive** — `0` disables it |
+| `VANTAGE_PUBLIC_DEMO` | `0` | Enable shared-sandbox safeguards and default the reset cadence on |
+| `VANTAGE_DEMO_RESET_MINUTES` | `1440` when shared mode is enabled, else `0` | Reseed the whole tenant on this cadence. **Destructive** — `0` disables it |
 | `VANTAGE_RATE_LIMIT` | `1` | Per-client rate limiting on `/api` |
 | `VANTAGE_TRUST_PROXY` | follows `VANTAGE_PUBLIC_DEMO` | Take the client address from `CF-Connecting-IP` / `X-Forwarded-For`. Only enable behind a proxy you control |
 | `VANTAGE_HSTS` | `0` | Always send HSTS, rather than only when the request arrived over TLS |
 | `VANTAGE_MAX_PENDING_TRUST_REQUESTS` | `200` | Cap on the anonymous Trust Center request backlog |
 | `VANTAGE_SOURCE_URL` | this repository | "Source on GitHub" link shown in the UI |
-| `VANTAGE_SESSION_DAYS` | `14` | Session lifetime. The shared demonstration uses `1`, so a session never outlives the data it was issued against |
+| `VANTAGE_SESSION_DAYS` | `14` | Session lifetime. Shared mode can use `1`, so a session never outlives the data it was issued against |
 | `VANTAGE_READYZ_DETAIL` | `0` | Serve full `/readyz` diagnostics to every caller. By default paths, driver errors and row counts go only to a loopback caller; everyone else gets a reason code such as `data_volume_not_writable` |
 | `VANTAGE_ALLOW_DEMO_RESET` | `1` | Set to `0` to refuse tenant resets entirely |
 
-## Public access and abuse resistance
+## Shared-mode safeguards
 
-Nothing sits in front of the hosted instance, so the application defends itself:
+When an operator intentionally enables shared mode, the application provides:
 
 * **Per-client rate limits** across five budgets — reads, writes, expensive operations (full
   scans, remediation, questionnaire autofill, tenant reset), sign-in and anonymous contact — under
@@ -195,15 +183,15 @@ Nothing sits in front of the hosted instance, so the application defends itself:
 * **Browser security headers** on every response: a content security policy matching what the build
   emits, `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `nosniff`, referrer and permissions
   policies, cross-origin isolation, and HSTS over TLS.
-* **Bounded anonymous writes.** The Trust Center access-request form is the only table an anonymous
+* **Bounded unauthenticated writes.** The Trust Center access-request form is the only table an unauthenticated
   visitor can write to: fields are length-capped, the address validated, the backlog capped, and the
   JSON body limit is 256 kB.
-* **No visitor identity is stored.** Anyone can sign in to the shared workspace and read the
+* **No visitor identity is stored in shared mode.** Anyone with access can sign in to the shared workspace and read the
   access-request queue, so in shared-demo mode the name, email and company submitted to that
-  form are discarded and an anonymous demonstration request is recorded instead. The requested
+  form are discarded and an anonymous sandbox request is recorded instead. The requested
   document is resolved against the published catalogue rather than stored as typed, so no free-text
   field survives. A self-hosted instance keeps the requester it was given.
-* **A demonstration Trust Center that discloses only coverage.** Control status is published as exactly two
+* **A sandbox Trust Center that discloses only coverage.** Control status is published as exactly two
   values — `verified` and `in_progress` — so a failing control is indistinguishable from an untested
   one, and the published aggregate counts controls rather than tests so its complement cannot be
   subtracted back into a live failing count.
@@ -211,7 +199,7 @@ Nothing sits in front of the hosted instance, so the application defends itself:
   enablement, settings and Trust Center configuration require an administrator.
 * **A self-healing tenant.** The shared workspace reseeds daily — measured from the last reset and
   persisted, so a restart cannot quietly postpone it — and an overdue reset runs at boot.
-* **Nothing a visitor types is kept.** The sign-in page pre-fills the demonstration account and asks
+* **Nothing a visitor types is kept.** The sign-in page pre-fills the sandbox account and asks
   the browser not to save or autofill credentials against it; the session token lives in
   `sessionStorage` and dies with the tab; and the sign-in throttle keys on an HMAC under a
   process-random key, so a real address typed by habit is neither held in the clear nor
@@ -233,7 +221,7 @@ POST   /api/vendors/:id/review              → complete a vendor security revie
 POST   /api/questionnaires/:id/autofill     → draft answers from controls and policies
 GET    /api/public/trust                    → public Trust Center payload (no auth)
 POST   /api/public/trust/request            → request a gated document (no auth)
-GET    /api/public/config                   → version, demo accounts, reset cadence (no auth)
+GET    /api/public/config                   → version, sandbox accounts, reset cadence (no auth)
 POST   /api/demo/reset                      → restore the seeded baseline
 ```
 
@@ -250,76 +238,9 @@ POST   /api/demo/reset                      → restore the seeded baseline
 5. Fix that one too and readiness moves. Or try *Endpoints have disk encryption enabled*, the only
    test on its control, where a single fix moves readiness immediately.
 6. Open **Questionnaires → Security review — renewal** and press **Auto-answer**.
-7. Visit `/trust` in a private window, request the demonstration SOC 2 report, then approve it under
-   **Trust Center**. On the hosted demonstration the details you type are discarded — the queue
-   records an anonymous request.
-8. **Settings → Reset demo data** puts everything back.
-
-## Deployment
-
-Vantage runs on the InstaHost estate at **https://vantage.insta.host**.
-
-| | |
-|---|---|
-| Host | `nas1.insta.host` (TrueNAS SCALE), application `vantage` |
-| Port | `30002` |
-| Runtime | `node:24-slim` pinned by digest, release source bind-mounted read-only at `/app` |
-| Source | `/mnt/TailsPool/vantage/releases/<commit-sha>` |
-| Data | `/mnt/TailsPool/vantage/data` (SQLite, the only writable path) |
-| Ingress | Cloudflare tunnel `instahost-nas1` → `http://192.168.100.116:30002` |
-| Identity | Cloudflare Access restricts the hosted demonstration while governance review is pending |
-
-There is no build step on the host and no container image to build: `web/dist`
-is committed, the server has no dependencies, and the release commit SHA is the
-immutable artifact identity.
-
-### Health and readiness
-
-Cloudflare Access protects every public path. Read health and readiness from the
-origin through the recorded SSH transport:
-
-```sh
-ssh nas1 "curl -s http://127.0.0.1:30002/readyz"    # the same: the container is reached through a
-                                                    # published port, so this is not a loopback caller either
-```
-
-`/readyz` returns `503` if the database is unreachable, the schema is not
-seeded, the monitoring engine has never run, or `web/dist` is missing.
-
-### Publishing and un-publishing
-
-`scripts/publishctl.py` owns the edge state, in a fixed order — Access
-application → policy → tunnel ingress → DNS — so identity can never lag behind
-routing:
-
-```sh
-python3 scripts/publishctl.py status
-python3 scripts/publishctl.py apply --stage public --confirm \
-        --expect-version <version> --expect-sha <release-sha> # only after written review permits public access
-python3 scripts/publishctl.py regate                           # put it back
-```
-
-Do not run the `public` stage while governance review is pending. When public
-access is authorized, the stage fails **closed**. It proves the deployed build at the origin
-first, while the gate is still up — public-demo mode on, every guard enabled,
-and the expected version and release commit — so the Access application is only
-ever deleted for a build already known to be safe. It then re-proves the same
-claims through the public hostname, including that `/api/dashboard` still
-answers 401 anonymously, and any failure, exception or interrupt triggers a
-retrying, read-back-confirmed restoration of the gate.
-
-### Release process
-
-See `RELEASE_NOTES.md` for the deployment and rollback runbook, and
-`release-evidence/` for the deployment profile and the pre-freeze contract
-matrix (live dependency probes with negative controls, bounded-resource
-preflight and executable invariants).
-
-```sh
-node scripts/verify-invariants.mjs                    # readiness, counters and dist parity
-node --test tests/*.test.mjs                          # unit + API contract tests
-python3 -m unittest discover -s tests -p 'test_*.py'  # edge-publication tool
-```
+7. Visit `/trust`, request the example SOC 2 report, then approve it under
+   **Trust Center**.
+8. **Settings → Reset sandbox data** puts everything back.
 
 ## Contributing
 
@@ -339,8 +260,7 @@ This is an independent educational reimplementation of the product category. Fra
 titles are paraphrased summaries of publicly published standard structures; no proprietary content,
 branding or assets are reproduced. All company, personnel and vendor data is fictional.
 
-The seeded demonstration accounts use a published password. That is deliberate
-on the hosted demonstration, whose data is fictional, shared and reset daily. It
-is **not** safe anywhere else: change the passwords in `server/seed.js`, or put
-your own identity gate in front, before running an instance that holds anything
-real.
+The seeded sandbox accounts use a published password. They protect only
+fictional local data and are **not** safe for any instance holding real
+information. Change the passwords in `server/seed.js` and add appropriate
+identity controls before putting an instance on a network.
