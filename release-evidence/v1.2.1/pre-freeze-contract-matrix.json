@@ -76,8 +76,8 @@
         "Published HTML references an absent content-hashed asset"
       ],
       "validation_command": "node scripts/verify-invariants.mjs",
-      "result": "PENDING",
-      "evidence": "Frontend build succeeds; final parity check waits for the immutable candidate commit.",
+      "result": "PASS",
+      "evidence": "A clean rebuild left the committed three-file web/dist tree unchanged; all five repository invariants pass.",
       "invariant": {
         "authoritative_source": "web/src and build configuration",
         "derived_representation": "Committed web/dist served in production",
