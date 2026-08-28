@@ -90,10 +90,11 @@
     ],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
-    "source_digest": "sha256:2b10805c78e400ca88131d25c4f1a4bd16ae8b6341b839e29a7fc3b25867edfd",
+    "source_digest": "sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95",
+    "source_manifest_digest": "sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95",
     "configuration_digest": "PENDING",
     "source_artifact": {
-      "definition": "A deterministic archive of the 50bd0ca release tree excluding .git, node_modules, tests, release-evidence, __pycache__, and data.",
+      "definition": "A deterministic archive of the signed Vantage release tree excluding node_modules, tests, release-evidence, __pycache__, and data.",
       "exclusions": [
         ".git",
         "node_modules",
@@ -102,6 +103,24 @@
         "__pycache__",
         "data"
       ],
+      "candidate_paths": [
+        ".gitignore",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        "LICENSE",
+        "PROJECT_NOTICE.md",
+        "PROVENANCE.md",
+        "README.md",
+        "RELEASE_NOTES.md",
+        "SECURITY.md",
+        "package.json",
+        "scripts",
+        "server",
+        "web"
+      ],
+      "manifest": "source-manifest.json",
+      "working_tree_source_digest": "sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95",
+      "digest": "sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95",
       "post_freeze_operational_paths": [
         "release-evidence/v2.0.0/release-evidence.json",
         "release-evidence/v2.0.0/verdicts.json"
