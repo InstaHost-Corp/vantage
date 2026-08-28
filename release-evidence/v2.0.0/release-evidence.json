@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "DEPLOYED",
+  "state": "GO_PUBLISH",
   "outcome": "DEPLOYED_NOT_PUBLISHED",
   "release": {
     "id": "vantage-2.0.0",
@@ -38,20 +38,20 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "42fbda37faed368c82907f7ab14784cb78dc51a3",
-    "evidence_bundle_sha256": "sha256:f70652b17f29c559a7f9613eccaf96a5b5491bfd36e41ada35613a55d0ea0441",
-    "frozen_projection_sha256": "sha256:ca423df9a30241d964f52ca995f8691ef40406bafbd51314c45a69f753873d87",
+    "evidence_checkpoint": "8a9292764da028c0def54647763af826c64c8dfd",
+    "evidence_bundle_sha256": "sha256:f08230d50fb74fe7c9f0c8a963ac43aa9a10bda38943865b929e8fa51d0c4845",
+    "frozen_projection_sha256": "sha256:58a754ff88a9265496e35032fe51e7a5cb2b20af69cc0e2eb80f4111b1770b01",
     "cto_solo_authority": {
       "release_id": "vantage-2.0.0",
       "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence_checkpoint": "42fbda37faed368c82907f7ab14784cb78dc51a3",
-      "evidence_bundle_sha256": "sha256:f70652b17f29c559a7f9613eccaf96a5b5491bfd36e41ada35613a55d0ea0441",
-      "frozen_projection_sha256": "sha256:ca423df9a30241d964f52ca995f8691ef40406bafbd51314c45a69f753873d87",
+      "evidence_checkpoint": "8a9292764da028c0def54647763af826c64c8dfd",
+      "evidence_bundle_sha256": "sha256:f08230d50fb74fe7c9f0c8a963ac43aa9a10bda38943865b929e8fa51d0c4845",
+      "frozen_projection_sha256": "sha256:58a754ff88a9265496e35032fe51e7a5cb2b20af69cc0e2eb80f4111b1770b01",
       "implementation_actor_id": "9080454",
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
       "reviewer_role": "CTO",
-      "decided_at": "2026-08-28T23:38:00+00:00",
+      "decided_at": "2026-08-28T23:40:00+00:00",
       "rationale": "As the authenticated CTO and sole human review authority, Patrick Hamid authorizes the Vantage 2.0.0 candidate to use the controller's narrowly defined solo-authority route for the verified live-evidence checkpoint. This authority changes who supplies the human gate decisions; it does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls.",
       "residual_risk": "Human-gate separation is reduced because one authenticated CTO supplies the approved decisions after all configured independent review sources were attempted. The release remains blocked if any mandatory technical, migration, security, recovery, or live-verification control fails.",
       "review_attempts": [
@@ -77,15 +77,15 @@
       "attestation": {
         "attestation_source": "GITHUB_SIGNED_COMMIT",
         "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b773cdb5379ff033aa2a5c168c4f4954e7cfb725/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/baa17378fcad2e06b2515a66c3f84f5258812a6a/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "repository": "InstaHost-Corp/instahost",
-        "commit_sha": "b773cdb5379ff033aa2a5c168c4f4954e7cfb725",
+        "commit_sha": "baa17378fcad2e06b2515a66c3f84f5258812a6a",
         "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "github_actor": "phamid",
         "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKGI3NzNjZGI1Mzc5ZmYwMzNhYTJhNWMxNjhjNGY0OTU0ZTdjZmI3MjU",
+        "github_node_id": "C_kwDOTJJMyNoAKGJhYTE3Mzc4ZmNhZDJlMDZiMjUxNWE2NmMzZjg0ZjUyNTg4MTJhNmE",
         "signature_reason": "valid",
-        "response_sha256": "c09f1269054291fd9ddf0947865cd29eca7020fa4442fb5644c60c05981cc83f"
+        "response_sha256": "97bbdc9e76ba55236157ab2aea821797e758f6d37b22a3d8f69c0f1285505f36"
       }
     }
   },
@@ -208,11 +208,11 @@
       "evidence": "GitHub-verified CTO solo-authority receipt b773cdb5379ff033aa2a5c168c4f4954e7cfb725 supplies the authorized human live-QA gate. Public health and readiness reported Vantage 2.0.0 with the candidate SHA and source digest; the edge returned 200 for the application, 401 for the protected dashboard, and 404 for unpublished Trust Center data; tenant-isolation smoke passed; sqlite3 PRAGMA foreign_key_check returned zero rows; no sessions have a null tenant_id; and post-release snapshot TailsPool/vantage@post-2.0.0 is verified."
     },
     "publish": {
-      "verdict": "PENDING",
-      "reviewer": "PENDING",
-      "at": "PENDING",
-      "release_commit": "PENDING",
-      "evidence": "PENDING"
+      "verdict": "GO_PUBLISH",
+      "reviewer": "phamid",
+      "at": "2026-08-28T23:40:00+00:00",
+      "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+      "evidence": "GitHub-verified CTO solo-authority receipt baa17378fcad2e06b2515a66c3f84f5258812a6a supplies the authorized human publication gate for the final Vantage 2.0.0 live-evidence checkpoint. Mandatory engineering, QA, deployment, health/readiness, tenant isolation, data integrity, public-boundary, cleanup, and recovery controls have passed."
     }
   },
   "deployment": {
@@ -268,11 +268,11 @@
         "approver": "phamid",
         "release_id": "vantage-2.0.0",
         "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-        "evidence_checkpoint": "42fbda37faed368c82907f7ab14784cb78dc51a3",
-        "evidence_bundle_sha256": "sha256:f70652b17f29c559a7f9613eccaf96a5b5491bfd36e41ada35613a55d0ea0441",
-        "frozen_projection_sha256": "sha256:ca423df9a30241d964f52ca995f8691ef40406bafbd51314c45a69f753873d87",
+        "evidence_checkpoint": "8a9292764da028c0def54647763af826c64c8dfd",
+        "evidence_bundle_sha256": "sha256:f08230d50fb74fe7c9f0c8a963ac43aa9a10bda38943865b929e8fa51d0c4845",
+        "frozen_projection_sha256": "sha256:58a754ff88a9265496e35032fe51e7a5cb2b20af69cc0e2eb80f4111b1770b01",
         "implementation_actor_id": "9080454",
-        "approved_at": "2026-08-28T23:38:00+00:00",
+        "approved_at": "2026-08-28T23:40:00+00:00",
         "owner": "Design and UX",
         "reason": "CTO approved a time-bound deviation after the signed Vantage 2.0.0 candidate passed its Node, Python, historical migration, frontend build, and executable invariant validation. The existing Vantage interface predates the estate visual token system; its 68 visual-style contract failures are unrelated to the multitenancy safety, identity, migration, tenant-isolation, readiness, rollback, or secret-delivery changes.",
         "alternate_evidence": "The signed candidate c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 passed 76 Node tests, 19 Python tests, the historical Vantage 1.3.0 migration regression, the locked frontend production build, and all 5 repository-owned invariant checks. The visual-style validator failure is retained as an explicit exception rather than represented as a passing result.",
@@ -282,15 +282,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b773cdb5379ff033aa2a5c168c4f4954e7cfb725/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/baa17378fcad2e06b2515a66c3f84f5258812a6a/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "b773cdb5379ff033aa2a5c168c4f4954e7cfb725",
+          "commit_sha": "baa17378fcad2e06b2515a66c3f84f5258812a6a",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKGI3NzNjZGI1Mzc5ZmYwMzNhYTJhNWMxNjhjNGY0OTU0ZTdjZmI3MjU",
+          "github_node_id": "C_kwDOTJJMyNoAKGJhYTE3Mzc4ZmNhZDJlMDZiMjUxNWE2NmMzZjg0ZjUyNTg4MTJhNmE",
           "signature_reason": "valid",
-          "response_sha256": "2df0815944e6768d124834f0ee4e3d94884557a4fb44ba810f355e6d7ee536e7"
+          "response_sha256": "bb87d5d60cb0bcaa95d150513f4d64b54f6d06490e8f6083ca46a1ce13622bb1"
         }
       }
     ]
@@ -395,6 +395,20 @@
       "at": "2026-08-28T23:19:17.279660+00:00",
       "actor": "release-manager",
       "reason": "TrueNAS app.update job 85155 succeeded; Vantage 2.0 runtime identity, health, readiness, migration integrity, production boundaries, and public tenant isolation were verified."
+    },
+    {
+      "from": "DEPLOYED",
+      "to": "LIVE_QA_PASSED",
+      "at": "2026-08-28T23:43:54.766791+00:00",
+      "actor": "release-manager",
+      "reason": "Verified CTO authority receipt baa17378fcad2e06b2515a66c3f84f5258812a6a is bound to checkpoint 8a9292764da028c0def54647763af826c64c8dfd; all production live-QA and recovery evidence passed."
+    },
+    {
+      "from": "LIVE_QA_PASSED",
+      "to": "GO_PUBLISH",
+      "at": "2026-08-28T23:44:42.483269+00:00",
+      "actor": "release-manager",
+      "reason": "Verified CTO authority receipt baa17378fcad2e06b2515a66c3f84f5258812a6a authorizes GO_PUBLISH after all mandatory production and live-QA controls passed."
     }
   ]
 }
