@@ -10,6 +10,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateRuntimeConfig } from '../server/runtime.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -274,6 +275,45 @@ test('PROD-8: production signup requires company name', async () => {
 test('PROD-9: production mode CSRF is documented as bearer-token', async () => {
   const config = await fetch(`${PROD}/api/public/config`).then((r) => r.json());
   assert.equal(config.guards.csrf_protection, 'bearer_token');
+});
+
+test('PROD-10: production has no default public Trust Center', async () => {
+  assert.equal((await fetch(`${PROD}/api/public/trust`)).status, 404);
+  assert.equal((await fetch(`${PROD}/api/public/trust/request`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'Test', email: 'test@example.com', company: 'Test', document: 'Policy' }),
+  })).status, 404);
+});
+
+test('PROD-11: production startup configuration fails closed before SQLite opens', () => {
+  const missingMode = validateRuntimeConfig({ NODE_ENV: 'production' });
+  assert.equal(missingMode.ok, false);
+  assert.match(missingMode.errors.join('\n'), /VANTAGE_ENV=production/);
+
+  const unsafeDemo = validateRuntimeConfig({
+    NODE_ENV: 'production',
+    VANTAGE_ENV: 'production',
+    VANTAGE_PUBLIC_DEMO: '1',
+    VANTAGE_SESSION_SECRET: 'a'.repeat(32),
+  });
+  assert.equal(unsafeDemo.ok, false);
+  assert.match(unsafeDemo.errors.join('\n'), /VANTAGE_PUBLIC_DEMO/);
+
+  const shortSecret = validateRuntimeConfig({
+    NODE_ENV: 'production',
+    VANTAGE_ENV: 'production',
+    VANTAGE_SESSION_SECRET: 'too-short',
+  });
+  assert.equal(shortSecret.ok, false);
+  assert.match(shortSecret.errors.join('\n'), /at least 32/);
+
+  const validFileSecret = validateRuntimeConfig({
+    NODE_ENV: 'production',
+    VANTAGE_ENV: 'production',
+    VANTAGE_SESSION_SECRET: 'a'.repeat(32),
+  });
+  assert.equal(validFileSecret.ok, true);
 });
 
 /* ===================== Demo-mode multi-tenant ===================== */

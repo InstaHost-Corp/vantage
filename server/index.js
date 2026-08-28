@@ -3,14 +3,11 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp, jsonBody, staticFiles } from './http.js';
-import { db, all, get, run, setting, setSetting, logActivity, DB_PATH } from './db.js';
-import { runTests, controlStatuses, frameworkReadiness, overallPosture } from './engine.js';
-import { hashPassword, seed, verifyPassword } from './seed.js';
-import { isProduction, validateProductionConfig, createTenant } from './tenant.js';
 import {
   anonymizeTrustRequest, createResetSchedule, clientIp, publicModeConfig, rateLimit,
   readinessDetailAllowed, sanitizeTrustRequest, securityHeaders, sweepExpired, throttleKeyFor,
 } from './public-mode.js';
+import { isProduction, validateRuntimeConfig } from './runtime.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, '..', 'web', 'dist');
@@ -28,16 +25,24 @@ export const RELEASE = {
 // Production mode: fail closed unless explicitly configured as safe.
 // ---------------------------------------------------------------------------
 
+const runtimeConfig = validateRuntimeConfig();
+if (!runtimeConfig.ok) {
+  console.error('[vantage] FATAL: runtime configuration errors:');
+  for (const e of runtimeConfig.errors) console.error(`  - ${e}`);
+  process.exit(1);
+}
+if (runtimeConfig.sessionSecret) {
+  process.env.VANTAGE_SESSION_SECRET = runtimeConfig.sessionSecret;
+}
 const PRODUCTION = isProduction();
 if (PRODUCTION) {
-  const check = validateProductionConfig();
-  if (!check.ok) {
-    console.error('[vantage] FATAL: production mode configuration errors:');
-    for (const e of check.errors) console.error(`  - ${e}`);
-    process.exit(1);
-  }
   console.log('[vantage] starting in PRODUCTION mode (multi-tenant, no demo data)');
 }
+
+const { db, all, get, run, setting, setSetting, logActivity, DB_PATH } = await import('./db.js');
+const { runTests, controlStatuses, frameworkReadiness, overallPosture } = await import('./engine.js');
+const { hashPassword, seed, verifyPassword } = await import('./seed.js');
+const { createTenant } = await import('./tenant.js');
 
 export const PUBLIC_MODE = publicModeConfig();
 
@@ -382,6 +387,7 @@ function publicTenantId() {
 }
 
 app.get('/api/public/trust', (req, res) => {
+  if (PRODUCTION) return res.status(404).json({ error: 'No public Trust Center is configured' });
   const tid = publicTenantId();
   const company = setting('company', null, tid);
   const trust = setting('trust_center', null, tid);
@@ -414,6 +420,7 @@ app.get('/api/public/trust', (req, res) => {
 });
 
 app.post('/api/public/trust/request', (req, res) => {
+  if (PRODUCTION) return res.status(404).json({ error: 'No public Trust Center is configured' });
   const tid = publicTenantId();
   const { ok: valid, value, errors } = sanitizeTrustRequest(req.body || {});
   if (!valid) return res.status(400).json({ error: errors[0], errors });

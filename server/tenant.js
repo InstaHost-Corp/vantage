@@ -5,35 +5,20 @@
 // configuration that makes Vantage fail closed when VANTAGE_ENV=production.
 
 import { randomUUID } from 'node:crypto';
-import { db, all, get, run } from './db.js';
+import { all, get, run } from './db.js';
 import { frameworks, requirements, controls, tests, integrationCatalog } from './seed-frameworks.js';
+import { isProduction, validateRuntimeConfig } from './runtime.js';
 
 // ---------------------------------------------------------------------------
 // Production mode
 // ---------------------------------------------------------------------------
 
-const TRUTHY = new Set(['1', 'true', 'yes', 'on']);
-const boolEnv = (v, fallback = false) =>
-  (v === undefined || v === '' ? fallback : TRUTHY.has(String(v).toLowerCase()));
-
-export function isProduction(env = process.env) {
-  return env.VANTAGE_ENV === 'production';
-}
-
 /** Validates that the environment is safe to start in production mode. */
 export function validateProductionConfig(env = process.env) {
-  const errors = [];
-  if (boolEnv(env.VANTAGE_PUBLIC_DEMO)) {
-    errors.push('VANTAGE_PUBLIC_DEMO must not be enabled in production');
-  }
-  if (boolEnv(env.VANTAGE_ALLOW_DEMO_RESET)) {
-    errors.push('VANTAGE_ALLOW_DEMO_RESET must not be enabled in production');
-  }
-  if (!env.VANTAGE_SESSION_SECRET) {
-    errors.push('VANTAGE_SESSION_SECRET must be set in production (random >=32-char string)');
-  }
-  return { ok: errors.length === 0, errors };
+  return validateRuntimeConfig(env);
 }
+
+export { isProduction };
 
 // ---------------------------------------------------------------------------
 // Tenant lifecycle

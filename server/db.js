@@ -189,6 +189,11 @@ if (needsMigration) {
       db.exec(`ALTER TABLE ${t} ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 1`);
     }
 
+    // Existing bearer tokens grant access to the legacy shared workspace but
+    // production login deliberately quarantines it. Invalidate them together
+    // with the schema transition so authentication is never split-brain.
+    db.exec('DELETE FROM sessions');
+
     db.exec('COMMIT');
     console.log('[vantage] multi-tenant migration complete');
   } catch (err) {
