@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.0",
-  "state": "QA_PASSED",
-  "outcome": "READY_FOR_RELEASE",
+  "state": "DEPLOYED",
+  "outcome": "DEPLOYED_NOT_PUBLISHED",
   "release": {
     "id": "vantage-2.0.0",
     "product": "Vantage",
@@ -38,15 +38,15 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "4aa336b412b1029c781cac787ae46fa7aa5b6854",
-    "evidence_bundle_sha256": "sha256:5a81d114f3f49d3581a2e7be203487ef6cdf7c2d75e062c2cfd6553e60f0d537",
-    "frozen_projection_sha256": "sha256:51bad159a0219c75fa60876e682c22d093a4791037d0aa31c269fe38dd388bf7",
+    "evidence_checkpoint": "e39061d5a1ad93022ddd1fbe67e25cba4d36b5dd",
+    "evidence_bundle_sha256": "sha256:36028fb0f7a5c024ade6a17ddd970376c96992e53885414b440fdcfc9548e48a",
+    "frozen_projection_sha256": "sha256:7fe76dda8feafcb1a6065947ec19709b5aaf1bd3410248857e784264eefc3cfa",
     "cto_solo_authority": {
       "release_id": "vantage-2.0.0",
       "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence_checkpoint": "4aa336b412b1029c781cac787ae46fa7aa5b6854",
-      "evidence_bundle_sha256": "sha256:5a81d114f3f49d3581a2e7be203487ef6cdf7c2d75e062c2cfd6553e60f0d537",
-      "frozen_projection_sha256": "sha256:51bad159a0219c75fa60876e682c22d093a4791037d0aa31c269fe38dd388bf7",
+      "evidence_checkpoint": "e39061d5a1ad93022ddd1fbe67e25cba4d36b5dd",
+      "evidence_bundle_sha256": "sha256:36028fb0f7a5c024ade6a17ddd970376c96992e53885414b440fdcfc9548e48a",
+      "frozen_projection_sha256": "sha256:7fe76dda8feafcb1a6065947ec19709b5aaf1bd3410248857e784264eefc3cfa",
       "implementation_actor_id": "9080454",
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
@@ -77,15 +77,15 @@
       "attestation": {
         "attestation_source": "GITHUB_SIGNED_COMMIT",
         "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/3cacedf9677b64c826b33d93dfa4663188dc03e9/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/779a98003f1bb4cf05a1ddc920a74ec15349134d/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "repository": "InstaHost-Corp/instahost",
-        "commit_sha": "3cacedf9677b64c826b33d93dfa4663188dc03e9",
+        "commit_sha": "779a98003f1bb4cf05a1ddc920a74ec15349134d",
         "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "github_actor": "phamid",
         "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKDNjYWNlZGY5Njc3YjY0YzgyNmIzM2Q5M2RmYTQ2NjMxODhkYzAzZTk",
+        "github_node_id": "C_kwDOTJJMyNoAKDc3OWE5ODAwM2YxYmI0Y2YwNWExZGRjOTIwYTc0ZWMxNTM0OTEzNGQ",
         "signature_reason": "valid",
-        "response_sha256": "429a49dc2e99eab3eb946b80e841869fb5aae0bec0b732445dee7e8839afa2d4"
+        "response_sha256": "5d6e52c7e72ab1c1db13cd3169ddf5c553c83f9ea489a095e1e582e029098988"
       }
     }
   },
@@ -201,11 +201,11 @@
       "evidence": "GitHub-verified CTO solo-authority receipt 3cacedf9677b64c826b33d93dfa4663188dc03e9; live Vantage 1.3.0 health/readiness and TailsPool capacity were revalidated immediately before deployment; TailsPool/vantage@pre-2.0.0 was created and verified."
     },
     "live_qa": {
-      "verdict": "PENDING",
-      "reviewer": "PENDING",
-      "at": "PENDING",
-      "release_commit": "PENDING",
-      "evidence": "PENDING"
+      "verdict": "PASS_LIVE",
+      "reviewer": "phamid",
+      "at": "2026-08-28T23:20:30+00:00",
+      "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+      "evidence": "GitHub-verified CTO solo-authority receipt 779a98003f1bb4cf05a1ddc920a74ec15349134d supplies the authorized human live-QA gate. Public health and readiness reported Vantage 2.0.0 with the candidate SHA and source digest; the edge returned 200 for the application, 401 for the protected dashboard, and 404 for unpublished Trust Center data; tenant-isolation smoke passed; sqlite3 PRAGMA foreign_key_check returned zero rows; no sessions have a null tenant_id; and post-release snapshot TailsPool/vantage@post-2.0.0 is verified."
     },
     "publish": {
       "verdict": "PENDING",
@@ -216,38 +216,40 @@
     }
   },
   "deployment": {
-    "started_at": "PENDING",
-    "completed_at": "PENDING",
-    "job_ids": [],
-    "migration_result": null,
+    "started_at": "2026-08-28T23:14:00+00:00",
+    "completed_at": "2026-08-28T23:15:54+00:00",
+    "job_ids": [
+      "85155"
+    ],
+    "migration_result": "PASS: application startup migrated the existing Vantage 1.3.0 SQLite database to tenant-scoped records, invalidated legacy sessions, and the live host sqlite3 PRAGMA foreign_key_check returned zero violations.",
     "stability_policy": "SHORT",
-    "stability_result": "PENDING"
+    "stability_result": "PASS: service remained healthy and ready through the post-deployment verification window; TrueNAS job 85155 remains SUCCESS."
   },
   "runtime": {
-    "configured_identity": "PENDING",
-    "active_identity": "PENDING",
-    "health": "PENDING",
-    "readiness": "PENDING",
-    "logs": "PENDING"
+    "configured_identity": "TrueNAS app.update job 85155 applied compose sha256:d7b869be6b2ceaa0e8e41ec2f71ff527b0cb468ddc532ee8a7dfcfd7a84febd3: node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03; /app source c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 read-only; /data writable; session secret mounted read-only at /run/secrets/vantage-session-secret.",
+    "active_identity": "TrueNAS job 85155 result reported one running Vantage container using the pinned node:24-slim digest, read-only /app mount from /mnt/TailsPool/vantage/releases/c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63, writable /data mount, and read-only session-secret mount.",
+    "health": "PASS: origin /healthz returned Vantage 2.0.0, release_sha c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63, and source_digest sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95.",
+    "readiness": "PASS: origin /readyz returned ready=true with database, schema_seeded, monitoring_engine, database_writable, and frontend_build checks all ok.",
+    "logs": "PASS: TrueNAS job 85155 completed SUCCESS and reported the Vantage container running."
   },
   "validation": {
     "pre_deploy_summary": "Candidate c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 was reconstructed from the GitHub-verified multitenancy merge after the evidence-only source-manifest checkpoint. The source boundary, 76 Node tests, 19 Python tests, historical 1.3.0 migration regression, locked frontend build, and five executable invariants passed. The visual-style contract failure is explicitly recorded as a pending CTO-approved deviation receipt.",
     "contract_matrix": "PASS",
     "review_consolidation": "PASS",
-    "functional_smoke": "PENDING",
+    "functional_smoke": "PASS: public production tenant smoke created two isolated workspaces, rejected a cross-tenant owner assignment with HTTP 400, and logged both smoke-test sessions out without mutating the target tenant.",
     "asset_graph": "PASS",
     "visual_style_contract": "FAIL",
-    "assigned_user_journey": "PENDING",
+    "assigned_user_journey": "PASS: public production signup created independent tenant workspaces with their initiating user as tenant admin; cross-tenant ownership mutation was rejected.",
     "restart_or_reboot": "PASS",
     "data_reconciliation": "PASS",
-    "secret_artifact_sweep": "PENDING",
+    "secret_artifact_sweep": "PASS: candidate source was scanned for private-key, GitHub-token, cloud-key, and common API-token patterns with no findings. The production session secret remains file-backed and read-only at /run/secrets/vantage-session-secret; no secret value was recorded.",
     "invariant_contracts": "PASS",
     "dependency_live_probe": "PASS",
     "identity_contract": "PASS",
     "release_base_alignment": "PASS",
     "production_platform_build": "PASS",
-    "public_edge_verification": "PENDING",
-    "cleanup_manifest": "PENDING",
+    "public_edge_verification": "PASS: vantage.insta.host returned 200 for / and the exact content-hashed JS/CSS assets, 200 for /healthz with Vantage 2.0.0 and candidate c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63, 401 for /api/dashboard, 404 for /api/public/trust and /api/no-such-route. DNS checks through 1.1.1.1, 8.8.8.8, and 9.9.9.9 returned only the expected Cloudflare proxy addresses. TLS validated against the active DNS:*.insta.host certificate.",
+    "cleanup_manifest": "PASS: temporary local deployment helpers and remote /tmp/vantage_snapshot.py, /tmp/vantage-2.0.0-compose.yaml, and /tmp/vantage_update.py are absent. The active immutable source and pre/post 2.0.0 snapshots are retained as recovery artifacts.",
     "enterprise_operating_model": "PASS",
     "enterprise_metrics_contract": "PASS"
   },
@@ -266,9 +268,9 @@
         "approver": "phamid",
         "release_id": "vantage-2.0.0",
         "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-        "evidence_checkpoint": "4aa336b412b1029c781cac787ae46fa7aa5b6854",
-        "evidence_bundle_sha256": "sha256:5a81d114f3f49d3581a2e7be203487ef6cdf7c2d75e062c2cfd6553e60f0d537",
-        "frozen_projection_sha256": "sha256:51bad159a0219c75fa60876e682c22d093a4791037d0aa31c269fe38dd388bf7",
+        "evidence_checkpoint": "e39061d5a1ad93022ddd1fbe67e25cba4d36b5dd",
+        "evidence_bundle_sha256": "sha256:36028fb0f7a5c024ade6a17ddd970376c96992e53885414b440fdcfc9548e48a",
+        "frozen_projection_sha256": "sha256:7fe76dda8feafcb1a6065947ec19709b5aaf1bd3410248857e784264eefc3cfa",
         "implementation_actor_id": "9080454",
         "approved_at": "2026-08-28T08:56:54+00:00",
         "owner": "Design and UX",
@@ -280,15 +282,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/3cacedf9677b64c826b33d93dfa4663188dc03e9/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/779a98003f1bb4cf05a1ddc920a74ec15349134d/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "3cacedf9677b64c826b33d93dfa4663188dc03e9",
+          "commit_sha": "779a98003f1bb4cf05a1ddc920a74ec15349134d",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKDNjYWNlZGY5Njc3YjY0YzgyNmIzM2Q5M2RmYTQ2NjMxODhkYzAzZTk",
+          "github_node_id": "C_kwDOTJJMyNoAKDc3OWE5ODAwM2YxYmI0Y2YwNWExZGRjOTIwYTc0ZWMxNTM0OTEzNGQ",
           "signature_reason": "valid",
-          "response_sha256": "3c80480f06e57d957784e098aa083ac908aa45f647ab7e8f01712788a4ffd4c4"
+          "response_sha256": "24a1774940e71a531c2a1326a151cb0ba07c64f3b92d874fa9cda9893105a1ee"
         }
       }
     ]
@@ -306,7 +308,7 @@
   },
   "recovery": {
     "pre_release_snapshot": "/Users/patrickhamid/release-candidates/vantage-main-release/release-evidence/v2.0.0/pre-2.0.0-snapshot.json; TrueNAS recursive snapshot TailsPool/vantage@pre-2.0.0 created 2026-08-28T23:06:19+00:00 and verified present before deployment.",
-    "post_release_snapshot": "PENDING",
+    "post_release_snapshot": "TrueNAS recursive snapshot TailsPool/vantage@post-2.0.0 was created after live verification and zfs.snapshot.query returned exactly one snapshot with that id.",
     "last_known_good": "Vantage 1.3.0, release 4e596f25a785c5c2917e4a7fa77a2b73b8a95f84, with TailsPool/vantage@pre-1.3.0 and @post-1.3.0 retained.",
     "rollback_command": "Stop Vantage, restore the fresh TailsPool/vantage@pre-2.0.0 recursive snapshot, update the application to /mnt/TailsPool/vantage/releases/4e596f25a785c5c2917e4a7fa77a2b73b8a95f84 with VANTAGE_ENV=demo and VANTAGE_DEMO_MODE=1, then verify health and readiness.",
     "rollback_validation": "PASS",
@@ -372,6 +374,27 @@
       "at": "2026-08-28T23:05:41.337848+00:00",
       "actor": "release-manager",
       "reason": "CTO solo-authority receipt binds the recorded PASS decision; independent QA validation is complete."
+    },
+    {
+      "from": "QA_PASSED",
+      "to": "GO_DEPLOY",
+      "at": "2026-08-28T23:14:16.018857+00:00",
+      "actor": "release-manager",
+      "reason": "CTO solo-authority GO_DEPLOY, production baseline, transfer checksum, capacity, and pre-release recovery snapshot all bind to the signed Vantage candidate."
+    },
+    {
+      "from": "GO_DEPLOY",
+      "to": "DEPLOYING",
+      "at": "2026-08-28T23:15:29.543005+00:00",
+      "actor": "release-manager",
+      "reason": "TrueNAS app.update will apply the exact checksum-verified production compose after source staging and validated GO_DEPLOY."
+    },
+    {
+      "from": "DEPLOYING",
+      "to": "DEPLOYED",
+      "at": "2026-08-28T23:19:17.279660+00:00",
+      "actor": "release-manager",
+      "reason": "TrueNAS app.update job 85155 succeeded; Vantage 2.0 runtime identity, health, readiness, migration integrity, production boundaries, and public tenant isolation were verified."
     }
   ]
 }
