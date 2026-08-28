@@ -35,11 +35,11 @@ function describe(rule, ok) {
     : `Non-compliant — ${rule.field} ${human} ${expected}`;
 }
 
-// Collect the population of entities a test applies to.
-function population(rule) {
+// Collect the population of entities a test applies to, scoped to a tenant.
+function population(rule, tenantId) {
   switch (rule.kind) {
     case 'resource': {
-      const rows = all('SELECT * FROM resources WHERE type = ?', rule.type);
+      const rows = all('SELECT * FROM resources WHERE tenant_id = ? AND type = ?', tenantId, rule.type);
       return rows.map((r) => ({
         type: 'resource',
         id: r.external_id,
@@ -49,37 +49,40 @@ function population(rule) {
     }
     case 'device': {
       const rows = all(`SELECT d.*, p.name AS person FROM devices d
-        JOIN personnel p ON p.id = d.personnel_id WHERE p.status = 'active'`);
+        JOIN personnel p ON p.id = d.personnel_id AND p.tenant_id = d.tenant_id
+        WHERE d.tenant_id = ? AND p.status = 'active'`, tenantId);
       return rows.map((d) => ({ type: 'device', id: `device-${d.id}`, name: `${d.name} (${d.person})`, data: d }));
     }
     case 'personnel': {
       const scope = rule.scope || 'active';
       const rows = scope === 'offboarded'
-        ? all("SELECT * FROM personnel WHERE status = 'offboarded'")
-        : all("SELECT * FROM personnel WHERE status = 'active'");
+        ? all("SELECT * FROM personnel WHERE tenant_id = ? AND status = 'offboarded'", tenantId)
+        : all("SELECT * FROM personnel WHERE tenant_id = ? AND status = 'active'", tenantId);
       return rows.map((p) => ({ type: 'personnel', id: `person-${p.id}`, name: p.name, data: p }));
     }
     case 'policy': {
-      const rows = rule.slug ? all('SELECT * FROM policies WHERE slug = ?', rule.slug) : all('SELECT * FROM policies');
+      const rows = rule.slug
+        ? all('SELECT * FROM policies WHERE tenant_id = ? AND slug = ?', tenantId, rule.slug)
+        : all('SELECT * FROM policies WHERE tenant_id = ?', tenantId);
       return rows.map((p) => ({ type: 'policy', id: p.slug, name: p.name, data: p }));
     }
     case 'policy_acceptance': {
       const rows = all(`SELECT p.id, p.name, p.email,
-          (SELECT COUNT(*) FROM policies WHERE status = 'approved') AS total,
-          (SELECT COUNT(*) FROM policy_acceptances a JOIN policies pol ON pol.id = a.policy_id
-            WHERE a.personnel_id = p.id AND pol.status = 'approved') AS accepted
-        FROM personnel p WHERE p.status = 'active'`);
+          (SELECT COUNT(*) FROM policies WHERE tenant_id = ? AND status = 'approved') AS total,
+          (SELECT COUNT(*) FROM policy_acceptances a JOIN policies pol ON pol.id = a.policy_id AND pol.tenant_id = a.tenant_id
+            WHERE a.tenant_id = p.tenant_id AND a.personnel_id = p.id AND pol.status = 'approved') AS accepted
+        FROM personnel p WHERE p.tenant_id = ? AND p.status = 'active'`, tenantId, tenantId);
       return rows.map((p) => ({
         type: 'personnel', id: `person-${p.id}`, name: p.name,
         data: { ...p, all_accepted: p.accepted >= p.total ? 'yes' : 'no' },
       }));
     }
     case 'vendor': {
-      const rows = all("SELECT * FROM vendors WHERE status = 'active'");
+      const rows = all("SELECT * FROM vendors WHERE tenant_id = ? AND status = 'active'", tenantId);
       return rows.map((v) => ({ type: 'vendor', id: `vendor-${v.id}`, name: v.name, data: v }));
     }
     case 'risk': {
-      const rows = all("SELECT * FROM risks WHERE status != 'closed'");
+      const rows = all("SELECT * FROM risks WHERE tenant_id = ? AND status != 'closed'", tenantId);
       return rows.map((r) => ({
         type: 'risk', id: r.code, name: `${r.code} ${r.title}`,
         data: { ...r, overdue: r.due_date && new Date(r.due_date) < new Date() ? 'yes' : 'no' },
@@ -90,9 +93,9 @@ function population(rule) {
   }
 }
 
-export function evaluateTest(test) {
+export function evaluateTest(test, tenantId) {
   const rule = JSON.parse(test.rule);
-  const entities = population(rule);
+  const entities = population(rule, tenantId);
   const now = new Date().toISOString();
   return entities.map((e) => {
     const ok = compare(e.data[rule.field], rule.op, rule.value);
@@ -100,28 +103,28 @@ export function evaluateTest(test) {
   });
 }
 
-export function runTests({ actor = 'Vantage Agent', testIds = null } = {}) {
-  const tests = testIds
-    ? all(`SELECT * FROM tests WHERE id IN (${testIds.map(() => '?').join(',')})`, ...testIds)
-    : all('SELECT * FROM tests');
+export function runTests({ actor = 'Vantage Agent', testIds = null, tenantId = 1 } = {}) {
+  const testsRows = testIds
+    ? all(`SELECT * FROM tests WHERE tenant_id = ? AND id IN (${testIds.map(() => '?').join(',')})`, tenantId, ...testIds)
+    : all('SELECT * FROM tests WHERE tenant_id = ?', tenantId);
   const now = new Date().toISOString();
   let newlyFailing = 0;
   let newlyPassing = 0;
 
   const insertEntity = db.prepare(
-    'INSERT INTO test_entities (test_id, entity_type, entity_id, entity_name, passed, message, checked_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO test_entities (tenant_id, test_id, entity_type, entity_id, entity_name, passed, message, checked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   );
-  const clearEntities = db.prepare('DELETE FROM test_entities WHERE test_id = ?');
+  const clearEntities = db.prepare('DELETE FROM test_entities WHERE test_id = ? AND tenant_id = ?');
 
-  for (const test of tests) {
+  for (const test of testsRows) {
     if (test.disabled) {
-      run("UPDATE tests SET status = 'disabled', last_run = ? WHERE id = ?", now, test.id);
+      run("UPDATE tests SET status = 'disabled', last_run = ? WHERE id = ? AND tenant_id = ?", now, test.id, tenantId);
       continue;
     }
-    const results = evaluateTest(test);
-    clearEntities.run(test.id);
+    const results = evaluateTest(test, tenantId);
+    clearEntities.run(test.id, tenantId);
     for (const r of results) {
-      insertEntity.run(test.id, r.type, r.id, r.name, r.passed ? 1 : 0, r.message, r.checked_at);
+      insertEntity.run(tenantId, test.id, r.type, r.id, r.name, r.passed ? 1 : 0, r.message, r.checked_at);
     }
     const failing = results.filter((r) => !r.passed).length;
     const passing = results.length - failing;
@@ -133,31 +136,32 @@ export function runTests({ actor = 'Vantage Agent', testIds = null } = {}) {
         const days = SEVERITY_SLA_DAYS[test.severity] ?? 14;
         deadline = new Date(Date.now() + days * 86400000).toISOString();
         newlyFailing++;
-        logActivity('test_failed', actor, `Test "${test.name}" started failing (${failing} failing ${failing === 1 ? 'entity' : 'entities'})`);
+        logActivity('test_failed', actor, `Test "${test.name}" started failing (${failing} failing ${failing === 1 ? 'entity' : 'entities'})`, tenantId);
       }
     } else {
       if (test.status === 'failing') {
         newlyPassing++;
-        logActivity('test_passed', actor, `Test "${test.name}" is now passing`);
+        logActivity('test_passed', actor, `Test "${test.name}" is now passing`, tenantId);
       }
       deadline = null;
     }
 
-    run('UPDATE tests SET status = ?, failing_count = ?, passing_count = ?, last_run = ?, deadline = ? WHERE id = ?',
-      status, failing, passing, now, deadline, test.id);
+    run('UPDATE tests SET status = ?, failing_count = ?, passing_count = ?, last_run = ?, deadline = ? WHERE id = ? AND tenant_id = ?',
+      status, failing, passing, now, deadline, test.id, tenantId);
   }
 
-  return { ran: tests.length, at: now, newlyFailing, newlyPassing };
+  return { ran: testsRows.length, at: now, newlyFailing, newlyPassing };
 }
 
-export function controlStatuses() {
+export function controlStatuses(tenantId = 1) {
   const rows = all(`
     SELECT c.id,
       COUNT(t.id) AS total,
       SUM(CASE WHEN t.status = 'failing' THEN 1 ELSE 0 END) AS failing,
       SUM(CASE WHEN t.status = 'disabled' THEN 1 ELSE 0 END) AS disabled
-    FROM controls c LEFT JOIN tests t ON t.control_id = c.id
-    GROUP BY c.id`);
+    FROM controls c LEFT JOIN tests t ON t.control_id = c.id AND t.tenant_id = c.tenant_id
+    WHERE c.tenant_id = ?
+    GROUP BY c.id`, tenantId);
   const map = new Map();
   for (const r of rows) {
     const active = (r.total || 0) - (r.disabled || 0);
@@ -168,11 +172,11 @@ export function controlStatuses() {
   return map;
 }
 
-export function frameworkReadiness(frameworkId) {
-  const statuses = controlStatuses();
-  const reqs = all('SELECT * FROM requirements WHERE framework_id = ? ORDER BY id', frameworkId);
+export function frameworkReadiness(frameworkId, tenantId = 1) {
+  const statuses = controlStatuses(tenantId);
+  const reqs = all('SELECT * FROM requirements WHERE tenant_id = ? AND framework_id = ? ORDER BY id', tenantId, frameworkId);
   const links = all(`SELECT cr.requirement_id, cr.control_id FROM control_requirements cr
-    JOIN requirements r ON r.id = cr.requirement_id WHERE r.framework_id = ?`, frameworkId);
+    JOIN requirements r ON r.id = cr.requirement_id AND r.tenant_id = cr.tenant_id WHERE cr.tenant_id = ? AND r.framework_id = ?`, tenantId, frameworkId);
   const byReq = new Map();
   for (const l of links) {
     if (!byReq.has(l.requirement_id)) byReq.set(l.requirement_id, []);
@@ -180,14 +184,14 @@ export function frameworkReadiness(frameworkId) {
   }
   const detail = reqs.map((r) => {
     const controlIds = byReq.get(r.id) || [];
-    const controls = controlIds.map((id) => ({ id, ...(statuses.get(id) || { status: 'no_tests' }) }));
-    const failing = controls.filter((c) => c.status === 'failing').length;
-    const untested = controls.filter((c) => c.status === 'no_tests').length;
-    let status = 'complete';
-    if (controls.length === 0) status = 'unmapped';
-    else if (failing > 0) status = 'at_risk';
-    else if (untested === controls.length) status = 'in_progress';
-    return { ...r, controls, control_count: controls.length, failing, status };
+    const controlList = controlIds.map((id) => ({ id, ...(statuses.get(id) || { status: 'no_tests' }) }));
+    const failCount = controlList.filter((c) => c.status === 'failing').length;
+    const untested = controlList.filter((c) => c.status === 'no_tests').length;
+    let reqStatus = 'complete';
+    if (controlList.length === 0) reqStatus = 'unmapped';
+    else if (failCount > 0) reqStatus = 'at_risk';
+    else if (untested === controlList.length) reqStatus = 'in_progress';
+    return { ...r, controls: controlList, control_count: controlList.length, failing: failCount, status: reqStatus };
   });
   const complete = detail.filter((d) => d.status === 'complete').length;
   const mapped = new Set(links.map((l) => l.control_id));
@@ -205,12 +209,12 @@ export function frameworkReadiness(frameworkId) {
   };
 }
 
-export function overallPosture() {
-  const tests = all("SELECT status, severity FROM tests WHERE disabled = 0");
-  const failing = tests.filter((t) => t.status === 'failing');
+export function overallPosture(tenantId = 1) {
+  const testsRows = all("SELECT status, severity FROM tests WHERE tenant_id = ? AND disabled = 0", tenantId);
+  const failing = testsRows.filter((t) => t.status === 'failing');
   return {
-    tests_total: tests.length,
-    tests_passing: tests.filter((t) => t.status === 'ok').length,
+    tests_total: testsRows.length,
+    tests_passing: testsRows.filter((t) => t.status === 'ok').length,
     tests_failing: failing.length,
     critical_failing: failing.filter((t) => t.severity === 'critical').length,
     high_failing: failing.filter((t) => t.severity === 'high').length,

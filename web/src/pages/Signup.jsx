@@ -8,6 +8,7 @@ const MIN_PASSWORD = 12;
 
 export default function Signup() {
   const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -28,7 +29,7 @@ export default function Signup() {
     setLoading(true);
     setError(null);
     try {
-      const result = await api('/auth/signup', { method: 'POST', auth: false, body: { name, email, password } });
+      const result = await api('/auth/signup', { method: 'POST', auth: false, body: { name, email, password, company } });
       setToken(result.token);
       navigate('/');
     } catch (err) {
@@ -39,6 +40,7 @@ export default function Signup() {
   };
 
   const publicDemo = !!config?.public_demo;
+  const requiresCompany = !!config?.signup?.requires_company;
 
   return (
     <div className="grid min-h-full lg:grid-cols-2">
@@ -59,6 +61,13 @@ export default function Signup() {
               <input type="text" name="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={120}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
             </label>
+            {requiresCompany && (
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-ink-700">Company</span>
+                <input type="text" name="company" autoComplete="organization" value={company} onChange={(e) => setCompany(e.target.value)} required maxLength={160}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
+              </label>
+            )}
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-ink-700">Email</span>
               <input type="email" name="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={200}

@@ -27,6 +27,7 @@ const iso = (offsetDays = 0) => new Date(now + offsetDays * DAY).toISOString();
 const date = (offsetDays = 0) => iso(offsetDays).slice(0, 10);
 
 const COMPANY = 'Northwind Systems, Inc.';
+const DEMO_TENANT_ID = 1;
 
 const users = [
   ['ada@northwind.io', 'Ada Whitfield', 'admin', 'Chief Technology Officer'],
@@ -94,7 +95,6 @@ const R = (integration, type, external_id, name, region, owner, metadata) =>
   ({ integration, type, external_id, name, region, owner, metadata });
 
 const resources = [
-  // IAM
   R('aws', 'aws_iam_user', 'AIDA1001', 'svc-terraform-deploy', 'global', 'Platform', { mfa_enabled: false, access_key_age_days: 41, admin_reviewed: true, days_since_last_use: 1, console_access: false }),
   R('aws', 'aws_iam_user', 'AIDA1002', 'ada.whitfield', 'global', 'Engineering', { mfa_enabled: true, access_key_age_days: 12, admin_reviewed: true, days_since_last_use: 2 }),
   R('aws', 'aws_iam_user', 'AIDA1003', 'marcus.bell', 'global', 'Security', { mfa_enabled: true, access_key_age_days: 30, admin_reviewed: true, days_since_last_use: 1 }),
@@ -104,7 +104,6 @@ const resources = [
   R('aws', 'aws_iam_user', 'AIDA1007', 'tom.nguyen', 'global', 'Engineering', { mfa_enabled: true, access_key_age_days: 8, admin_reviewed: true, days_since_last_use: 4 }),
   R('aws', 'aws_iam_user', 'AIDA1008', 'legacy-etl-user', 'global', 'Data', { mfa_enabled: false, access_key_age_days: 402, admin_reviewed: true, days_since_last_use: 9 }),
   R('aws', 'aws_iam_user', 'AIDA1009', 'rafael.duarte', 'global', 'Security', { mfa_enabled: true, access_key_age_days: 17, admin_reviewed: true, days_since_last_use: 1 }),
-  // S3
   R('aws', 'aws_s3_bucket', 'northwind-prod-customer-data', 'northwind-prod-customer-data', 'us-east-1', 'Platform', { encryption_enabled: true, public_access_blocked: true, versioning: true, logging: true }),
   R('aws', 'aws_s3_bucket', 'northwind-prod-uploads', 'northwind-prod-uploads', 'us-east-1', 'Platform', { encryption_enabled: true, public_access_blocked: true, versioning: true, logging: true }),
   R('aws', 'aws_s3_bucket', 'northwind-prod-backups', 'northwind-prod-backups', 'us-west-2', 'Platform', { encryption_enabled: true, public_access_blocked: true, versioning: true, logging: true }),
@@ -113,19 +112,16 @@ const resources = [
   R('aws', 'aws_s3_bucket', 'northwind-terraform-state', 'northwind-terraform-state', 'us-east-1', 'Platform', { encryption_enabled: true, public_access_blocked: true, versioning: true, logging: true }),
   R('aws', 'aws_s3_bucket', 'northwind-audit-logs', 'northwind-audit-logs', 'us-east-1', 'Security', { encryption_enabled: true, public_access_blocked: true, versioning: true, logging: true }),
   R('aws', 'aws_s3_bucket', 'northwind-staging-scratch', 'northwind-staging-scratch', 'us-east-2', 'Engineering', { encryption_enabled: true, public_access_blocked: true, versioning: true, logging: true }),
-  // EC2
   R('aws', 'aws_ec2_instance', 'i-0a91f2', 'prod-api-1', 'us-east-1a', 'Platform', { ebs_encrypted: true, imdsv2_required: true, public_ip: false }),
   R('aws', 'aws_ec2_instance', 'i-0b32c7', 'prod-api-2', 'us-east-1b', 'Platform', { ebs_encrypted: true, imdsv2_required: true, public_ip: false }),
   R('aws', 'aws_ec2_instance', 'i-0c88d1', 'prod-worker-1', 'us-east-1a', 'Platform', { ebs_encrypted: true, imdsv2_required: true, public_ip: false }),
   R('aws', 'aws_ec2_instance', 'i-0d19e4', 'prod-bastion', 'us-east-1a', 'Security', { ebs_encrypted: true, imdsv2_required: true, public_ip: false }),
   R('aws', 'aws_ec2_instance', 'i-0e77b8', 'staging-api-1', 'us-east-2a', 'Engineering', { ebs_encrypted: true, imdsv2_required: true, public_ip: false }),
   R('aws', 'aws_ec2_instance', 'i-0f45a2', 'build-runner-1', 'us-east-1c', 'Engineering', { ebs_encrypted: true, imdsv2_required: true, public_ip: false }),
-  // RDS
   R('aws', 'aws_rds_instance', 'northwind-prod-pg', 'northwind-prod-pg', 'us-east-1', 'Platform', { encrypted: true, backup_retention_days: 30, publicly_accessible: false, multi_az: true }),
   R('aws', 'aws_rds_instance', 'northwind-prod-standby', 'northwind-prod-standby', 'us-west-2', 'Platform', { encrypted: true, backup_retention_days: 14, publicly_accessible: false, multi_az: true }),
   R('aws', 'aws_rds_instance', 'northwind-analytics-pg', 'northwind-analytics-pg', 'us-east-1', 'Data', { encrypted: true, backup_retention_days: 3, publicly_accessible: false, multi_az: true }),
   R('aws', 'aws_rds_instance', 'northwind-staging-pg', 'northwind-staging-pg', 'us-east-2', 'Engineering', { encrypted: true, backup_retention_days: 7, publicly_accessible: false, multi_az: true }),
-  // Network
   R('aws', 'aws_security_group', 'sg-0011', 'prod-alb-sg', 'us-east-1', 'Platform', { admin_ports_open_to_world: false }),
   R('aws', 'aws_security_group', 'sg-0012', 'prod-app-sg', 'us-east-1', 'Platform', { admin_ports_open_to_world: false }),
   R('aws', 'aws_security_group', 'sg-0013', 'prod-db-sg', 'us-east-1', 'Platform', { admin_ports_open_to_world: false }),
@@ -134,7 +130,6 @@ const resources = [
   R('aws', 'aws_security_group', 'sg-0016', 'build-runner-sg', 'us-east-1', 'Engineering', { admin_ports_open_to_world: false }),
   R('aws', 'aws_vpc', 'vpc-prod-01', 'northwind-prod-vpc', 'us-east-1', 'Platform', { flow_logs_enabled: true }),
   R('aws', 'aws_vpc', 'vpc-stage-01', 'northwind-staging-vpc', 'us-east-2', 'Engineering', { flow_logs_enabled: true }),
-  // Logging & keys
   R('aws', 'aws_cloudtrail', 'northwind-org-trail', 'northwind-org-trail', 'us-east-1', 'Security', { multi_region: true, log_file_validation: true }),
   R('aws', 'aws_log_group', '/aws/api/prod', '/aws/api/prod', 'us-east-1', 'Platform', { retention_days: 365 }),
   R('aws', 'aws_log_group', '/aws/worker/prod', '/aws/worker/prod', 'us-east-1', 'Platform', { retention_days: 365 }),
@@ -143,7 +138,6 @@ const resources = [
   R('aws', 'aws_kms_key', 'key-rds-prod', 'rds-prod-cmk', 'us-east-1', 'Platform', { rotation_enabled: true }),
   R('aws', 'aws_kms_key', 'key-s3-prod', 's3-prod-cmk', 'us-east-1', 'Platform', { rotation_enabled: true }),
   R('aws', 'aws_kms_key', 'key-analytics', 'analytics-cmk', 'us-east-1', 'Data', { rotation_enabled: true }),
-  // GitHub repositories
   R('github', 'github_repo', 'northwind/api', 'northwind/api', null, 'Engineering', { branch_protection: true, required_reviewers: 2, secret_scanning: true, dependabot: true, code_scanning: true, visibility: 'private' }),
   R('github', 'github_repo', 'northwind/web', 'northwind/web', null, 'Engineering', { branch_protection: true, required_reviewers: 1, secret_scanning: true, dependabot: true, code_scanning: true, visibility: 'private' }),
   R('github', 'github_repo', 'northwind/infra', 'northwind/infra', null, 'Platform', { branch_protection: true, required_reviewers: 2, secret_scanning: true, dependabot: true, code_scanning: true, visibility: 'private' }),
@@ -154,7 +148,6 @@ const resources = [
   R('github', 'github_repo', 'northwind/terraform-modules', 'northwind/terraform-modules', null, 'Platform', { branch_protection: true, required_reviewers: 2, secret_scanning: true, dependabot: true, code_scanning: true, visibility: 'private' }),
   R('github', 'github_repo', 'northwind/sdk-js', 'northwind/sdk-js', null, 'Engineering', { branch_protection: true, required_reviewers: 1, secret_scanning: true, dependabot: true, code_scanning: true, visibility: 'public' }),
   R('github', 'github_repo', 'northwind/internal-tools', 'northwind/internal-tools', null, 'Engineering', { branch_protection: true, required_reviewers: 1, secret_scanning: true, dependabot: true, code_scanning: true, visibility: 'private' }),
-  // Identity provider policy & SaaS apps
   R('okta', 'idp_policy', 'default-password-policy', 'Default password policy', null, 'Security', { meets_standard: true, min_length: 14, lockout_attempts: 5 }),
   R('okta', 'saas_app', 'app-salesforce', 'Salesforce', null, 'Sales', { sso_enabled: true }),
   R('okta', 'saas_app', 'app-hubspot', 'HubSpot', null, 'Marketing', { sso_enabled: true }),
@@ -225,7 +218,7 @@ Violations may result in disciplinary action up to and including termination of 
 ## 6. Review
 This policy is reviewed at least annually, and after any material change to the business, its systems or the regulatory landscape.`;
 
-const vendors = [
+const vendorData = [
   ['Amazon Web Services', 'aws.amazon.com', 'Cloud infrastructure', 'Primary hosting provider for all production workloads.', 'high', 'Customer data, PII', 1, 'complete', 1, 1, -70, 295000],
   ['Datadog', 'datadoghq.com', 'Observability', 'Infrastructure and application monitoring, log aggregation.', 'medium', 'Logs, metadata', 1, 'complete', 1, 1, -120, 64000],
   ['GitHub', 'github.com', 'Development', 'Source control, code review and CI workflows.', 'high', 'Source code', 0, 'complete', 1, 1, -95, 28000],
@@ -297,14 +290,8 @@ const questionnaireData = [
 export function seed({ force = false } = {}) {
   const existing = get('SELECT COUNT(*) AS n FROM frameworks');
   if (existing.n > 0 && !force) return { skipped: true };
-  // Reseeding wipes 25 tables and refills them. On the public deployment it
-  // runs on a timer while requests are in flight, so it has to be atomic: a
-  // crash or a concurrent read must never observe a half-wiped tenant.
   db.exec('BEGIN IMMEDIATE');
   try {
-    // PRAGMA foreign_keys is a no-op inside a transaction; defer_foreign_keys
-    // is the transaction-scoped equivalent, so the wipe can delete parents
-    // before children while constraints are still enforced at COMMIT.
     db.exec('PRAGMA defer_foreign_keys = ON');
     const result = seedTables();
     db.exec('COMMIT');
@@ -316,18 +303,22 @@ export function seed({ force = false } = {}) {
 }
 
 function seedTables() {
+  const T = DEMO_TENANT_ID;
   const wipe = ['test_entities', 'tests', 'control_requirements', 'controls', 'requirements', 'frameworks',
     'resources', 'integrations', 'policy_acceptances', 'policies', 'devices', 'personnel', 'vendors', 'risks',
     'audit_requests', 'audits', 'evidence', 'trust_documents', 'trust_requests', 'questionnaire_items',
     'questionnaires', 'activity', 'sessions', 'users', 'settings'];
-  for (const table of wipe) db.exec(`DELETE FROM ${table}`);
+  for (const table of wipe) db.exec(`DELETE FROM ${table} WHERE tenant_id = ${T}`);
+
+  // Ensure demo tenant exists
+  run("INSERT OR IGNORE INTO tenants (id, slug, name, created_at) VALUES (?, 'demo', 'Northwind Systems (Demo)', ?)", T, new Date().toISOString());
 
   // Users
   for (const [email, name, role, title] of users) {
-    run('INSERT INTO users (email, name, password_hash, role, title, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      email, name, hashPassword('vantage123'), role, title, iso(-400));
+    run('INSERT INTO users (tenant_id, email, name, password_hash, role, title, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      T, email, name, hashPassword('vantage123'), role, title, iso(-400));
   }
-  const userId = (email) => get('SELECT id FROM users WHERE email = ?', email).id;
+  const userId = (email) => get('SELECT id FROM users WHERE tenant_id = ? AND email = ?', T, email).id;
   const security = userId('marcus@northwind.io');
   const cto = userId('ada@northwind.io');
   const peopleOps = userId('sofia@northwind.io');
@@ -335,8 +326,8 @@ function seedTables() {
 
   // Frameworks + requirements
   for (const f of frameworks) {
-    run('INSERT INTO frameworks (slug, name, short_name, category, description, color, enabled, target_date, audit_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      f.slug, f.name, f.short_name, f.category, f.description, f.color,
+    run('INSERT INTO frameworks (tenant_id, slug, name, short_name, category, description, color, enabled, target_date, audit_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      T, f.slug, f.name, f.short_name, f.category, f.description, f.color,
       ['pcidss', 'iso42001'].includes(f.slug) ? 0 : 1, f.target_date, f.audit_status);
   }
 
@@ -348,58 +339,57 @@ function seedTables() {
     return security;
   };
   for (const c of controls) {
-    run('INSERT INTO controls (code, name, description, category, owner_id) VALUES (?, ?, ?, ?, ?)',
-      c.code, c.name, c.description, c.category, ownerFor(c.category));
+    run('INSERT INTO controls (tenant_id, code, name, description, category, owner_id) VALUES (?, ?, ?, ?, ?, ?)',
+      T, c.code, c.name, c.description, c.category, ownerFor(c.category));
   }
-  const controlId = (code) => get('SELECT id FROM controls WHERE code = ?', code)?.id;
+  const controlId = (code) => get('SELECT id FROM controls WHERE tenant_id = ? AND code = ?', T, code)?.id;
 
   for (const [slug, reqs] of Object.entries(requirements)) {
-    const fw = get('SELECT id FROM frameworks WHERE slug = ?', slug);
+    const fw = get('SELECT id FROM frameworks WHERE tenant_id = ? AND slug = ?', T, slug);
     for (const r of reqs) {
-      run('INSERT INTO requirements (framework_id, code, title, description, section) VALUES (?, ?, ?, ?, ?)',
-        fw.id, r.code, r.title, r.description, r.section);
-      const reqId = get('SELECT id FROM requirements WHERE framework_id = ? AND code = ?', fw.id, r.code).id;
+      run('INSERT INTO requirements (tenant_id, framework_id, code, title, description, section) VALUES (?, ?, ?, ?, ?, ?)',
+        T, fw.id, r.code, r.title, r.description, r.section);
+      const reqId = get('SELECT id FROM requirements WHERE tenant_id = ? AND framework_id = ? AND code = ?', T, fw.id, r.code).id;
       for (const code of r.controls) {
         const cid = controlId(code);
-        if (cid) run('INSERT OR IGNORE INTO control_requirements (control_id, requirement_id) VALUES (?, ?)', cid, reqId);
+        if (cid) run('INSERT OR IGNORE INTO control_requirements (tenant_id, control_id, requirement_id) VALUES (?, ?, ?)', T, cid, reqId);
       }
     }
   }
 
   // Tests
   for (const test of tests) {
-    run('INSERT INTO tests (slug, control_id, name, description, remediation, severity, integration, rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      test.slug, controlId(test.control), test.name, test.description, test.remediation, test.severity, test.integration, JSON.stringify(test.rule));
+    run('INSERT INTO tests (tenant_id, slug, control_id, name, description, remediation, severity, integration, rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      T, test.slug, controlId(test.control), test.name, test.description, test.remediation, test.severity, test.integration, JSON.stringify(test.rule));
   }
 
   // Integrations & resources
   for (const [slug, name, category, description, status, account] of integrations) {
-    run('INSERT INTO integrations (slug, name, category, description, status, account, connected_at, last_sync) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      slug, name, category, description, status, account,
+    run('INSERT INTO integrations (tenant_id, slug, name, category, description, status, account, connected_at, last_sync) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      T, slug, name, category, description, status, account,
       status === 'connected' ? iso(-Math.floor(Math.random() * 300) - 30) : null,
       status === 'connected' ? iso(-0.02) : null);
   }
   for (const r of resources) {
-    run('INSERT INTO resources (integration, type, external_id, name, region, owner, metadata, discovered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      r.integration, r.type, r.external_id, r.name, r.region, r.owner, JSON.stringify(r.metadata), iso(-90));
+    run('INSERT INTO resources (tenant_id, integration, type, external_id, name, region, owner, metadata, discovered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      T, r.integration, r.type, r.external_id, r.name, r.region, r.owner, JSON.stringify(r.metadata), iso(-90));
   }
 
   // Personnel
   const trainingLapsed = new Set(['tom@northwind.io', 'ben@northwind.io', 'hassan@northwind.io']);
   const trainingPending = new Set(['owen@northwind.io', 'sara@northwind.io', 'isabel@northwind.io']);
-  const bgPending = new Set([]);
   for (const [name, email, title, department, employment_type, startOffset] of people) {
     const training = trainingLapsed.has(email) ? 'expired' : trainingPending.has(email) ? 'not_started' : 'complete';
-    const bg = bgPending.has(email) ? 'in_progress' : employment_type === 'contractor' ? 'not_applicable' : 'complete';
-    run(`INSERT INTO personnel (name, email, title, department, employment_type, status, start_date, background_check, security_training, training_due)
-         VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)`,
-      name, email, title, department, employment_type, date(startOffset), bg, training,
+    const bg = employment_type === 'contractor' ? 'not_applicable' : 'complete';
+    run(`INSERT INTO personnel (tenant_id, name, email, title, department, employment_type, status, start_date, background_check, security_training, training_due)
+         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)`,
+      T, name, email, title, department, employment_type, date(startOffset), bg, training,
       training === 'complete' ? date(200) : date(training === 'expired' ? -30 : 14));
   }
   for (const [name, email, title, department, startOffset, endOffset, removed] of offboarded) {
-    run(`INSERT INTO personnel (name, email, title, department, employment_type, status, start_date, end_date, background_check, security_training, offboarded_access_removed)
-         VALUES (?, ?, ?, ?, 'employee', 'offboarded', ?, ?, 'complete', 'complete', ?)`,
-      name, email, title, department, date(startOffset), date(endOffset), removed);
+    run(`INSERT INTO personnel (tenant_id, name, email, title, department, employment_type, status, start_date, end_date, background_check, security_training, offboarded_access_removed)
+         VALUES (?, ?, ?, ?, ?, 'employee', 'offboarded', ?, ?, 'complete', 'complete', ?)`,
+      T, name, email, title, department, date(startOffset), date(endOffset), removed);
   }
 
   // GitHub organisation members
@@ -410,75 +400,67 @@ function seedTables() {
     ['owen-walsh', 'Owen Walsh', 1], ['rafael-duarte', 'Rafael Duarte', 3], ['northwind-ci-bot', 'northwind-ci-bot', 1],
   ];
   for (const [handle, name, idleDays] of ghMembers) {
-    run('INSERT INTO resources (integration, type, external_id, name, region, owner, metadata, discovered_at) VALUES (?, ?, ?, ?, NULL, ?, ?, ?)',
-      'github', 'github_user', handle, `${name} (@${handle})`, 'Engineering',
+    run('INSERT INTO resources (tenant_id, integration, type, external_id, name, region, owner, metadata, discovered_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)',
+      T, 'github', 'github_user', handle, `${name} (@${handle})`, 'Engineering',
       JSON.stringify({ mfa_enabled: true, days_since_active: idleDays, role: handle === 'northwind-ci-bot' ? 'bot' : 'member' }), iso(-120));
   }
 
-  // Identity provider accounts mirror the personnel roster
-  const roster = all("SELECT * FROM personnel WHERE status = 'active'");
+  // Identity provider accounts
+  const roster = all("SELECT * FROM personnel WHERE tenant_id = ? AND status = 'active'", T);
   const noMfa = new Set(['sara@northwind.io']);
-  const approvedAdmins = new Set(['ada@northwind.io', 'marcus@northwind.io', 'priya@northwind.io']);
   for (const p of roster) {
-    run('INSERT INTO resources (integration, type, external_id, name, region, owner, metadata, discovered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      'okta', 'idp_user', `okta-${p.email}`, `${p.name} <${p.email}>`, null, p.department,
-      JSON.stringify({
-        mfa_enabled: !noMfa.has(p.email),
-        admin_approved: p.department === 'Engineering' && !approvedAdmins.has(p.email) ? true : true,
-        status: 'active',
-      }), iso(-60));
+    run('INSERT INTO resources (tenant_id, integration, type, external_id, name, region, owner, metadata, discovered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      T, 'okta', 'idp_user', `okta-${p.email}`, `${p.name} <${p.email}>`, null, p.department,
+      JSON.stringify({ mfa_enabled: !noMfa.has(p.email), admin_approved: true, status: 'active' }), iso(-60));
   }
-  run(`INSERT INTO resources (integration, type, external_id, name, region, owner, metadata, discovered_at)
-       VALUES ('okta', 'idp_user', 'okta-svc-integrations', 'svc-integrations <svc@northwind.io>', NULL, 'Platform', ?, ?)`,
-    JSON.stringify({ mfa_enabled: true, admin_approved: true, status: 'active' }), iso(-60));
+  run(`INSERT INTO resources (tenant_id, integration, type, external_id, name, region, owner, metadata, discovered_at)
+       VALUES (?, 'okta', 'idp_user', 'okta-svc-integrations', 'svc-integrations <svc@northwind.io>', NULL, 'Platform', ?, ?)`,
+    T, JSON.stringify({ mfa_enabled: true, admin_approved: true, status: 'active' }), iso(-60));
 
   // Devices
   const osOptions = [['macOS', '15.6.1', 'Kandji'], ['macOS', '15.5', 'Kandji'], ['Windows', '11 23H2', 'Intune'], ['macOS', '14.7.2', 'Kandji']];
-  const activePeople = all("SELECT * FROM personnel WHERE status = 'active'");
+  const activePeople = all("SELECT * FROM personnel WHERE tenant_id = ? AND status = 'active'", T);
   activePeople.forEach((p, i) => {
     const [os, version, mdm] = osOptions[i % 3];
     const noEncryption = p.email === 'hassan@northwind.io';
-    const stale = false;
-    run(`INSERT INTO devices (personnel_id, name, os, os_version, serial, mdm, encrypted, screen_lock, antivirus, os_up_to_date, last_checkin)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      p.id, `${p.name.split(' ')[0]}-${os === 'macOS' ? 'MBP' : 'TP'}`, os, version,
+    run(`INSERT INTO devices (tenant_id, personnel_id, name, os, os_version, serial, mdm, encrypted, screen_lock, antivirus, os_up_to_date, last_checkin)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      T, p.id, `${p.name.split(' ')[0]}-${os === 'macOS' ? 'MBP' : 'TP'}`, os, version,
       `C02${randomUUID().slice(0, 8).toUpperCase()}`, mdm,
-      noEncryption ? 0 : 1, 1, 1, 1,
-      iso(stale ? -47 : -Math.random() * 2));
+      noEncryption ? 0 : 1, 1, 1, 1, iso(-Math.random() * 2));
   });
-  // A second device for a few senior staff
   for (const email of ['ada@northwind.io', 'marcus@northwind.io', 'priya@northwind.io']) {
-    const p = get('SELECT * FROM personnel WHERE email = ?', email);
-    run(`INSERT INTO devices (personnel_id, name, os, os_version, serial, mdm, encrypted, screen_lock, antivirus, os_up_to_date, last_checkin)
-         VALUES (?, ?, 'macOS', '15.6.1', ?, 'Kandji', 1, 1, 1, 1, ?)`,
-      p.id, `${p.name.split(' ')[0]}-Mini`, `C02${randomUUID().slice(0, 8).toUpperCase()}`, iso(-0.5));
+    const p = get('SELECT * FROM personnel WHERE tenant_id = ? AND email = ?', T, email);
+    run(`INSERT INTO devices (tenant_id, personnel_id, name, os, os_version, serial, mdm, encrypted, screen_lock, antivirus, os_up_to_date, last_checkin)
+         VALUES (?, ?, ?, 'macOS', '15.6.1', ?, 'Kandji', 1, 1, 1, 1, ?)`,
+      T, p.id, `${p.name.split(' ')[0]}-Mini`, `C02${randomUUID().slice(0, 8).toUpperCase()}`, iso(-0.5));
   }
 
   // Policies
   for (const [slug, name, category, description, status, approvedOffset] of policyDefs) {
-    run(`INSERT INTO policies (slug, name, category, description, body, version, status, owner_id, approved_at, renewal_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      slug, name, category, description, policyBody(name, description, category),
+    run(`INSERT INTO policies (tenant_id, slug, name, category, description, body, version, status, owner_id, approved_at, renewal_date)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      T, slug, name, category, description, policyBody(name, description, category),
       status === 'approved' ? '2.1' : '0.9', status, ownerFor(category === 'Security' ? 'Access Control' : category),
       approvedOffset === null ? null : iso(approvedOffset),
       approvedOffset === null ? null : date(approvedOffset + 365));
   }
 
-  // Policy acceptances — most people accepted everything, a few have gaps
-  const allPolicies = all("SELECT id FROM policies WHERE status = 'approved'");
+  // Policy acceptances
+  const allPolicies = all("SELECT id FROM policies WHERE tenant_id = ? AND status = 'approved'", T);
   const laggards = new Set(['owen@northwind.io', 'sara@northwind.io', 'leo@northwind.io', 'isabel@northwind.io']);
   for (const p of activePeople) {
     const skipFrom = laggards.has(p.email) ? Math.floor(allPolicies.length / 2) : allPolicies.length;
     allPolicies.slice(0, skipFrom).forEach((pol) => {
-      run('INSERT OR IGNORE INTO policy_acceptances (policy_id, personnel_id, accepted_at) VALUES (?, ?, ?)', pol.id, p.id, iso(-Math.random() * 120));
+      run('INSERT OR IGNORE INTO policy_acceptances (tenant_id, policy_id, personnel_id, accepted_at) VALUES (?, ?, ?, ?)', T, pol.id, p.id, iso(-Math.random() * 120));
     });
   }
 
   // Vendors
-  for (const [name, website, category, description, risk, data, sub, review, soc2, iso27001, reviewedOffset, cost] of vendors) {
-    run(`INSERT INTO vendors (name, website, category, description, risk_level, status, data_processed, subprocessor, owner_id, security_review_status, soc2, iso27001, last_reviewed, next_review, annual_cost)
-         VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      name, website, category, description, risk, data, sub, risk === 'high' ? security : counsel,
+  for (const [name, website, category, description, risk, data, sub, review, soc2, iso27001, reviewedOffset, cost] of vendorData) {
+    run(`INSERT INTO vendors (tenant_id, name, website, category, description, risk_level, status, data_processed, subprocessor, owner_id, security_review_status, soc2, iso27001, last_reviewed, next_review, annual_cost)
+         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      T, name, website, category, description, risk, data, sub, risk === 'high' ? security : counsel,
       review, soc2, iso27001,
       reviewedOffset === null ? null : iso(reviewedOffset),
       reviewedOffset === null ? date(30) : date(reviewedOffset + 365), cost);
@@ -486,22 +468,22 @@ function seedTables() {
 
   // Risks
   for (const [code, title, description, category, likelihood, impact, treatment, rl, ri, status, dueOffset, mitigation] of risks) {
-    run(`INSERT INTO risks (code, title, description, category, likelihood, impact, treatment, residual_likelihood, residual_impact, status, owner_id, due_date, mitigation)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      code, title, description, category, likelihood, impact, treatment, rl, ri, status,
+    run(`INSERT INTO risks (tenant_id, code, title, description, category, likelihood, impact, treatment, residual_likelihood, residual_impact, status, owner_id, due_date, mitigation)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      T, code, title, description, category, likelihood, impact, treatment, rl, ri, status,
       category === 'AI' ? cto : security, dueOffset === null ? null : date(dueOffset), mitigation);
   }
 
   // Audits
-  const soc2Fw = get("SELECT id FROM frameworks WHERE slug = 'soc2'");
-  const isoFw = get("SELECT id FROM frameworks WHERE slug = 'iso27001'");
-  run(`INSERT INTO audits (framework_id, name, auditor_firm, auditor_name, auditor_email, type, period_start, period_end, status)
-       VALUES (?, 'SOC 2 Type II — FY26', 'Keeling & Co CPA', 'Helen Keeling', 'auditor@keeling-cpa.com', 'Type II', ?, ?, 'fieldwork')`,
-    soc2Fw.id, date(-180), date(15));
-  run(`INSERT INTO audits (framework_id, name, auditor_firm, auditor_name, auditor_email, type, period_start, period_end, status)
-       VALUES (?, 'ISO 27001 Stage 1', 'Brightline Certification', 'Omar Haddad', 'omar@brightlinecert.com', 'Stage 1', ?, ?, 'scheduled')`,
-    isoFw.id, date(60), date(75));
-  const soc2Audit = get("SELECT id FROM audits WHERE name LIKE 'SOC 2%'");
+  const soc2Fw = get("SELECT id FROM frameworks WHERE tenant_id = ? AND slug = 'soc2'", T);
+  const isoFw = get("SELECT id FROM frameworks WHERE tenant_id = ? AND slug = 'iso27001'", T);
+  run(`INSERT INTO audits (tenant_id, framework_id, name, auditor_firm, auditor_name, auditor_email, type, period_start, period_end, status)
+       VALUES (?, ?, 'SOC 2 Type II — FY26', 'Keeling & Co CPA', 'Helen Keeling', 'auditor@keeling-cpa.com', 'Type II', ?, ?, 'fieldwork')`,
+    T, soc2Fw.id, date(-180), date(15));
+  run(`INSERT INTO audits (tenant_id, framework_id, name, auditor_firm, auditor_name, auditor_email, type, period_start, period_end, status)
+       VALUES (?, ?, 'ISO 27001 Stage 1', 'Brightline Certification', 'Omar Haddad', 'omar@brightlinecert.com', 'Stage 1', ?, ?, 'scheduled')`,
+    T, isoFw.id, date(60), date(75));
+  const soc2Audit = get("SELECT id FROM audits WHERE tenant_id = ? AND name LIKE 'SOC 2%'", T);
   const auditRequests = [
     ['PBC-01', 'Population of employees hired during the period', 'Provide a complete listing of new hires with start dates.', 'accepted', -20, 3],
     ['PBC-02', 'Evidence of security awareness training completion', 'Training completion records for a sample of 12 employees.', 'submitted', -8, 12],
@@ -515,8 +497,8 @@ function seedTables() {
     ['PBC-10', 'Board meeting minutes evidencing security oversight', 'Minutes from quarterly management review meetings.', 'submitted', -2, 2],
   ];
   for (const [ref, name, description, status, dueOffset, evidenceCount] of auditRequests) {
-    run('INSERT INTO audit_requests (audit_id, ref, name, description, status, due_date, evidence_count) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      soc2Audit.id, ref, name, description, status, date(dueOffset), evidenceCount);
+    run('INSERT INTO audit_requests (tenant_id, audit_id, ref, name, description, status, due_date, evidence_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      T, soc2Audit.id, ref, name, description, status, date(dueOffset), evidenceCount);
   }
 
   // Evidence
@@ -533,17 +515,17 @@ function seedTables() {
     ['Vendor review — Anthropic', 'questionnaire', 'Security team', 'VM-01', -25, 340],
   ];
   for (const [name, type, source, controlCode, collected, renewal] of evidenceItems) {
-    run('INSERT INTO evidence (control_id, name, type, source, collected_at, renewal_date) VALUES (?, ?, ?, ?, ?, ?)',
-      controlId(controlCode), name, type, source, iso(collected), date(renewal));
+    run('INSERT INTO evidence (tenant_id, control_id, name, type, source, collected_at, renewal_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      T, controlId(controlCode), name, type, source, iso(collected), date(renewal));
   }
 
   // Trust center
   for (const [name, type, description, gated] of trustDocuments) {
-    run('INSERT INTO trust_documents (name, type, description, gated, updated_at) VALUES (?, ?, ?, ?, ?)',
-      name, type, description, gated, iso(-Math.floor(Math.random() * 120)));
+    run('INSERT INTO trust_documents (tenant_id, name, type, description, gated, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      T, name, type, description, gated, iso(-Math.floor(Math.random() * 120)));
   }
-  run("INSERT INTO trust_requests (name, email, company, document, status, created_at) VALUES ('Jordan Pike', 'jordan.pike@halcyonhealth.com', 'Halcyon Health Group', 'SOC 2 Type II Report', 'pending', ?)", iso(-1));
-  run("INSERT INTO trust_requests (name, email, company, document, status, created_at) VALUES ('Amelia Frost', 'a.frost@vertexfin.com', 'Vertex Financial', 'Penetration Test Summary', 'approved', ?)", iso(-9));
+  run("INSERT INTO trust_requests (tenant_id, name, email, company, document, status, created_at) VALUES (?, 'Jordan Pike', 'jordan.pike@halcyonhealth.com', 'Halcyon Health Group', 'SOC 2 Type II Report', 'pending', ?)", T, iso(-1));
+  run("INSERT INTO trust_requests (tenant_id, name, email, company, document, status, created_at) VALUES (?, 'Amelia Frost', 'a.frost@vertexfin.com', 'Vertex Financial', 'Penetration Test Summary', 'approved', ?)", T, iso(-9));
 
   setSetting('company', {
     name: COMPANY,
@@ -551,25 +533,25 @@ function seedTables() {
     description: 'Northwind Systems builds the operations data platform used by logistics teams to plan, track and reconcile freight in real time.',
     subdomain: 'trust.northwind.io',
     contact: 'security@northwind.io',
-  });
+  }, T);
   setSetting('trust_center', {
     published: true,
     headline: 'Security at Northwind',
-    subhead: 'We treat our customers’ data as if it were our own. This page is generated from live monitoring — every control below is tested continuously.',
+    subhead: 'We treat our customers\u2019 data as if it were our own. This page is generated from live monitoring \u2014 every control below is tested continuously.',
     primary_color: '#6558f5',
-  });
+  }, T);
 
   // Questionnaires
   for (const [name, company, status, dueOffset, items] of questionnaireData) {
-    run('INSERT INTO questionnaires (name, company, status, due_date, created_at) VALUES (?, ?, ?, ?, ?)',
-      name, company, status, date(dueOffset), iso(dueOffset - 20));
-    const qid = get('SELECT id FROM questionnaires WHERE name = ? AND company = ?', name, company).id;
+    run('INSERT INTO questionnaires (tenant_id, name, company, status, due_date, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      T, name, company, status, date(dueOffset), iso(dueOffset - 20));
+    const qid = get('SELECT id FROM questionnaires WHERE tenant_id = ? AND name = ? AND company = ?', T, name, company).id;
     for (const [question, answer, confidence, source] of items) {
-      run('INSERT INTO questionnaire_items (questionnaire_id, question, answer, confidence, source, status) VALUES (?, ?, ?, ?, ?, ?)',
-        qid, question, answer, confidence, source, 'answered');
+      run('INSERT INTO questionnaire_items (tenant_id, questionnaire_id, question, answer, confidence, source, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        T, qid, question, answer, confidence, source, 'answered');
     }
   }
-  const orion = get("SELECT id FROM questionnaires WHERE company = 'Orion Logistics'");
+  const orion = get("SELECT id FROM questionnaires WHERE tenant_id = ? AND company = 'Orion Logistics'", T);
   for (const q of [
     'Describe your approach to encryption of data at rest and in transit.',
     'How do you manage privileged access to production systems?',
@@ -580,7 +562,7 @@ function seedTables() {
     'Do you perform annual disaster recovery testing?',
     'How is employee access removed upon termination?',
   ]) {
-    run("INSERT INTO questionnaire_items (questionnaire_id, question, status) VALUES (?, ?, 'unanswered')", orion.id, q);
+    run("INSERT INTO questionnaire_items (tenant_id, questionnaire_id, question, status) VALUES (?, ?, ?, 'unanswered')", T, orion.id, q);
   }
 
   // Activity feed
@@ -596,10 +578,10 @@ function seedTables() {
     ['trust_center', 'Dan Okoye', 'Approved document access for Vertex Financial', -9],
   ];
   for (const [type, actor, message, offset] of activity) {
-    run('INSERT INTO activity (type, actor, message, created_at) VALUES (?, ?, ?, ?)', type, actor, message, iso(offset));
+    run('INSERT INTO activity (tenant_id, type, actor, message, created_at) VALUES (?, ?, ?, ?, ?)', T, type, actor, message, iso(offset));
   }
 
-  const result = runTests({ actor: 'Vantage Agent' });
+  const result = runTests({ actor: 'Vantage Agent', tenantId: T });
   return { seeded: true, ...result };
 }
 

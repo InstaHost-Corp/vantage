@@ -504,3 +504,28 @@ export const tests = [
     'Risks with a mitigation plan must be remediated by the agreed due date.',
     'Complete the mitigation or agree a revised due date with the risk owner.'),
 ];
+
+// Integration catalogue: [slug, name, category, description].
+// Used by tenant.js to seed the available integrations for a new tenant.
+export const integrationCatalog = [
+  ['aws', 'Amazon Web Services', 'Cloud infrastructure', 'Continuously inventories IAM, S3, EC2, RDS, VPC, KMS and CloudTrail configuration.'],
+  ['github', 'GitHub', 'Version control', 'Monitors repository protection rules, code scanning, secret scanning and organisation membership.'],
+  ['okta', 'Okta', 'Identity provider', 'Syncs users, group membership, MFA factors, sign-on policies and application assignments.'],
+  ['mdm', 'Kandji MDM', 'Device management', 'Reports endpoint encryption, screen lock, OS version and agent health.'],
+  ['hris', 'Rippling', 'HR information system', 'Source of truth for personnel, employment status, start and end dates.'],
+  ['gcp', 'Google Cloud Platform', 'Cloud infrastructure', 'Inventories projects, IAM bindings, buckets and Cloud SQL instances.'],
+  ['azure', 'Microsoft Azure', 'Cloud infrastructure', 'Inventories subscriptions, storage accounts, network security groups and Entra ID.'],
+  ['gworkspace', 'Google Workspace', 'Productivity', 'Monitors user accounts, 2-step verification and admin roles.'],
+  ['datadog', 'Datadog', 'Monitoring', 'Verifies monitors, alert routing and log retention configuration.'],
+  ['pagerduty', 'PagerDuty', 'Incident response', 'Verifies on-call schedules and escalation policies exist for production services.'],
+  ['jira', 'Jira', 'Ticketing', 'Links change tickets and remediation tasks to controls.'],
+  ['snyk', 'Snyk', 'Vulnerability management', 'Imports dependency and container vulnerability findings with SLA tracking.'],
+  ['cloudflare', 'Cloudflare', 'Network & CDN', 'Checks WAF, TLS configuration and DDoS protection settings.'],
+  ['vantage-agent', 'Vantage Agent', 'Endpoint agent', 'Lightweight agent reporting endpoint posture for unmanaged and BYOD machines.'],
+  ['slack', 'Slack', 'Collaboration', 'Delivers control failure alerts and policy acceptance reminders.'],
+  ['1password', '1Password', 'Secrets management', 'Verifies vault membership, master password policy and shared item hygiene.'],
+  ['stripe', 'Stripe', 'Payments', 'Monitors API key hygiene and account access for the payments environment.'],
+  ['bamboohr', 'BambooHR', 'HR information system', 'Alternative HRIS source for personnel records.'],
+  ['linear', 'Linear', 'Ticketing', 'Links product change records to change management controls.'],
+  ['vercel', 'Vercel', 'Hosting', 'Checks project environment variable scoping and team membership.'],
+];
