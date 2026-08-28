@@ -499,7 +499,7 @@ function frameworkSummary(tid) {
     return {
       ...f, enabled: !!f.enabled, readiness: r.readiness, requirements_total: r.total,
       requirements_complete: r.complete, requirements_at_risk: r.at_risk,
-      controls_total: r.controls_total, controls_failing: r.controls_failing,
+      controls_total: r.controls_total, controls_failing: r.controls_failing, controls_ok: r.controls_ok,
     };
   });
 }
@@ -574,6 +574,7 @@ app.get('/api/frameworks/:slug', (req, res) => {
     readiness: r.readiness,
     controls_total: r.controls_total,
     controls_failing: r.controls_failing,
+    controls_ok: r.controls_ok,
     complete: r.complete,
     total: r.total,
     at_risk: r.at_risk,

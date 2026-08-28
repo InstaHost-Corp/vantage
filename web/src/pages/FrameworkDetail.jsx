@@ -42,7 +42,7 @@ export default function FrameworkDetail() {
         <Card className="flex flex-col items-center justify-center p-6">
           <Donut value={data.readiness} color={f.color} sublabel="Ready" />
           <p className="mt-3 text-center text-xs text-ink-500">
-            {data.controls_total - data.controls_failing} of {data.controls_total} mapped controls are passing
+            {data.controls_ok} of {data.controls_total} mapped controls are passing
           </p>
         </Card>
         <Card className="p-6 lg:col-span-3">

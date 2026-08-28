@@ -122,6 +122,11 @@ test('PROD-1: production signup creates an isolated tenant with admin owner', as
   assert.equal(dashboard.overall_readiness, 0,
     'an unevaluated tenant must not report readiness before it has control data');
   assert.ok(dashboard.frameworks.every((framework) => framework.readiness === 0));
+  assert.ok(dashboard.frameworks.every((framework) => framework.controls_ok === 0),
+    'the published count must not represent unevaluated controls as passing');
+  const framework = await api(PROD, body.token)(`/api/frameworks/${dashboard.frameworks[0].slug}`).then((r) => r.json());
+  assert.equal(framework.controls_ok, 0,
+    'framework detail must publish the authoritative passing-control count');
 });
 
 test('PROD-1a: a partially evaluated control does not report readiness', async () => {
