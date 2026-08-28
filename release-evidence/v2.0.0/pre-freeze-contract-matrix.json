@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.2",
+  "release_id": "vantage-2.0.0",
+  "invariant_review": "declared",
+  "invariant_review_justification": "The release changes tenant-scoped readiness semantics and serves a committed frontend build. Every published readiness aggregate and generated frontend artifact is independently recomputed by the repository-owned invariant command.",
+  "contracts": [
+    {
+      "id": "pinned-node-runtime",
+      "category": "other",
+      "authoritative_source": "Pinned production node:24-slim image",
+      "version": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "reject_conditions": [
+        "The pinned image cannot run the declared Linux validation suite with /app read-only",
+        "The production image default user cannot read the planned root-readable secret mount"
+      ],
+      "validation_command": "docker run --rm --platform linux/amd64 -v \"$PWD\":/app:ro -w /app node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 node --test tests/http.test.mjs tests/api.test.mjs tests/public-mode.test.mjs",
+      "result": "PASS",
+      "evidence": "The declared Linux/amd64 suite passed 58/58 against the pinned image with /app read-only. Image metadata reports its default user as root."
+    },
+    {
+      "id": "truenas-app-api",
+      "category": "external_api",
+      "authoritative_source": "TrueNAS SCALE middleware on nas1 through the nas1 SSH alias",
+      "version": "nas1.insta.host, observed 2026-08-28",
+      "reject_conditions": [
+        "The middleware cannot distinguish the existing Vantage application from an absent application",
+        "The running application is not healthy before release preparation"
+      ],
+      "validation_command": "ssh -o ConnectTimeout=25 -o BatchMode=yes nas1 'midclt call app.get_instance vantage; curl -fsS http://127.0.0.1:30002/healthz; curl -fsS http://127.0.0.1:30002/readyz'",
+      "result": "PASS",
+      "evidence": "app.get_instance reported RUNNING with one Vantage container; origin health and readiness both returned success for Vantage 1.3.0 release 4e596f25.",
+      "live_probe": {
+        "command": "midclt call app.get_instance vantage (valid) and midclt call app.get_instance definitely-not-vantage-xyz (invalid)",
+        "observed_at": "2026-08-28T08:04:00+00:00",
+        "observed_semantics": "The existing app returns a RUNNING instance object. The absent app fails with exit code 1.",
+        "ran_against_production_dependency": true,
+        "negative_control": {
+          "input": "app.get_instance definitely-not-vantage-xyz",
+          "observed_result": "Exit code 1, distinct from the RUNNING Vantage instance response.",
+          "distinguishes_success": true
+        }
+      }
+    },
+    {
+      "id": "vantage-storage-capacity",
+      "category": "bounded_resource",
+      "authoritative_source": "TrueNAS pool.dataset.query for TailsPool",
+      "version": "Observed 2026-08-28",
+      "reject_conditions": [
+        "Live available pool capacity is insufficient for the release archive, secret file, SQLite migration journal, and safety margin",
+        "Capacity is not rechecked immediately before app.update"
+      ],
+      "validation_command": "ssh -o ConnectTimeout=25 -o BatchMode=yes nas1 'midclt call pool.dataset.query \"[[\\\"id\\\",\\\"=\\\",\\\"TailsPool\\\"]]\"'",
+      "result": "PASS",
+      "evidence": "TrueNAS reported 476762882528 bytes (444.02 GiB) available on TailsPool. The 25 MiB maximum release and migration working-space reservation fits below the 75 percent safety limit.",
+      "resource": {
+        "kind": "storage",
+        "unit": "bytes",
+        "observed_available": 476762882528,
+        "requested": 26214400,
+        "platform_limit": 476762882528,
+        "safety_limit_percent": 75,
+        "limit_source": "TrueNAS pool.dataset.query TailsPool available.parsed",
+        "recheck_at_deploy": true
+      }
+    },
+    {
+      "id": "session-secret-delivery",
+      "category": "identity",
+      "authoritative_source": "macOS login Keychain service vantage-session-secret and nas1 /mnt/TailsPool/vantage/secrets/vantage-session-secret",
+      "version": "Observed 2026-08-28",
+      "reject_conditions": [
+        "The Keychain source is absent",
+        "The host secret file is missing, shorter than 32 characters, or not mode 0600",
+        "The pinned production image does not run as root and cannot read the planned read-only file mount"
+      ],
+      "validation_command": "security find-generic-password -s vantage-session-secret -w >/dev/null; ssh nas1 'test \"$(stat -c %a /mnt/TailsPool/vantage/secrets/vantage-session-secret)\" = 600'; docker image inspect node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "result": "PASS",
+      "evidence": "The Keychain entry for vantage.insta.host exists. Its nas1 delivery file is 65 bytes and mode 0600, owned by the SSH service account; the pinned image default user is root, which can read the planned read-only bind mount. The secret value was never printed or committed."
+    },
+    {
+      "id": "framework-readiness-invariants",
+      "category": "invariant",
+      "authoritative_source": "Tenant-scoped controls, tests, test_entities, control_requirements, requirements, and web/src",
+      "version": "Vantage 2.0.0 candidate 50bd0ca29aee3b44dc361beab446ce5fec9312c8",
+      "reject_conditions": [
+        "Published readiness or control counts differ from independent recomputation",
+        "Rebuilding web/dist changes the committed frontend artifact",
+        "A test counter or control mapping is inconsistent"
+      ],
+      "validation_command": "node scripts/verify-invariants.mjs",
+      "result": "PASS",
+      "evidence": "All five checks passed: runtime dependency freedom, frontend build parity, framework readiness recomputation, test-counter integrity, and test-control mapping.",
+      "invariant": {
+        "authoritative_source": "Raw seeded SQLite rows and web/src",
+        "derived_representation": "API/UI framework readiness and controls_ok counts, tests counters, and committed web/dist",
+        "recompute_command": "node scripts/verify-invariants.mjs",
+        "compares_to_authoritative_source": true
+      }
+    }
+  ]
+}
