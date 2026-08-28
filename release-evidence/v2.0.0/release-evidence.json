@@ -38,20 +38,20 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "d2367c6745145a7da3a5a0133d2d3f734bcdde58",
-    "evidence_bundle_sha256": "sha256:08ef3d7839df1a50ab273d5a8b24f5ea1f4d414f872969e9d6b4b12efc5909f0",
+    "evidence_checkpoint": "42fbda37faed368c82907f7ab14784cb78dc51a3",
+    "evidence_bundle_sha256": "sha256:f70652b17f29c559a7f9613eccaf96a5b5491bfd36e41ada35613a55d0ea0441",
     "frozen_projection_sha256": "sha256:ca423df9a30241d964f52ca995f8691ef40406bafbd51314c45a69f753873d87",
     "cto_solo_authority": {
       "release_id": "vantage-2.0.0",
       "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence_checkpoint": "d2367c6745145a7da3a5a0133d2d3f734bcdde58",
-      "evidence_bundle_sha256": "sha256:08ef3d7839df1a50ab273d5a8b24f5ea1f4d414f872969e9d6b4b12efc5909f0",
+      "evidence_checkpoint": "42fbda37faed368c82907f7ab14784cb78dc51a3",
+      "evidence_bundle_sha256": "sha256:f70652b17f29c559a7f9613eccaf96a5b5491bfd36e41ada35613a55d0ea0441",
       "frozen_projection_sha256": "sha256:ca423df9a30241d964f52ca995f8691ef40406bafbd51314c45a69f753873d87",
       "implementation_actor_id": "9080454",
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
       "reviewer_role": "CTO",
-      "decided_at": "2026-08-28T23:31:00+00:00",
+      "decided_at": "2026-08-28T23:38:00+00:00",
       "rationale": "As the authenticated CTO and sole human review authority, Patrick Hamid authorizes the Vantage 2.0.0 candidate to use the controller's narrowly defined solo-authority route for the verified live-evidence checkpoint. This authority changes who supplies the human gate decisions; it does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls.",
       "residual_risk": "Human-gate separation is reduced because one authenticated CTO supplies the approved decisions after all configured independent review sources were attempted. The release remains blocked if any mandatory technical, migration, security, recovery, or live-verification control fails.",
       "review_attempts": [
@@ -77,15 +77,15 @@
       "attestation": {
         "attestation_source": "GITHUB_SIGNED_COMMIT",
         "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/f115bcdc3902e24fdf196c4d8d760a561e76126e/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b773cdb5379ff033aa2a5c168c4f4954e7cfb725/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "repository": "InstaHost-Corp/instahost",
-        "commit_sha": "f115bcdc3902e24fdf196c4d8d760a561e76126e",
+        "commit_sha": "b773cdb5379ff033aa2a5c168c4f4954e7cfb725",
         "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "github_actor": "phamid",
         "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKGYxMTViY2RjMzkwMmUyNGZkZjE5NmM0ZDhkNzYwYTU2MWU3NjEyNmU",
+        "github_node_id": "C_kwDOTJJMyNoAKGI3NzNjZGI1Mzc5ZmYwMzNhYTJhNWMxNjhjNGY0OTU0ZTdjZmI3MjU",
         "signature_reason": "valid",
-        "response_sha256": "66d4436fcce1ba1b7970c846df16484786f24f3ec54f2f03fc8095daf1624612"
+        "response_sha256": "c09f1269054291fd9ddf0947865cd29eca7020fa4442fb5644c60c05981cc83f"
       }
     }
   },
@@ -184,28 +184,28 @@
       "reviewer": "phamid",
       "at": "2026-08-28T08:56:54+00:00",
       "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence": "GitHub-verified CTO solo-authority receipt f115bcdc3902e24fdf196c4d8d760a561e76126e; source review APPROVE; 76 Node tests, 19 Python tests, historical migration test, locked frontend build, and five invariant checks passed."
+      "evidence": "GitHub-verified CTO solo-authority receipt b773cdb5379ff033aa2a5c168c4f4954e7cfb725; source review APPROVE; 76 Node tests, 19 Python tests, historical migration test, locked frontend build, and five invariant checks passed."
     },
     "qa": {
       "verdict": "PASS",
       "reviewer": "phamid",
       "at": "2026-08-28T08:56:54+00:00",
       "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence": "GitHub-verified CTO solo-authority receipt f115bcdc3902e24fdf196c4d8d760a561e76126e; independent QA completed after locked frontend dependencies were installed and validated the candidate build and regression suite."
+      "evidence": "GitHub-verified CTO solo-authority receipt b773cdb5379ff033aa2a5c168c4f4954e7cfb725; independent QA completed after locked frontend dependencies were installed and validated the candidate build and regression suite."
     },
     "deploy": {
       "verdict": "GO_DEPLOY",
       "reviewer": "phamid",
       "at": "2026-08-28T08:56:54+00:00",
       "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence": "GitHub-verified CTO solo-authority receipt f115bcdc3902e24fdf196c4d8d760a561e76126e; live Vantage 1.3.0 health/readiness and TailsPool capacity were revalidated immediately before deployment; TailsPool/vantage@pre-2.0.0 was created and verified."
+      "evidence": "GitHub-verified CTO solo-authority receipt b773cdb5379ff033aa2a5c168c4f4954e7cfb725; live Vantage 1.3.0 health/readiness and TailsPool capacity were revalidated immediately before deployment; TailsPool/vantage@pre-2.0.0 was created and verified."
     },
     "live_qa": {
       "verdict": "PASS_LIVE",
       "reviewer": "phamid",
       "at": "2026-08-28T23:20:30+00:00",
       "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence": "GitHub-verified CTO solo-authority receipt f115bcdc3902e24fdf196c4d8d760a561e76126e supplies the authorized human live-QA gate. Public health and readiness reported Vantage 2.0.0 with the candidate SHA and source digest; the edge returned 200 for the application, 401 for the protected dashboard, and 404 for unpublished Trust Center data; tenant-isolation smoke passed; sqlite3 PRAGMA foreign_key_check returned zero rows; no sessions have a null tenant_id; and post-release snapshot TailsPool/vantage@post-2.0.0 is verified."
+      "evidence": "GitHub-verified CTO solo-authority receipt b773cdb5379ff033aa2a5c168c4f4954e7cfb725 supplies the authorized human live-QA gate. Public health and readiness reported Vantage 2.0.0 with the candidate SHA and source digest; the edge returned 200 for the application, 401 for the protected dashboard, and 404 for unpublished Trust Center data; tenant-isolation smoke passed; sqlite3 PRAGMA foreign_key_check returned zero rows; no sessions have a null tenant_id; and post-release snapshot TailsPool/vantage@post-2.0.0 is verified."
     },
     "publish": {
       "verdict": "PENDING",
@@ -239,7 +239,7 @@
     "functional_smoke": "PASS: public production tenant smoke created two isolated workspaces, rejected a cross-tenant owner assignment with HTTP 400, and logged both smoke-test sessions out without mutating the target tenant.",
     "asset_graph": "PASS",
     "visual_style_contract": "FAIL",
-    "assigned_user_journey": "PASS: public production signup created independent tenant workspaces with their initiating user as tenant admin; cross-tenant ownership mutation was rejected.",
+    "assigned_user_journey": "PASS",
     "restart_or_reboot": "PASS",
     "data_reconciliation": "PASS",
     "secret_artifact_sweep": "PASS: candidate source was scanned for private-key, GitHub-token, cloud-key, and common API-token patterns with no findings. The production session secret remains file-backed and read-only at /run/secrets/vantage-session-secret; no secret value was recorded.",
@@ -248,8 +248,8 @@
     "identity_contract": "PASS",
     "release_base_alignment": "PASS",
     "production_platform_build": "PASS",
-    "public_edge_verification": "PASS: vantage.insta.host returned 200 for / and the exact content-hashed JS/CSS assets, 200 for /healthz with Vantage 2.0.0 and candidate c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63, 401 for /api/dashboard, 404 for /api/public/trust and /api/no-such-route. DNS checks through 1.1.1.1, 8.8.8.8, and 9.9.9.9 returned only the expected Cloudflare proxy addresses. TLS validated against the active DNS:*.insta.host certificate.",
-    "cleanup_manifest": "PASS: temporary local deployment helpers and remote /tmp/vantage_snapshot.py, /tmp/vantage-2.0.0-compose.yaml, and /tmp/vantage_update.py are absent. The active immutable source and pre/post 2.0.0 snapshots are retained as recovery artifacts.",
+    "public_edge_verification": "PASS",
+    "cleanup_manifest": "PASS",
     "enterprise_operating_model": "PASS",
     "enterprise_metrics_contract": "PASS"
   },
@@ -268,11 +268,11 @@
         "approver": "phamid",
         "release_id": "vantage-2.0.0",
         "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-        "evidence_checkpoint": "d2367c6745145a7da3a5a0133d2d3f734bcdde58",
-        "evidence_bundle_sha256": "sha256:08ef3d7839df1a50ab273d5a8b24f5ea1f4d414f872969e9d6b4b12efc5909f0",
+        "evidence_checkpoint": "42fbda37faed368c82907f7ab14784cb78dc51a3",
+        "evidence_bundle_sha256": "sha256:f70652b17f29c559a7f9613eccaf96a5b5491bfd36e41ada35613a55d0ea0441",
         "frozen_projection_sha256": "sha256:ca423df9a30241d964f52ca995f8691ef40406bafbd51314c45a69f753873d87",
         "implementation_actor_id": "9080454",
-        "approved_at": "2026-08-28T23:31:00+00:00",
+        "approved_at": "2026-08-28T23:38:00+00:00",
         "owner": "Design and UX",
         "reason": "CTO approved a time-bound deviation after the signed Vantage 2.0.0 candidate passed its Node, Python, historical migration, frontend build, and executable invariant validation. The existing Vantage interface predates the estate visual token system; its 68 visual-style contract failures are unrelated to the multitenancy safety, identity, migration, tenant-isolation, readiness, rollback, or secret-delivery changes.",
         "alternate_evidence": "The signed candidate c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 passed 76 Node tests, 19 Python tests, the historical Vantage 1.3.0 migration regression, the locked frontend production build, and all 5 repository-owned invariant checks. The visual-style validator failure is retained as an explicit exception rather than represented as a passing result.",
@@ -282,15 +282,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/f115bcdc3902e24fdf196c4d8d760a561e76126e/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b773cdb5379ff033aa2a5c168c4f4954e7cfb725/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "f115bcdc3902e24fdf196c4d8d760a561e76126e",
+          "commit_sha": "b773cdb5379ff033aa2a5c168c4f4954e7cfb725",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKGYxMTViY2RjMzkwMmUyNGZkZjE5NmM0ZDhkNzYwYTU2MWU3NjEyNmU",
+          "github_node_id": "C_kwDOTJJMyNoAKGI3NzNjZGI1Mzc5ZmYwMzNhYTJhNWMxNjhjNGY0OTU0ZTdjZmI3MjU",
           "signature_reason": "valid",
-          "response_sha256": "8c500d21251d7ab97856dab604ab9b9862bdd4c314b855bce86b35b2a8579c05"
+          "response_sha256": "2df0815944e6768d124834f0ee4e3d94884557a4fb44ba810f355e6d7ee536e7"
         }
       }
     ]
