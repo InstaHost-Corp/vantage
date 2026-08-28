@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Github, ShieldCheck } from 'lucide-react';
 import { api, post, setToken } from '../api.js';
 import { Button, Card, cx } from '../ui.jsx';
@@ -91,6 +91,9 @@ export default function Login() {
             {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
             <Button type="submit" size="lg" loading={loading} className="w-full">Sign in <ArrowRight size={15} /></Button>
           </form>
+          <p className="mt-4 text-center text-sm text-ink-500">
+            Need your own account? <Link to="/signup" className="font-medium text-brand-600 hover:underline">Sign up</Link>
+          </p>
 
           <Card className="mt-6 bg-slate-50 p-3 text-xs text-ink-500">
             <p className="font-medium text-ink-700">{publicDemo ? 'Free shared demonstration' : 'Demonstration environment'}</p>

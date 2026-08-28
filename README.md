@@ -213,8 +213,11 @@ uses React, React Router, Tailwind CSS and Vite. The SQLite database is created
 and seeded automatically on first boot.
 
 The seeded accounts use a published password and protect only fictional local
-data. Change the passwords in `server/seed.js` and add appropriate identity
-controls before putting an instance on a network or using non-fictional data.
+data. You can also create a self-service contributor account from the sign-in
+page; signup passwords must be at least 12 characters and are stored with the
+same salted scrypt hashing used by the seeded accounts. Change the seeded
+passwords in `server/seed.js` and add appropriate identity controls before
+putting an instance on a network or using non-fictional data.
 
 ## Capability map
 

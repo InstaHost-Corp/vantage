@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  anonymizeTrustRequest, classify, clientIp, createRateLimiter, createResetSchedule,
+  DEFAULT_TIERS, anonymizeTrustRequest, classify, clientIp, createRateLimiter, createResetSchedule,
   publicModeConfig, readinessDetailAllowed, sanitizeTrustRequest, securityHeaders,
   sweepExpired, throttleKeyFor,
 } from '../server/public-mode.js';
@@ -61,7 +61,9 @@ test('expensive and anonymous-write routes get their own budgets', () => {
   assert.equal(classify('POST', '/api/questionnaires/3/autofill'), 'heavy');
   assert.equal(classify('POST', '/api/demo/reset'), 'heavy');
   assert.equal(classify('POST', '/api/auth/login'), 'auth');
+  assert.equal(classify('POST', '/api/auth/signup'), 'signup');
   assert.equal(classify('POST', '/api/public/trust/request'), 'contact');
+  assert.ok(DEFAULT_TIERS.signup.max <= DEFAULT_TIERS.contact.max, 'signup should have an anonymous-write budget');
 });
 
 test('security headers deny framing and only assert HSTS over TLS', () => {
@@ -105,7 +107,7 @@ test('reseeding is off unless the deployment asks for it', () => {
   assert.equal(publicModeConfig({ VANTAGE_PUBLIC_DEMO: '1', VANTAGE_DEMO_RESET_MINUTES: '0' }).resetMinutes, 0);
 });
 
-test('the one anonymous write path is bounded and validated', () => {
+test('the Trust Center anonymous write path is bounded and validated', () => {
   const valid = sanitizeTrustRequest({
     name: ' Jamie Fox ', email: 'jamie@example.com', company: 'Example Ltd', document: 'SOC 2 Type II Report',
   });

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createApp, jsonBody, staticFiles } from './http.js';
 import { db, all, get, run, setting, setSetting, logActivity, DB_PATH } from './db.js';
 import { runTests, controlStatuses, frameworkReadiness, overallPosture } from './engine.js';
-import { seed, verifyPassword } from './seed.js';
+import { hashPassword, seed, verifyPassword } from './seed.js';
 import {
   anonymizeTrustRequest, createResetSchedule, clientIp, publicModeConfig, rateLimit,
   readinessDetailAllowed, sanitizeTrustRequest, securityHeaders, sweepExpired, throttleKeyFor,
@@ -16,7 +16,7 @@ const dist = join(__dirname, '..', 'web', 'dist');
 
 export const RELEASE = {
   service: 'vantage',
-  version: process.env.APP_VERSION || '1.2.1',
+  version: process.env.APP_VERSION || '1.3.0',
   release_sha: process.env.RELEASE_SHA || 'unversioned',
   source_digest: process.env.SOURCE_DIGEST || 'unrecorded',
   node: process.version,
@@ -159,6 +159,47 @@ app.get('/readyz', (req, res) => {
 // A session must not outlive the data it was issued against: the public
 // demonstration reseeds daily, which drops the sessions table with it.
 const SESSION_DAYS = Number(process.env.VANTAGE_SESSION_DAYS || 14);
+const SIGNUP_LIMITS = { name: 120, email: 200, password: 1024 };
+const SIGNUP_MIN_PASSWORD_LENGTH = 12;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const CONTROL_CHARS_RE = /[\u0000-\u001f\u007f]/;
+
+function publicUser(user) {
+  return user ? { id: user.id, email: user.email, name: user.name, role: user.role, title: user.title } : null;
+}
+
+function issueSession(user) {
+  run('DELETE FROM sessions WHERE expires_at < ?', new Date().toISOString());
+  const token = randomUUID();
+  run('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
+    token, user.id, new Date(Date.now() + SESSION_DAYS * 86400000).toISOString());
+  return token;
+}
+
+function validateSignup(body = {}) {
+  const errors = [];
+  const name = typeof body.name === 'string'
+    ? body.name.normalize('NFKC').trim().replace(/\s+/g, ' ')
+    : '';
+  const email = typeof body.email === 'string' ? body.email.normalize('NFKC').trim().toLowerCase() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+
+  if (!name) errors.push('Display name is required');
+  else if (name.length < 2) errors.push('Display name must be at least 2 characters');
+  else if (name.length > SIGNUP_LIMITS.name) errors.push(`Display name must be ${SIGNUP_LIMITS.name} characters or fewer`);
+  else if (CONTROL_CHARS_RE.test(name)) errors.push('Display name contains unsupported characters');
+
+  if (!email) errors.push('Email is required');
+  else if (email.length > SIGNUP_LIMITS.email) errors.push(`Email must be ${SIGNUP_LIMITS.email} characters or fewer`);
+  else if (CONTROL_CHARS_RE.test(email) || !EMAIL_RE.test(email)) errors.push('Email must be a valid address');
+
+  if (!password) errors.push('Password is required');
+  else if (password.length < SIGNUP_MIN_PASSWORD_LENGTH) errors.push(`Password must be at least ${SIGNUP_MIN_PASSWORD_LENGTH} characters`);
+  else if (password.length > SIGNUP_LIMITS.password) errors.push(`Password must be ${SIGNUP_LIMITS.password} characters or fewer`);
+  else if (!password.trim()) errors.push('Password must include non-space characters');
+
+  return { ok: errors.length === 0, value: { name, email, password }, errors };
+}
 
 function currentUser(req) {
   // Bearer header only. A token in the query string leaks into access logs,
@@ -244,14 +285,36 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
   loginAttempts.delete(throttleKey);
-  // Expired rows are dead weight on a public demonstration where every visitor
-  // signs in, so clear them out on the one event that creates them.
-  run('DELETE FROM sessions WHERE expires_at < ?', new Date().toISOString());
-  const token = randomUUID();
-  run('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
-    token, user.id, new Date(Date.now() + SESSION_DAYS * 86400000).toISOString());
+  const token = issueSession(user);
   logActivity('auth', user.name, 'Signed in to Vantage');
-  res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role, title: user.title } });
+  res.json({ token, user: publicUser(user) });
+});
+
+app.post('/api/auth/signup', (req, res) => {
+  const { ok, value, errors } = validateSignup(req.body || {});
+  if (!ok) return res.status(400).json({ error: 'Check your signup details and try again.', errors });
+
+  if (get('SELECT id FROM users WHERE email = ?', value.email)) {
+    return res.status(409).json({ error: 'An account with this email already exists. Sign in instead.' });
+  }
+  if (get('SELECT COUNT(*) AS n FROM users').n >= PUBLIC_MODE.maxUsers) {
+    return res.status(429).json({ error: 'This shared demonstration has reached its signup capacity. Try again later.' });
+  }
+
+  try {
+    run('INSERT INTO users (email, name, password_hash, role, title, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      value.email, value.name, hashPassword(value.password), 'contributor', 'Workspace member', new Date().toISOString());
+  } catch (err) {
+    if (String(err?.message || '').includes('UNIQUE')) {
+      return res.status(409).json({ error: 'An account with this email already exists. Sign in instead.' });
+    }
+    throw err;
+  }
+
+  const user = get('SELECT * FROM users WHERE email = ?', value.email);
+  const token = issueSession(user);
+  logActivity('auth', user.name, 'Created a Vantage account');
+  res.status(201).json({ token, user: publicUser(user) });
 });
 
 app.post('/api/auth/logout', requireAuth, (req, res) => {
@@ -319,8 +382,8 @@ app.post('/api/public/trust/request', (req, res) => {
   // visitor can read, which is exactly what anonymising the rest prevents.
   const document = get('SELECT name FROM trust_documents WHERE name = ?', value.document);
   if (!document) return res.status(400).json({ error: 'Unknown document' });
-  // The only table an anonymous visitor can write to. Cap the backlog so it
-  // cannot be used to grow the demonstration database without limit.
+  // Cap the anonymous request backlog so it cannot be used to grow the
+  // demonstration database without limit.
   const pending = get("SELECT COUNT(*) AS n FROM trust_requests WHERE status = 'pending'").n;
   if (pending >= PUBLIC_MODE.maxPendingTrustRequests) {
     return res.status(429).json({ error: 'The access-request queue is full on this shared demonstration. Try again later.' });
@@ -357,9 +420,15 @@ app.get('/api/public/config', (req, res) => {
     source_url: PUBLIC_MODE.sourceUrl,
     guards: {
       rate_limit: PUBLIC_MODE.rateLimit,
+      signup_rate_limit: PUBLIC_MODE.rateLimit,
       security_headers: true,
       anonymous_writes_anonymized: PUBLIC_MODE.publicDemo,
       auto_reset: resetSchedule.enabled,
+    },
+    signup: {
+      enabled: true,
+      password_min_length: SIGNUP_MIN_PASSWORD_LENGTH,
+      max_users: PUBLIC_MODE.maxUsers,
     },
     demo: {
       shared: PUBLIC_MODE.publicDemo,

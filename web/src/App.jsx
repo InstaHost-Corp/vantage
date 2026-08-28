@@ -9,6 +9,7 @@ import { getToken, setToken, get, post } from './api.js';
 import { Avatar, Button, Loading, cx, timeAgo, useToast } from './ui.jsx';
 
 import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Frameworks from './pages/Frameworks.jsx';
 import FrameworkDetail from './pages/FrameworkDetail.jsx';
@@ -249,6 +250,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={authed ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/signup" element={authed ? <Navigate to="/" replace /> : <Signup />} />
       <Route path="/trust" element={<TrustCenter />} />
       <Route path="/*" element={authed ? <Shell /> : <Navigate to="/login" replace />} />
     </Routes>

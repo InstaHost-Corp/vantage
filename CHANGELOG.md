@@ -5,6 +5,18 @@ All notable changes to Vantage are documented here. This project follows
 
 ## Unreleased
 
+- Added self-service signup at `/signup` and `POST /api/auth/signup`. New
+  accounts are normal contributors, sign in immediately, and use the existing
+  salted scrypt password storage and session flow.
+- Signup validates and normalises display name, email and password; rejects
+  duplicates; enforces a 12-character minimum and bounded field lengths; and
+  has its own public-mode rate-limit tier.
+
+## [1.3.0] - 2026-08-28
+
+- Opened bounded self-service contributor signup for the hosted demonstration.
+- Published the repository and hosted application as an open, free service.
+
 ## [1.2.1] - 2026-08-12
 
 - Restricted the hosted demonstration behind Cloudflare Access while the
@@ -122,7 +134,7 @@ published on GitHub under the MIT licence.
 - **Free, open access.** The Cloudflare Access gate is gone. Visiting
   `https://vantage.insta.host` reaches the application itself, and the seeded
   demonstration accounts published on the sign-in page are all that is needed.
-  There is no signup, no trial and no cost.
+  There is no trial and no cost.
 - **Open source under the MIT licence.** `LICENSE` is added and the repository
   is public, so anyone can read it, fork it, self-host it or take pieces of it.
 - **`GET /api/public/config`.** An unauthenticated endpoint describing the

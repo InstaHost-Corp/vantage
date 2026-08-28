@@ -98,6 +98,7 @@ const HEAVY = [
 
 export function classify(method, path) {
   if (method === 'POST' && /^\/api\/auth\/login\/?$/.test(path)) return 'auth';
+  if (method === 'POST' && /^\/api\/auth\/signup\/?$/.test(path)) return 'signup';
   if (method === 'POST' && /^\/api\/public\/trust\/request\/?$/.test(path)) return 'contact';
   if (HEAVY.some((re) => re.test(path))) return 'heavy';
   if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return 'read';
@@ -109,6 +110,7 @@ export const DEFAULT_TIERS = {
   write: { windowMs: 60_000, max: 60 },
   heavy: { windowMs: 60_000, max: 12 },
   auth: { windowMs: 900_000, max: 30 },
+  signup: { windowMs: 3_600_000, max: 5 },
   contact: { windowMs: 3_600_000, max: 5 },
   // A ceiling across every tier, so a client cannot spend each budget in full
   // at once and still flood the process.
@@ -204,8 +206,8 @@ export function createResetSchedule({ intervalMinutes = 0, now = Date.now, last:
   };
 }
 
-// Free-text fields reachable without an account are the one place an anonymous
-// client can write to the database, so every one of them is bounded.
+// Trust Center free-text fields are reachable without an account, so every one
+// of them is bounded before it can be written to the database.
 export const FIELD_LIMITS = { name: 120, email: 200, company: 160, document: 200 };
 
 export function sanitizeTrustRequest(body = {}, limits = FIELD_LIMITS) {
@@ -284,7 +286,8 @@ export function throttleKeyFor(ip, email, { hash = defaultHash } = {}) {
   return hash(`${ip || 'unknown'}|${String(email || '').toLowerCase().trim() || 'anonymous'}`);
 }
 
-export function publicModeConfig(env = process.env) {  const publicDemo = boolEnv(env.VANTAGE_PUBLIC_DEMO, false);
+export function publicModeConfig(env = process.env) {
+  const publicDemo = boolEnv(env.VANTAGE_PUBLIC_DEMO, false);
   return {
     publicDemo,
     trustProxy: boolEnv(env.VANTAGE_TRUST_PROXY, publicDemo),
@@ -295,6 +298,7 @@ export function publicModeConfig(env = process.env) {  const publicDemo = boolEn
     // itself once a day.
     resetMinutes: numEnv(env.VANTAGE_DEMO_RESET_MINUTES, publicDemo ? 1440 : 0),
     maxPendingTrustRequests: numEnv(env.VANTAGE_MAX_PENDING_TRUST_REQUESTS, 200),
+    maxUsers: numEnv(env.VANTAGE_MAX_USERS, publicDemo ? 200 : 1000),
     sourceUrl: env.VANTAGE_SOURCE_URL || 'https://github.com/phamid/vantage',
   };
 }

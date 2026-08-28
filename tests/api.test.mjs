@@ -108,6 +108,89 @@ test('a bad password is rejected and a good one issues a session', async () => {
   token = body.token;
 });
 
+test('anonymous signup creates a normal signed-in account', async () => {
+  const password = 'CorrectHorse42!';
+  const res = await fetch(`${BASE}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.31' },
+    body: JSON.stringify({ name: '  Jamie   Signup  ', email: '  JAMIE.Signup+One@Example.COM ', password }),
+  });
+  assert.equal(res.status, 201);
+  const body = await res.json();
+  assert.ok(body.token);
+  assert.deepEqual(body.user, {
+    id: body.user.id,
+    email: 'jamie.signup+one@example.com',
+    name: 'Jamie Signup',
+    role: 'contributor',
+    title: 'Workspace member',
+  });
+  assert.equal(body.user.password_hash, undefined);
+  assert.ok(!JSON.stringify(body).includes(password), 'signup response must not echo the password');
+
+  const asSignup = (path, options = {}) => fetch(`${BASE}${path}`, {
+    ...options,
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${body.token}`, ...(options.headers || {}) },
+  });
+  const me = await asSignup('/api/me').then((r) => r.json());
+  assert.equal(me.user.email, 'jamie.signup+one@example.com');
+  assert.equal((await asSignup('/api/demo/reset', { method: 'POST' })).status, 403, 'self-service users must not be admins');
+});
+
+test('signup rejects duplicate and invalid input without leaking secrets', async () => {
+  const duplicate = await fetch(`${BASE}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.32' },
+    body: JSON.stringify({ name: 'Duplicate', email: 'JAMIE.SIGNUP+ONE@EXAMPLE.COM', password: 'AnotherLong42!' }),
+  });
+  assert.equal(duplicate.status, 409);
+  assert.ok(!JSON.stringify(await duplicate.json()).includes('password_hash'));
+
+  for (const [payload, label] of [
+    [{ name: 'A', email: 'bad-address', password: 'LongEnough42!' }, 'bad email and short name'],
+    [{ name: 'Valid Name', email: 'valid@example.com', password: 'short' }, 'short password'],
+    [{ name: 'x'.repeat(121), email: 'long-name@example.com', password: 'LongEnough42!' }, 'long name'],
+    [{ name: 'Valid Name', email: 'huge-password@example.com', password: 'x'.repeat(1025) }, 'huge password'],
+  ]) {
+    const res = await fetch(`${BASE}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': `203.0.113.${40 + label.length}` },
+      body: JSON.stringify(payload),
+    });
+    assert.equal(res.status, 400, label);
+    const raw = JSON.stringify(await res.json());
+    assert.ok(!raw.includes(payload.password), `${label} leaked password material`);
+    assert.ok(!raw.includes('SQLITE'), `${label} leaked database internals`);
+  }
+});
+
+test('anonymous signup writes are rate-limited and field-bounded', async () => {
+  const beforeUsers = await api('/api/users').then((r) => r.json());
+  const tooLarge = await fetch(`${BASE}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.60' },
+    body: JSON.stringify({ name: 'Bounded Tester', email: 'bounded@example.com', password: 'x'.repeat(5000) }),
+  });
+  assert.equal(tooLarge.status, 400);
+  const afterUsers = await api('/api/users').then((r) => r.json());
+  assert.equal(afterUsers.length, beforeUsers.length, 'oversized anonymous signup must not create a user');
+
+  let throttled = false;
+  for (let i = 0; i < 7; i++) {
+    const res = await fetch(`${BASE}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.61' },
+      body: JSON.stringify({ name: `Burst Signup ${i}`, email: `burst-signup-${i}@example.com`, password: 'LongEnough42!' }),
+    });
+    if (res.status === 429) {
+      throttled = true;
+      assert.ok(Number(res.headers.get('retry-after')) > 0);
+      break;
+    }
+  }
+  assert.equal(throttled, true, 'signup must use the public anonymous-write rate limiter');
+});
+
 test('the dashboard reports a seeded compliance posture', async () => {
   const body = await api('/api/dashboard').then((r) => r.json());
   assert.equal(body.posture.tests_total, 49);

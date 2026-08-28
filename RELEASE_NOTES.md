@@ -1,66 +1,36 @@
-# Vantage 1.2.1 - private source containment
+# Vantage 1.3.0 - public signup and open publication
 
 | | |
 |---|---|
-| **Release** | 1.2.1 |
-| **Type** | Patch - source positioning and repository containment |
-| **Repository** | `phamid/vantage` |
-| **Publication model** | Private GitHub repository |
-| **Previous public main** | `ecc4d7157e10de697675f5d8482d4c00045f551b` |
+| **Release** | 1.3.0 |
+| **Type** | Minor - public signup and repository publication |
+| **Repository** | `InstaHost-Corp/vantage` |
+| **Publication model** | Public GitHub repository; free hosted demonstration |
 
 ## What changed
 
-- Repositioned Vantage as an open-source compliance-readiness, baselining and
-  educational reference implementation that complements enterprise governance
-  platforms such as Microsoft Purview.
-- Made the current implementation boundaries explicit: fictional seeded data,
-  simulated connectors, no live Microsoft or customer integration, and no
-  Microsoft-managed/shared controls or Microsoft Compliance Score.
-- Removed hosted-demo promotion and deployment details from the README.
-- Removed vulnerability-response and fix-time commitments.
-- Added public provenance and contribution boundaries.
-- Added an executable regression test preventing donation surfaces, implied
-  Microsoft affiliation, support commitments and inaccurate live-system claims.
+- Added `/signup` and `POST /api/auth/signup` for self-service contributor
+  accounts.
+- Signup normalizes and validates bounded name, email and password fields,
+  stores passwords with salted scrypt hashing, rate-limits anonymous attempts,
+  rejects duplicate addresses, and grants no administrative privileges.
+- Opened `https://vantage.insta.host` for anonymous access after verifying the
+  application-level public-mode guards.
 
-## Repository containment
+## Security and data
 
-The repository is made private before the remediated commits are pushed to
-`main`. Existing Git history is preserved; there is no force push, commit
-deletion or evidence rewriting.
-
-After privatization:
-
-- anonymous repository and source access must return `404`;
-- authenticated metadata must report `private=true`;
-- `main` must fast-forward to the reviewed evidence tip;
-- the annotated `v1.2.1` tag and GitHub Release remain private.
-
-## Validation
-
-- 58 Node tests pass.
-- 19 Python tests pass.
-- The frontend build succeeds.
-- All five repository invariants pass.
-- The source-positioning regression guard passes.
-- The candidate is a non-force fast-forward from the previous public `main`.
-- GitHub administration permission, repository scope, zero forks and zero
-  network members were verified before containment.
-
-## Application deployment
-
-No application deployment is included in this source release. The separately
-hosted service remains access-gated on its existing application version.
+- New accounts are contributors and the shared fictional workspace resets
+  daily. Do not enter real or confidential information.
+- Signup stores the supplied display name and email plus a password hash so
+  the account can be used. No plaintext password is stored or returned.
 
 ## Rollback
 
-Keep the repository private. If source behavior must be reverted, create normal
-revert commits on private `main`; do not make the repository public, force-push
-or rewrite history.
+- Restore the Cloudflare Access gate with `python3 scripts/publishctl.py regate`.
+- Redeploy the previous known-good release and restore repository visibility
+  only if required; do not rewrite history.
 
-## Residual risk
+## Known limitations
 
-Repository privatization prevents future anonymous GitHub access but cannot
-recall clones, downloads, browser/search caches, archives or screenshots made
-while the repository was public. Any previously exposed secret would require
-rotation rather than relying on privatization; no common credential signatures
-were found in the local all-ref scan.
+- The hosted demonstration remains shared and fictional. It is not a
+  production compliance system and does not connect to customer environments.
