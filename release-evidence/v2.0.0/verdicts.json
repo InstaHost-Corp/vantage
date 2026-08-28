@@ -3,8 +3,8 @@
   "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
   "implementation_owner": "Copilot",
   "implementation_actor_id": "9080454",
-  "evidence_checkpoint": "PENDING",
-  "evidence_bundle_sha256": "PENDING",
-  "frozen_projection_sha256": "PENDING",
+  "evidence_checkpoint": "a1241998db19c151d7ee0c713290a9f38476b124",
+  "evidence_bundle_sha256": "sha256:87b0d90eb9a77adf3bb22ccac2cc83bcccfcfba88a0dd1bd5d3a378c640a3ebe",
+  "frozen_projection_sha256": "sha256:65621fe121f90d6eab481d9fea4bb077dcfc0f3250e951ab3b5b15b665298fb4",
   "entries": []
 }

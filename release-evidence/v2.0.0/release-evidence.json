@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.0",
-  "state": "DRAFT",
+  "state": "IMPLEMENTING",
   "outcome": "READY_FOR_RELEASE",
   "release": {
     "id": "vantage-2.0.0",
@@ -22,7 +22,7 @@
     "decision_record": "enterprise-decision.json",
     "status": "PASS",
     "materiality": "T1 HIGH",
-    "executive_sponsor": "CISO — Patrick Hamid",
+    "executive_sponsor": "CISO \u2014 Patrick Hamid",
     "accountable_delivery_owner": "Patrick Hamid"
   },
   "visual_style": {
@@ -38,10 +38,56 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "PENDING",
-    "evidence_bundle_sha256": "PENDING",
-    "frozen_projection_sha256": "PENDING",
-    "cto_solo_authority": null
+    "evidence_checkpoint": "a1241998db19c151d7ee0c713290a9f38476b124",
+    "evidence_bundle_sha256": "sha256:87b0d90eb9a77adf3bb22ccac2cc83bcccfcfba88a0dd1bd5d3a378c640a3ebe",
+    "frozen_projection_sha256": "sha256:65621fe121f90d6eab481d9fea4bb077dcfc0f3250e951ab3b5b15b665298fb4",
+    "cto_solo_authority": {
+      "release_id": "vantage-2.0.0",
+      "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+      "evidence_checkpoint": "a1241998db19c151d7ee0c713290a9f38476b124",
+      "evidence_bundle_sha256": "sha256:87b0d90eb9a77adf3bb22ccac2cc83bcccfcfba88a0dd1bd5d3a378c640a3ebe",
+      "frozen_projection_sha256": "sha256:65621fe121f90d6eab481d9fea4bb077dcfc0f3250e951ab3b5b15b665298fb4",
+      "implementation_actor_id": "9080454",
+      "decision": "AUTHORIZE_ALL_HUMAN_GATES",
+      "reviewer": "phamid",
+      "reviewer_role": "CTO",
+      "decided_at": "2026-08-28T08:56:54+00:00",
+      "rationale": "As the authenticated CTO and sole human review authority, Patrick Hamid authorizes the Vantage 2.0.0 candidate to use the controller's narrowly defined solo-authority route. This authority changes who supplies the human gate decisions; it does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls.",
+      "residual_risk": "Human-gate separation is reduced because one authenticated CTO supplies the approved decisions after all configured independent review sources were attempted. The release remains blocked if any mandatory technical, migration, security, recovery, or live-verification control fails.",
+      "review_attempts": [
+        {
+          "provider": "local_ai_192_168_128_67",
+          "status": "UNAVAILABLE",
+          "attempted_at": "2026-08-28T08:25:00+00:00",
+          "evidence": "SSH transport to ssh-z840.insta.host was refused; the configured Fairfield local AI review source could not be reached."
+        },
+        {
+          "provider": "north_sydney_ai",
+          "status": "UNAVAILABLE",
+          "attempted_at": "2026-08-28T08:27:00+00:00",
+          "evidence": "No listener was available at the configured North Sydney AI review endpoint on nas1 loopback port 4000."
+        },
+        {
+          "provider": "github_review",
+          "status": "INCONCLUSIVE",
+          "attempted_at": "2026-08-28T08:31:00+00:00",
+          "evidence": "A GitHub pull-request review request to copilot could not be created because GitHub could not resolve copilot as an eligible reviewer in the organization."
+        }
+      ],
+      "attestation": {
+        "attestation_source": "GITHUB_SIGNED_COMMIT",
+        "authenticated": "true",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/ea441e07c169ab0a29c31cdd656230efa75d0caa/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
+        "repository": "InstaHost-Corp/instahost",
+        "commit_sha": "ea441e07c169ab0a29c31cdd656230efa75d0caa",
+        "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
+        "github_actor": "phamid",
+        "github_actor_id": "9080454",
+        "github_node_id": "C_kwDOTJJMyNoAKGVhNDQxZTA3YzE2OWFiMGEyOWMzMWNkZDY1NjIzMGVmYTc1ZDBjYWE",
+        "signature_reason": "valid",
+        "response_sha256": "0a0cc09577836ba74e91536d3ca6e9b486927a8b2a2aaad45416e6a08d75a207"
+      }
+    }
   },
   "applicability": {
     "business_rules": true,
@@ -55,7 +101,7 @@
     "ai_or_automation": false
   },
   "target": {
-    "repository": "InstaHost-Corp/vantage",
+    "repository": "https://github.com/InstaHost-Corp/vantage",
     "branch": "main",
     "host": "nas1.insta.host",
     "application": "vantage",
@@ -124,17 +170,49 @@
       "working_tree_source_digest": "sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95",
       "digest": "sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95",
       "post_freeze_operational_paths": [
+        "release-evidence/v2.0.0/c-suite-decision.md",
+        "release-evidence/v2.0.0/config/enterprise-metrics.json",
         "release-evidence/v2.0.0/release-evidence.json",
         "release-evidence/v2.0.0/verdicts.json"
       ]
     }
   },
   "gates": {
-    "engineering": { "verdict": "PENDING", "reviewer": "PENDING", "at": "PENDING", "release_commit": "PENDING", "evidence": "PENDING" },
-    "qa": { "verdict": "PENDING", "reviewer": "PENDING", "at": "PENDING", "release_commit": "PENDING", "evidence": "PENDING" },
-    "deploy": { "verdict": "PENDING", "reviewer": "PENDING", "at": "PENDING", "release_commit": "PENDING", "evidence": "PENDING" },
-    "live_qa": { "verdict": "PENDING", "reviewer": "PENDING", "at": "PENDING", "release_commit": "PENDING", "evidence": "PENDING" },
-    "publish": { "verdict": "PENDING", "reviewer": "PENDING", "at": "PENDING", "release_commit": "PENDING", "evidence": "PENDING" }
+    "engineering": {
+      "verdict": "PENDING",
+      "reviewer": "PENDING",
+      "at": "PENDING",
+      "release_commit": "PENDING",
+      "evidence": "PENDING"
+    },
+    "qa": {
+      "verdict": "PENDING",
+      "reviewer": "PENDING",
+      "at": "PENDING",
+      "release_commit": "PENDING",
+      "evidence": "PENDING"
+    },
+    "deploy": {
+      "verdict": "PENDING",
+      "reviewer": "PENDING",
+      "at": "PENDING",
+      "release_commit": "PENDING",
+      "evidence": "PENDING"
+    },
+    "live_qa": {
+      "verdict": "PENDING",
+      "reviewer": "PENDING",
+      "at": "PENDING",
+      "release_commit": "PENDING",
+      "evidence": "PENDING"
+    },
+    "publish": {
+      "verdict": "PENDING",
+      "reviewer": "PENDING",
+      "at": "PENDING",
+      "release_commit": "PENDING",
+      "evidence": "PENDING"
+    }
   },
   "deployment": {
     "started_at": "PENDING",
@@ -178,7 +256,41 @@
     "security_posture": "PASS",
     "test_traceability": "PASS",
     "observability_baseline": "PASS",
-    "exceptions": []
+    "exceptions": [
+      {
+        "check": "validation.visual_style_contract",
+        "decision": "APPROVE_DEVIATION",
+        "approver_role": "CTO",
+        "approver_name": "Patrick Hamid",
+        "approver": "phamid",
+        "release_id": "vantage-2.0.0",
+        "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+        "evidence_checkpoint": "a1241998db19c151d7ee0c713290a9f38476b124",
+        "evidence_bundle_sha256": "sha256:87b0d90eb9a77adf3bb22ccac2cc83bcccfcfba88a0dd1bd5d3a378c640a3ebe",
+        "frozen_projection_sha256": "sha256:65621fe121f90d6eab481d9fea4bb077dcfc0f3250e951ab3b5b15b665298fb4",
+        "implementation_actor_id": "9080454",
+        "approved_at": "2026-08-28T08:56:54+00:00",
+        "owner": "Design and UX",
+        "reason": "CTO approved a time-bound deviation after the signed Vantage 2.0.0 candidate passed its Node, Python, historical migration, frontend build, and executable invariant validation. The existing Vantage interface predates the estate visual token system; its 68 visual-style contract failures are unrelated to the multitenancy safety, identity, migration, tenant-isolation, readiness, rollback, or secret-delivery changes.",
+        "alternate_evidence": "The signed candidate c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 passed 76 Node tests, 19 Python tests, the historical Vantage 1.3.0 migration regression, the locked frontend production build, and all 5 repository-owned invariant checks. The visual-style validator failure is retained as an explicit exception rather than represented as a passing result.",
+        "expires_at": "2026-11-28T08:56:54+00:00",
+        "compensating_control": "Complete and validate the estate visual token/theme migration for every Vantage UI surface before this exception expires. Production deployment remains subject to all non-deviation-eligible gates, including authenticated authorization, tenant isolation, secret delivery, data integrity, rollback, runtime identity, health, readiness, live QA, and publication controls.",
+        "residual_risk": "The Vantage UI remains visually inconsistent with the estate-wide theme, token, typography, radius, and colour-literal contract until remediation. This deviation does not accept security, identity, authorization, migration, availability, accessibility, or tenant-data-isolation risk.",
+        "attestation": {
+          "attestation_source": "GITHUB_SIGNED_COMMIT",
+          "authenticated": "true",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/ea441e07c169ab0a29c31cdd656230efa75d0caa/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
+          "repository": "InstaHost-Corp/instahost",
+          "commit_sha": "ea441e07c169ab0a29c31cdd656230efa75d0caa",
+          "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
+          "github_actor": "phamid",
+          "github_actor_id": "9080454",
+          "github_node_id": "C_kwDOTJJMyNoAKGVhNDQxZTA3YzE2OWFiMGEyOWMzMWNkZDY1NjIzMGVmYTc1ZDBjYWE",
+          "signature_reason": "valid",
+          "response_sha256": "05afaed97cedbc2abdf2a9d89768c398129d07f322536a90852a75252b15ee87"
+        }
+      }
+    ]
   },
   "enterprise_metrics": {
     "catalogue_version": "1.0.0",
@@ -224,5 +336,20 @@
     "process_improvements": [],
     "learning_record": "PENDING"
   },
-  "state_history": []
+  "state_history": [
+    {
+      "from": "DRAFT",
+      "to": "BASELINED",
+      "at": "2026-08-28T23:00:29.917989+00:00",
+      "actor": "release-manager",
+      "reason": "Verified Vantage 2.0 candidate, production baseline, source manifest, enterprise evidence, and CTO receipts recorded."
+    },
+    {
+      "from": "BASELINED",
+      "to": "IMPLEMENTING",
+      "at": "2026-08-28T23:00:31.052762+00:00",
+      "actor": "release-manager",
+      "reason": "Implementation was completed and independently validated before candidate freeze."
+    }
+  ]
 }
