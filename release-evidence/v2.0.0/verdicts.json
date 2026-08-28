@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "candidate": "50bd0ca29aee3b44dc361beab446ce5fec9312c8",
+  "implementation_owner": "Copilot",
+  "implementation_actor_id": "9080454",
+  "evidence_checkpoint": "PENDING",
+  "evidence_bundle_sha256": "PENDING",
+  "frozen_projection_sha256": "PENDING",
+  "entries": []
+}
