@@ -29,6 +29,7 @@ async function boot() {
     env: {
       ...process.env,
       PORT: String(PORT), HOST: '127.0.0.1', VANTAGE_DB: DB,
+      VANTAGE_ENV: 'demo', VANTAGE_DEMO_MODE: '1',
       VANTAGE_PUBLIC_DEMO: '1', VANTAGE_SCAN_MINUTES: '600', APP_VERSION: '1.2.0',
     },
     stdio: ['ignore', 'pipe', 'pipe'],

@@ -10,7 +10,7 @@
   "access_position": "off estate LAN (workstation 10.253.241.58); reached through the ssh alias nas1",
   "application": "vantage",
   "public_endpoint": "https://vantage.insta.host",
-  "runtime": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 with release source bind-mounted read-only",
+  "runtime": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 with release source bind-mounted read-only, SQLite data at /data/vantage.db, and the VANTAGE_SESSION_SECRET secret file mounted read-only",
   "ingress": "Cloudflare tunnel instahost-nas1 (40cd9ce8-5c37-4b72-afe4-698c57cd8b65) -> http://192.168.100.116:30002, protected by Cloudflare Access while governance review is pending",
   "source_path": "/mnt/TailsPool/vantage/releases/<commit-sha>",
   "data_paths": [
@@ -50,11 +50,11 @@
    "ssh nas1 \"midclt call zfs.snapshot.create '{\\\"dataset\\\":\\\"TailsPool/vantage\\\",\\\"name\\\":\\\"pre-<version>\\\",\\\"recursive\\\":true}'\""
   ],
   "migrate": [
-   "none - the application creates and seeds its own SQLite schema idempotently on boot"
+   "Automatic SQLite migration: back up /mnt/TailsPool/vantage/data before application start; the 2.0 process validates production configuration before opening SQLite, then adds tenant_id to every customer-owned table, invalidates legacy sessions, and records the default tenant as quarantined."
   ],
   "deploy": [
    "rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'tests' --exclude 'release-evidence' --exclude '__pycache__' --exclude 'data' -e ssh ./ nas1:/mnt/TailsPool/vantage/releases/<sha>/",
-   "ssh nas1 \"midclt call -j app.update vantage <payload pinning the new release directory, APP_VERSION=1.2.1, VANTAGE_DEMO_RESET_MINUTES=1440 and VANTAGE_SESSION_DAYS=1>\""
+   "ssh nas1 \"midclt call -j app.update vantage <payload pinning the new release directory, APP_VERSION=2.0.0, VANTAGE_ENV=production, VANTAGE_PUBLIC_DEMO=0, VANTAGE_ALLOW_DEMO_RESET=0, VANTAGE_SESSION_SECRET_FILE=/run/secrets/vantage-session-secret, and the existing session/forwarded-header configuration>\""
   ],
   "health": [
    "ssh nas1 'curl -s http://127.0.0.1:30002/healthz'"
@@ -63,17 +63,19 @@
    "ssh nas1 'curl -s http://127.0.0.1:30002/readyz'"
   ],
   "smoke": [
-   "ssh nas1 'curl -s http://127.0.0.1:30002/api/public/config'   # expect reset_interval_minutes 1440",
+   "ssh nas1 'curl -s http://127.0.0.1:30002/api/public/config'   # expect production=true, requires_company=true, no demo accounts, and auto_reset=false",
+   "Create two production tenants through the public signup flow and prove each session cannot read or modify the other tenant's records",
    "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/            (expect 200)",
-   "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/api/dashboard  (expect 401 - negative control)"
+   "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/api/dashboard  (expect 401 - negative control)",
+   "curl -s -o /dev/null -w '%{http_code}' https://vantage.insta.host/api/public/trust  (expect 404 until tenant-specific publication is implemented)"
   ],
   "restart": [
    "ssh nas1 'midclt call -j app.redeploy vantage'"
   ],
   "rollback": [
-   "ssh nas1 \"midclt call -j app.update <payload pinning /mnt/TailsPool/vantage/releases/a624d802a7a63b1117a8dd5177877af215b72e97 and the 1.1.0 environment>\"",
-   "ssh nas1 \"midclt call zfs.rollback '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.2.0\\\"}'\"",
-   "python3 scripts/publishctl.py regate   # close the open endpoint, independent of the application version"
+   "Stop the workload before restoring the newly captured TailsPool/vantage@pre-2.0.0 recursive snapshot, so the old application cannot write the incompatible multi-tenant schema.",
+   "Restore TailsPool/vantage@pre-2.0.0, then update the application to the retained 1.3.0 release directory /mnt/TailsPool/vantage/releases/4e596f25a785c5c2917e4a7fa77a2b73b8a95f84 with its explicit VANTAGE_ENV=demo and VANTAGE_DEMO_MODE=1 configuration.",
+   "Confirm /healthz reports 1.3.0 and release_sha 4e596f25a785c5c2917e4a7fa77a2b73b8a95f84 before reopening the public endpoint."
   ]
  },
  "policies": {

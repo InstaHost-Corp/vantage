@@ -47,6 +47,8 @@ before(async () => {
       VANTAGE_SCAN_MINUTES: '600',
       // Boot the server in exactly the shape the free public deployment uses,
       // so the public-mode guards are exercised rather than bypassed.
+      VANTAGE_ENV: 'demo',
+      VANTAGE_DEMO_MODE: '1',
       VANTAGE_PUBLIC_DEMO: '1',
     },
     stdio: ['ignore', 'pipe', 'pipe'],

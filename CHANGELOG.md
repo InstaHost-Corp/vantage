@@ -3,14 +3,80 @@
 All notable changes to Vantage are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [2.0.0] - 2026-08-28
 
-- Added self-service signup at `/signup` and `POST /api/auth/signup`. New
-  accounts are normal contributors, sign in immediately, and use the existing
-  salted scrypt password storage and session flow.
-- Signup validates and normalises display name, email and password; rejects
-  duplicates; enforces a 12-character minimum and bounded field lengths; and
-  has its own public-mode rate-limit tier.
+### Breaking changes
+
+- **Multi-tenant isolation**: every customer-owned table now carries a
+  `tenant_id` column. The database schema is incompatible with pre-2.0
+  databases unless the built-in migration runs (it runs automatically on
+  first boot). **Back up your database before upgrading.**
+- **Production mode** (`VANTAGE_ENV=production`): fails closed at startup
+  unless `VANTAGE_PUBLIC_DEMO` is disabled, a 32+-character session secret is
+  provided through `VANTAGE_SESSION_SECRET_FILE`, and
+  `VANTAGE_ALLOW_DEMO_RESET` is disabled. Demo reset, demo seeding and the
+  continuous scan timer are all disabled in production.
+- Signup in production mode requires a `company` field and creates a new
+  isolated tenant with the caller as owner/admin. In demo mode, signup still
+  creates a contributor in the shared demo tenant.
+- The `settings` table primary key changed from `(key)` to `(tenant_id, key)`.
+  The `setting()`, `setSetting()` and `logActivity()` helpers now accept a
+  `tenantId` parameter (defaulting to 1 for backward compatibility).
+- Engine functions (`runTests`, `controlStatuses`, `frameworkReadiness`,
+  `overallPosture`) now require a `tenantId` parameter.
+
+### Added
+
+- **`tenants` table** and `tenant_id` on all 25 customer-owned tables:
+  users, sessions, frameworks, requirements, controls, control_requirements,
+  tests, test_entities, resources, integrations, policies, policy_acceptances,
+  personnel, devices, vendors, risks, audits, audit_requests, evidence,
+  trust_documents, trust_requests, questionnaires, questionnaire_items,
+  activity, settings.
+- **Automatic migration** from pre-2.0 single-tenant databases: creates the
+  `tenants` table, inserts a default tenant (id=1), adds `tenant_id` to all
+  tables, and recreates tables that need UNIQUE constraint changes.
+- **`server/tenant.js`**: centralised tenant lifecycle — `createTenant()`,
+  `seedTenantFrameworks()`, `isProduction()`, `validateProductionConfig()`.
+- **Production mode** (`VANTAGE_ENV=production`):
+  - Fails closed at startup with clear error messages if misconfigured.
+  - Demo reset disabled; demo seed skipped; continuous scan timer off.
+  - Public config endpoint does not expose demo credentials.
+  - CSRF protection: documented as inherent in Bearer token auth.
+- **Tenant onboarding**: signup creates a new tenant with company name
+  metadata. Duplicate email returns a generic error that does not reveal
+  which tenant the address belongs to.
+- **Tenant-scoped queries**: every authenticated route reads and writes only
+  `req.user.tenant_id`. All SQL queries include explicit `tenant_id` filters.
+  Engine functions, settings helpers and activity logging are all scoped.
+- **Rate limiting** on signup and login (carried forward from 1.x; now
+  documented explicitly as part of the multi-tenant security model).
+- **Integration catalogue** exported from `seed-frameworks.js` for use by
+  tenant seeding.
+- **11 new tests** proving:
+  - Two tenants cannot read or update each other's records.
+  - Production mode cannot reset or reseed demo data.
+  - Signup creates an isolated tenant with admin owner.
+  - Duplicate email behaviour does not enumerate tenants.
+  - Schema migration adds tenant_id to all tables.
+
+### Production limitations
+
+- Public Trust Center routes return `404` in production until a tenant-specific
+  publication model is implemented.
+- No tenant deletion or data export API.
+- No tenant-level billing, quotas or usage metering.
+- Role management is limited to the existing admin/contributor/auditor roles;
+  no tenant-level role customisation.
+
+### Migration instructions
+
+1. **Back up your database** before upgrading:
+   `cp data/vantage.db data/vantage.db.backup`
+2. Start the new version. The migration runs automatically on first boot and
+   logs `[vantage] migrating database to multi-tenant schema (v2.0.0)...`.
+3. Verify the migration completed: `[vantage] multi-tenant migration complete`.
+4. If the migration fails, restore from backup and file an issue.
 
 ## [1.3.0] - 2026-08-28
 

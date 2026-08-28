@@ -212,6 +212,33 @@ The server runs on Node 24+ with no runtime package dependencies. The frontend
 uses React, React Router, Tailwind CSS and Vite. The SQLite database is created
 and seeded automatically on first boot.
 
+### Multi-tenant production mode
+
+Vantage 2.0 supports customer-safe multi-tenant isolation. Set
+`VANTAGE_ENV=production` to enable production mode:
+
+```sh
+VANTAGE_ENV=production \
+VANTAGE_SESSION_SECRET_FILE=/run/secrets/vantage-session-secret \
+npm start
+```
+
+In production mode:
+- Signup creates a new isolated tenant with the caller as owner/admin.
+- Each tenant's data (frameworks, controls, tests, personnel, policies, etc.)
+  is fully isolated by `tenant_id` on every table.
+- Demo seeding, demo reset and the shared demo password are disabled.
+- The compliance framework library is seeded automatically for each new tenant.
+- Generate a session secret of at least 32 characters once, store it in your
+  platform's secret manager, and mount it at `VANTAGE_SESSION_SECRET_FILE`.
+  An inline `VANTAGE_SESSION_SECRET` remains supported for local development
+  only; never put it in a deployment manifest.
+- Public Trust Center routes return `404` until a tenant-specific publication
+  model is implemented.
+
+**Migration**: existing pre-2.0 databases are migrated automatically on first
+boot. Back up your database before upgrading.
+
 The seeded accounts use a published password and protect only fictional local
 data. You can also create a self-service contributor account from the sign-in
 page; signup passwords must be at least 12 characters and are stored with the
@@ -239,11 +266,13 @@ putting an instance on a network or using non-fictional data.
 
 ```text
 server/
-  db.js               SQLite schema and helpers
-  engine.js           Rule evaluation and readiness calculations
-  seed-frameworks.js  Frameworks, requirements, controls and tests
-  seed.js             Fictional people, devices, resources, vendors and risks
-  index.js            REST API, authentication, actions and static hosting
+  db.js               SQLite schema, multi-tenant migration and helpers
+  engine.js           Rule evaluation and readiness calculations (tenant-scoped)
+  tenant.js           Tenant lifecycle, framework seeding and production guards
+  seed-frameworks.js  Frameworks, requirements, controls, tests and integration catalogue
+  seed.js             Fictional people, devices, resources, vendors and risks (demo tenant)
+  index.js            REST API, authentication, tenant-scoped actions and static hosting
+  public-mode.js      Guards for the free public demonstration mode
 web/
   src/                React application
   dist/               Committed production build

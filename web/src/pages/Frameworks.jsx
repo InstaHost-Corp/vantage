@@ -58,7 +58,7 @@ export default function Frameworks() {
               </div>
               <Progress value={f.readiness} />
               <div className="mt-2 flex justify-between text-xs text-ink-500">
-                <span>{f.controls_total - f.controls_failing}/{f.controls_total} controls OK</span>
+                <span>{f.controls_ok}/{f.controls_total} controls OK</span>
                 <span>{f.requirements_at_risk} of {f.requirements_total} requirements at risk</span>
               </div>
             </div>

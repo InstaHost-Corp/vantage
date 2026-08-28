@@ -38,7 +38,7 @@ export default function Dashboard() {
                       {f.short_name}
                     </span>
                     <span className="tabular-nums text-ink-500">
-                      {f.controls_total - f.controls_failing}/{f.controls_total} controls · <span className="font-semibold text-ink-900">{f.readiness}%</span>
+                      {f.controls_ok}/{f.controls_total} controls · <span className="font-semibold text-ink-900">{f.readiness}%</span>
                     </span>
                   </div>
                   <Progress value={f.readiness} tone={f.readiness >= 85 ? 'bg-emerald-500' : undefined} />
