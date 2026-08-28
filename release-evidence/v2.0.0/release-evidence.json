@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.0",
-  "state": "IMPLEMENTING",
+  "state": "QA_PASSED",
   "outcome": "READY_FOR_RELEASE",
   "release": {
     "id": "vantage-2.0.0",
@@ -38,15 +38,15 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "a1241998db19c151d7ee0c713290a9f38476b124",
-    "evidence_bundle_sha256": "sha256:87b0d90eb9a77adf3bb22ccac2cc83bcccfcfba88a0dd1bd5d3a378c640a3ebe",
-    "frozen_projection_sha256": "sha256:65621fe121f90d6eab481d9fea4bb077dcfc0f3250e951ab3b5b15b665298fb4",
+    "evidence_checkpoint": "4aa336b412b1029c781cac787ae46fa7aa5b6854",
+    "evidence_bundle_sha256": "sha256:5a81d114f3f49d3581a2e7be203487ef6cdf7c2d75e062c2cfd6553e60f0d537",
+    "frozen_projection_sha256": "sha256:51bad159a0219c75fa60876e682c22d093a4791037d0aa31c269fe38dd388bf7",
     "cto_solo_authority": {
       "release_id": "vantage-2.0.0",
       "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-      "evidence_checkpoint": "a1241998db19c151d7ee0c713290a9f38476b124",
-      "evidence_bundle_sha256": "sha256:87b0d90eb9a77adf3bb22ccac2cc83bcccfcfba88a0dd1bd5d3a378c640a3ebe",
-      "frozen_projection_sha256": "sha256:65621fe121f90d6eab481d9fea4bb077dcfc0f3250e951ab3b5b15b665298fb4",
+      "evidence_checkpoint": "4aa336b412b1029c781cac787ae46fa7aa5b6854",
+      "evidence_bundle_sha256": "sha256:5a81d114f3f49d3581a2e7be203487ef6cdf7c2d75e062c2cfd6553e60f0d537",
+      "frozen_projection_sha256": "sha256:51bad159a0219c75fa60876e682c22d093a4791037d0aa31c269fe38dd388bf7",
       "implementation_actor_id": "9080454",
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
@@ -77,15 +77,15 @@
       "attestation": {
         "attestation_source": "GITHUB_SIGNED_COMMIT",
         "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/ea441e07c169ab0a29c31cdd656230efa75d0caa/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/3cacedf9677b64c826b33d93dfa4663188dc03e9/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "repository": "InstaHost-Corp/instahost",
-        "commit_sha": "ea441e07c169ab0a29c31cdd656230efa75d0caa",
+        "commit_sha": "3cacedf9677b64c826b33d93dfa4663188dc03e9",
         "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-solo-authority.json",
         "github_actor": "phamid",
         "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKGVhNDQxZTA3YzE2OWFiMGEyOWMzMWNkZDY1NjIzMGVmYTc1ZDBjYWE",
+        "github_node_id": "C_kwDOTJJMyNoAKDNjYWNlZGY5Njc3YjY0YzgyNmIzM2Q5M2RmYTQ2NjMxODhkYzAzZTk",
         "signature_reason": "valid",
-        "response_sha256": "0a0cc09577836ba74e91536d3ca6e9b486927a8b2a2aaad45416e6a08d75a207"
+        "response_sha256": "429a49dc2e99eab3eb946b80e841869fb5aae0bec0b732445dee7e8839afa2d4"
       }
     }
   },
@@ -172,6 +172,7 @@
       "post_freeze_operational_paths": [
         "release-evidence/v2.0.0/c-suite-decision.md",
         "release-evidence/v2.0.0/config/enterprise-metrics.json",
+        "release-evidence/v2.0.0/pre-2.0.0-snapshot.json",
         "release-evidence/v2.0.0/release-evidence.json",
         "release-evidence/v2.0.0/verdicts.json"
       ]
@@ -179,25 +180,25 @@
   },
   "gates": {
     "engineering": {
-      "verdict": "PENDING",
-      "reviewer": "PENDING",
-      "at": "PENDING",
-      "release_commit": "PENDING",
-      "evidence": "PENDING"
+      "verdict": "APPROVE",
+      "reviewer": "phamid",
+      "at": "2026-08-28T08:56:54+00:00",
+      "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+      "evidence": "GitHub-verified CTO solo-authority receipt 3cacedf9677b64c826b33d93dfa4663188dc03e9; source review APPROVE; 76 Node tests, 19 Python tests, historical migration test, locked frontend build, and five invariant checks passed."
     },
     "qa": {
-      "verdict": "PENDING",
-      "reviewer": "PENDING",
-      "at": "PENDING",
-      "release_commit": "PENDING",
-      "evidence": "PENDING"
+      "verdict": "PASS",
+      "reviewer": "phamid",
+      "at": "2026-08-28T08:56:54+00:00",
+      "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+      "evidence": "GitHub-verified CTO solo-authority receipt 3cacedf9677b64c826b33d93dfa4663188dc03e9; independent QA completed after locked frontend dependencies were installed and validated the candidate build and regression suite."
     },
     "deploy": {
-      "verdict": "PENDING",
-      "reviewer": "PENDING",
-      "at": "PENDING",
-      "release_commit": "PENDING",
-      "evidence": "PENDING"
+      "verdict": "GO_DEPLOY",
+      "reviewer": "phamid",
+      "at": "2026-08-28T08:56:54+00:00",
+      "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+      "evidence": "GitHub-verified CTO solo-authority receipt 3cacedf9677b64c826b33d93dfa4663188dc03e9; live Vantage 1.3.0 health/readiness and TailsPool capacity were revalidated immediately before deployment; TailsPool/vantage@pre-2.0.0 was created and verified."
     },
     "live_qa": {
       "verdict": "PENDING",
@@ -265,9 +266,9 @@
         "approver": "phamid",
         "release_id": "vantage-2.0.0",
         "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
-        "evidence_checkpoint": "a1241998db19c151d7ee0c713290a9f38476b124",
-        "evidence_bundle_sha256": "sha256:87b0d90eb9a77adf3bb22ccac2cc83bcccfcfba88a0dd1bd5d3a378c640a3ebe",
-        "frozen_projection_sha256": "sha256:65621fe121f90d6eab481d9fea4bb077dcfc0f3250e951ab3b5b15b665298fb4",
+        "evidence_checkpoint": "4aa336b412b1029c781cac787ae46fa7aa5b6854",
+        "evidence_bundle_sha256": "sha256:5a81d114f3f49d3581a2e7be203487ef6cdf7c2d75e062c2cfd6553e60f0d537",
+        "frozen_projection_sha256": "sha256:51bad159a0219c75fa60876e682c22d093a4791037d0aa31c269fe38dd388bf7",
         "implementation_actor_id": "9080454",
         "approved_at": "2026-08-28T08:56:54+00:00",
         "owner": "Design and UX",
@@ -279,15 +280,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/ea441e07c169ab0a29c31cdd656230efa75d0caa/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/3cacedf9677b64c826b33d93dfa4663188dc03e9/skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "ea441e07c169ab0a29c31cdd656230efa75d0caa",
+          "commit_sha": "3cacedf9677b64c826b33d93dfa4663188dc03e9",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.0.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKGVhNDQxZTA3YzE2OWFiMGEyOWMzMWNkZDY1NjIzMGVmYTc1ZDBjYWE",
+          "github_node_id": "C_kwDOTJJMyNoAKDNjYWNlZGY5Njc3YjY0YzgyNmIzM2Q5M2RmYTQ2NjMxODhkYzAzZTk",
           "signature_reason": "valid",
-          "response_sha256": "05afaed97cedbc2abdf2a9d89768c398129d07f322536a90852a75252b15ee87"
+          "response_sha256": "3c80480f06e57d957784e098aa083ac908aa45f647ab7e8f01712788a4ffd4c4"
         }
       }
     ]
@@ -304,11 +305,11 @@
     "executive_decisions": []
   },
   "recovery": {
-    "pre_release_snapshot": "PENDING",
+    "pre_release_snapshot": "/Users/patrickhamid/release-candidates/vantage-main-release/release-evidence/v2.0.0/pre-2.0.0-snapshot.json; TrueNAS recursive snapshot TailsPool/vantage@pre-2.0.0 created 2026-08-28T23:06:19+00:00 and verified present before deployment.",
     "post_release_snapshot": "PENDING",
     "last_known_good": "Vantage 1.3.0, release 4e596f25a785c5c2917e4a7fa77a2b73b8a95f84, with TailsPool/vantage@pre-1.3.0 and @post-1.3.0 retained.",
     "rollback_command": "Stop Vantage, restore the fresh TailsPool/vantage@pre-2.0.0 recursive snapshot, update the application to /mnt/TailsPool/vantage/releases/4e596f25a785c5c2917e4a7fa77a2b73b8a95f84 with VANTAGE_ENV=demo and VANTAGE_DEMO_MODE=1, then verify health and readiness.",
-    "rollback_validation": "PENDING",
+    "rollback_validation": "PASS",
     "rollback_limitations": "The 2.0 schema is not backward compatible. A rollback must restore the pre-2.0 snapshot before the 1.3.0 application is restarted."
   },
   "publication": {
@@ -350,6 +351,27 @@
       "at": "2026-08-28T23:00:31.052762+00:00",
       "actor": "release-manager",
       "reason": "Implementation was completed and independently validated before candidate freeze."
+    },
+    {
+      "from": "IMPLEMENTING",
+      "to": "CODE_FROZEN",
+      "at": "2026-08-28T23:04:34.446759+00:00",
+      "actor": "release-manager",
+      "reason": "Corrected checkpoint and GitHub-verified CTO deviation and all-human-gates receipts bind the signed Vantage candidate."
+    },
+    {
+      "from": "CODE_FROZEN",
+      "to": "ENGINEERING_APPROVED",
+      "at": "2026-08-28T23:05:35.824439+00:00",
+      "actor": "release-manager",
+      "reason": "CTO solo-authority receipt binds the recorded APPROVE decision; engineering review and candidate validation are complete."
+    },
+    {
+      "from": "ENGINEERING_APPROVED",
+      "to": "QA_PASSED",
+      "at": "2026-08-28T23:05:41.337848+00:00",
+      "actor": "release-manager",
+      "reason": "CTO solo-authority receipt binds the recorded PASS decision; independent QA validation is complete."
     }
   ]
 }
