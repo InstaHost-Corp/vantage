@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "release_id": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+  "generated_at": "2026-08-28T22:53:19.944971+00:00",
+  "catalogue_version": "1.0.0",
+  "decision_assurance_index": 1.0,
+  "mandatory_gate_status": "PASS",
+  "blocking_metric_ids": [],
+  "metric_summaries": [
+    {
+      "metric_id": "ai_automation_scope_compliance",
+      "definition_version": 1,
+      "value": 1.0,
+      "gate_result": "PASS",
+      "domain": "ai_governance"
+    }
+  ],
+  "stale": false,
+  "source_observation_count": 1
+}
