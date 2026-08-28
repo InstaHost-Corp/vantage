@@ -104,6 +104,7 @@ test('PROD-1: production signup creates an isolated tenant with admin owner', as
       company: 'Acme Corp',
     }),
   });
+
   assert.equal(res.status, 201);
   const body = await res.json();
   assert.ok(body.token);
@@ -121,6 +122,25 @@ test('PROD-1: production signup creates an isolated tenant with admin owner', as
   assert.equal(dashboard.overall_readiness, 0,
     'an unevaluated tenant must not report readiness before it has control data');
   assert.ok(dashboard.frameworks.every((framework) => framework.readiness === 0));
+});
+
+test('PROD-1a: a partially evaluated control does not report readiness', async () => {
+  const { DatabaseSync } = await import('node:sqlite');
+  const dbPath = join(prodDir, 'test.db');
+  const testDb = new DatabaseSync(dbPath);
+  const alice = testDb.prepare('SELECT tenant_id FROM users WHERE email = ?').get('alice@acme-corp.example');
+  const test = testDb.prepare('SELECT id FROM tests WHERE tenant_id = ? LIMIT 1').get(alice.tenant_id);
+  testDb.prepare("UPDATE tests SET status = 'ok' WHERE id = ?").run(test.id);
+  testDb.close();
+
+  const login = await fetch(`${PROD}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'alice@acme-corp.example', password: 'SecurePassword42!' }),
+  }).then((r) => r.json());
+  const dashboard = await api(PROD, login.token)('/api/dashboard').then((r) => r.json());
+  assert.equal(dashboard.overall_readiness, 0,
+    'a control with pending tests must not count as ready');
 });
 
 test('PROD-2: production signup creates a second isolated tenant', async () => {

@@ -169,7 +169,7 @@ export function controlStatuses(tenantId = 1) {
   for (const r of rows) {
     const active = (r.total || 0) - (r.disabled || 0);
     let status = 'no_tests';
-    if (active > 0) status = r.failing > 0 ? 'failing' : r.passing > 0 ? 'passing' : 'no_tests';
+    if (active > 0) status = r.failing > 0 ? 'failing' : r.passing === active ? 'passing' : 'no_tests';
     map.set(r.id, { status, tests: r.total || 0, failing: r.failing || 0 });
   }
   return map;

@@ -85,9 +85,8 @@ if (skipBuild) {
   const { all, get } = await import('../server/db.js');
   const { seed } = await import('../server/seed.js');
   seed({ force: true });
-  const { frameworkReadiness, controlStatuses } = await import('../server/engine.js');
+  const { frameworkReadiness } = await import('../server/engine.js');
 
-  const statuses = controlStatuses();
   const mismatches = [];
   const frameworks = all('SELECT id, short_name FROM frameworks');
   for (const f of frameworks) {
@@ -95,7 +94,13 @@ if (skipBuild) {
     const mapped = new Set(all(
       `SELECT DISTINCT cr.control_id AS id FROM control_requirements cr
        JOIN requirements r ON r.id = cr.requirement_id WHERE r.framework_id = ?`, f.id).map((r) => r.id));
-    const passing = [...mapped].filter((id) => statuses.get(id)?.status === 'passing').length;
+    const passing = [...mapped].filter((id) => {
+      const counts = get(`SELECT
+        COUNT(*) AS active,
+        SUM(CASE WHEN status = 'ok' THEN 1 ELSE 0 END) AS passing
+        FROM tests WHERE control_id = ? AND disabled = 0`, id);
+      return counts.active > 0 && counts.passing === counts.active;
+    }).length;
     const expected = mapped.size ? Math.round((passing / mapped.size) * 100) : 0;
     if (expected !== reported.readiness || mapped.size !== reported.controls_total) {
       mismatches.push(`${f.short_name}: published ${reported.readiness}%/${reported.controls_total} vs recomputed ${expected}%/${mapped.size}`);
