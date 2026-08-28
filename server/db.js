@@ -25,10 +25,12 @@ const needsMigration = !db.prepare("SELECT name FROM sqlite_master WHERE type='t
 
 if (needsMigration) {
   console.log('[vantage] migrating database to multi-tenant schema (v2.0.0)...');
+  // Recreating referenced parent tables temporarily invalidates foreign-key
+  // links. Validate the completed graph explicitly before committing instead
+  // of allowing an intermediate table order to reject a valid upgrade.
+  db.exec('PRAGMA foreign_keys = OFF');
   db.exec('BEGIN IMMEDIATE');
   try {
-    db.exec('PRAGMA defer_foreign_keys = ON');
-
     db.exec(`CREATE TABLE tenants (
       id INTEGER PRIMARY KEY,
       slug TEXT UNIQUE NOT NULL,
@@ -194,10 +196,16 @@ if (needsMigration) {
     // with the schema transition so authentication is never split-brain.
     db.exec('DELETE FROM sessions');
 
+    const violations = db.prepare('PRAGMA foreign_key_check').all();
+    if (violations.length) {
+      throw new Error(`multi-tenant migration foreign-key check failed: ${JSON.stringify(violations[0])}`);
+    }
     db.exec('COMMIT');
+    db.exec('PRAGMA foreign_keys = ON');
     console.log('[vantage] multi-tenant migration complete');
   } catch (err) {
     try { db.exec('ROLLBACK'); } catch { /* already gone */ }
+    db.exec('PRAGMA foreign_keys = ON');
     throw err;
   }
 }

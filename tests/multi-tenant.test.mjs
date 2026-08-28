@@ -5,14 +5,15 @@
 
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateRuntimeConfig } from '../server/runtime.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const LEGACY_COMMIT = '4e596f25a785c5c2917e4a7fa77a2b73b8a95f84';
 
 // -------------------------------------------------------- Demo-mode server
 // Boot a server in demo mode so we can test multi-tenant isolation.
@@ -27,9 +28,9 @@ const PROD_PORT = 42700 + Math.floor(Math.random() * 200);
 const PROD = `http://127.0.0.1:${PROD_PORT}`;
 let prodChild;
 
-async function bootServer(port, workdir, env = {}) {
+async function bootServer(port, workdir, env = {}, serverRoot = root) {
   const child = spawn(process.execPath, ['server/index.js'], {
-    cwd: root,
+    cwd: serverRoot,
     env: {
       ...process.env,
       PORT: String(port),
@@ -54,6 +55,11 @@ async function bootServer(port, workdir, env = {}) {
     await new Promise((r) => setTimeout(r, 300));
   }
   return child;
+}
+
+async function stopServer(child) {
+  if (!child || child.exitCode != null) return;
+  child.kill('SIGTERM');
 }
 
 const api = (base, token) => (path, options = {}) => fetch(`${base}${path}`, {
@@ -314,6 +320,64 @@ test('PROD-11: production startup configuration fails closed before SQLite opens
     VANTAGE_SESSION_SECRET: 'a'.repeat(32),
   });
   assert.equal(validFileSecret.ok, true);
+});
+
+test('MIGRATION: a real 1.3.0 database upgrades atomically and invalidates legacy sessions', async () => {
+  const legacyRoot = mkdtempSync(join(tmpdir(), 'vantage-legacy-source-'));
+  const migrationDir = mkdtempSync(join(tmpdir(), 'vantage-migration-'));
+  const legacyPort = 42900 + Math.floor(Math.random() * 100);
+  const migratedPort = 43000 + Math.floor(Math.random() * 100);
+  let legacyChild;
+  let migratedChild;
+  try {
+    mkdirSync(legacyRoot, { recursive: true });
+    const archive = execFileSync('git', ['archive', LEGACY_COMMIT], {
+      cwd: root,
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    execFileSync('tar', ['-x', '-C', legacyRoot], { input: archive });
+
+    legacyChild = await bootServer(legacyPort, migrationDir, {
+      VANTAGE_PUBLIC_DEMO: '1',
+      VANTAGE_ALLOW_DEMO_RESET: '0',
+    }, legacyRoot);
+    const legacyLogin = await fetch(`http://127.0.0.1:${legacyPort}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'ada@northwind.io', password: 'vantage123' }),
+    });
+    assert.equal(legacyLogin.status, 200);
+    await legacyLogin.json();
+    await stopServer(legacyChild);
+
+    migratedChild = await bootServer(migratedPort, migrationDir, {
+      VANTAGE_ENV: 'production',
+      VANTAGE_PUBLIC_DEMO: '0',
+      VANTAGE_ALLOW_DEMO_RESET: '0',
+      VANTAGE_SESSION_SECRET: 'a'.repeat(32),
+    });
+    await stopServer(migratedChild);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const { DatabaseSync } = await import('node:sqlite');
+    const migratedDb = new DatabaseSync(join(migrationDir, 'test.db'));
+    assert.equal(migratedDb.prepare('SELECT COUNT(*) AS n FROM sessions').get().n, 0,
+      'all pre-migration bearer sessions must be invalidated');
+    const legacyUser = migratedDb.prepare(
+      `SELECT u.tenant_id, t.slug, t.name FROM users u
+       JOIN tenants t ON t.id = u.tenant_id WHERE u.email = ?`,
+    ).get('ada@northwind.io');
+    assert.equal(legacyUser.tenant_id, 1, 'legacy users must remain in tenant 1');
+    assert.equal(legacyUser.slug, 'default', 'legacy users must remain in the default tenant');
+    assert.equal(legacyUser.name, 'Default Tenant', 'the default tenant must be quarantined');
+    assert.equal(migratedDb.prepare('PRAGMA foreign_key_check').all().length, 0,
+      'the migrated database must have no foreign-key violations');
+    migratedDb.close();
+  } finally {
+    await stopServer(legacyChild);
+    await stopServer(migratedChild);
+    rmSync(legacyRoot, { recursive: true, force: true });
+    rmSync(migrationDir, { recursive: true, force: true });
+  }
 });
 
 /* ===================== Demo-mode multi-tenant ===================== */
