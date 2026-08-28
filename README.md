@@ -219,7 +219,7 @@ Vantage 2.0 supports customer-safe multi-tenant isolation. Set
 
 ```sh
 VANTAGE_ENV=production \
-VANTAGE_SESSION_SECRET=$(openssl rand -hex 32) \
+VANTAGE_SESSION_SECRET_FILE=/run/secrets/vantage-session-secret \
 npm start
 ```
 
@@ -229,6 +229,12 @@ In production mode:
   is fully isolated by `tenant_id` on every table.
 - Demo seeding, demo reset and the shared demo password are disabled.
 - The compliance framework library is seeded automatically for each new tenant.
+- Generate a session secret of at least 32 characters once, store it in your
+  platform's secret manager, and mount it at `VANTAGE_SESSION_SECRET_FILE`.
+  An inline `VANTAGE_SESSION_SECRET` remains supported for local development
+  only; never put it in a deployment manifest.
+- Public Trust Center routes return `404` until a tenant-specific publication
+  model is implemented.
 
 **Migration**: existing pre-2.0 databases are migrated automatically on first
 boot. Back up your database before upgrading.

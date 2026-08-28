@@ -12,9 +12,10 @@ All notable changes to Vantage are documented here. This project follows
   databases unless the built-in migration runs (it runs automatically on
   first boot). **Back up your database before upgrading.**
 - **Production mode** (`VANTAGE_ENV=production`): fails closed at startup
-  unless `VANTAGE_PUBLIC_DEMO` is disabled, `VANTAGE_SESSION_SECRET` is set,
-  and `VANTAGE_ALLOW_DEMO_RESET` is disabled. Demo reset, demo seeding and
-  the continuous scan timer are all disabled in production.
+  unless `VANTAGE_PUBLIC_DEMO` is disabled, a 32+-character session secret is
+  provided through `VANTAGE_SESSION_SECRET_FILE`, and
+  `VANTAGE_ALLOW_DEMO_RESET` is disabled. Demo reset, demo seeding and the
+  continuous scan timer are all disabled in production.
 - Signup in production mode requires a `company` field and creates a new
   isolated tenant with the caller as owner/admin. In demo mode, signup still
   creates a contributor in the shared demo tenant.
@@ -61,8 +62,8 @@ All notable changes to Vantage are documented here. This project follows
 
 ### Production limitations
 
-- The public Trust Center endpoint reads from the demo tenant (tenant_id=1).
-  Per-tenant public Trust Centers are not yet implemented.
+- Public Trust Center routes return `404` in production until a tenant-specific
+  publication model is implemented.
 - No tenant deletion or data export API.
 - No tenant-level billing, quotas or usage metering.
 - Role management is limited to the existing admin/contributor/auditor roles;

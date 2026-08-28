@@ -29,7 +29,10 @@
   public config endpoint).
 - Signup and login are rate-limited per client IP.
 - Duplicate email returns a generic error that does not enumerate tenants.
-- Production mode requires `VANTAGE_SESSION_SECRET` to be set.
+- Production mode requires a random session secret of at least 32 characters,
+  supplied through a read-only `VANTAGE_SESSION_SECRET_FILE` mount. An inline
+  `VANTAGE_SESSION_SECRET` is for local development only and must not be
+  recorded in deployment configuration.
 - Admin actions (demo reset, policy approval, settings, framework toggle)
   require the `admin` role within the caller's tenant.
 
@@ -46,7 +49,7 @@
 
 ## Known limitations
 
-- The public Trust Center endpoint reads from the demo tenant. Per-tenant
-  public Trust Centers are not yet implemented.
+- Public Trust Center routes are disabled in production (`404`) until
+  tenant-specific publication is implemented.
 - No tenant deletion, data export or billing API.
 - The hosted demonstration remains shared and fictional.
