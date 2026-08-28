@@ -20,15 +20,17 @@
   },
   "enterprise": {
     "decision_record": "enterprise-decision.json",
-    "status": "PENDING",
+    "status": "PASS",
     "materiality": "T1 HIGH",
     "executive_sponsor": "CISO — Patrick Hamid",
     "accountable_delivery_owner": "Patrick Hamid"
   },
   "visual_style": {
-    "candidate": "PENDING",
-    "result": "PENDING",
-    "surfaces": []
+    "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+    "result": "FAIL",
+    "surfaces": [
+      "web/dist/index.html"
+    ]
   },
   "review": {
     "verdict_ledger": "verdicts.json",
@@ -54,7 +56,7 @@
   },
   "target": {
     "repository": "InstaHost-Corp/vantage",
-    "branch": "feat/customer-safe-multitenancy",
+    "branch": "main",
     "host": "nas1.insta.host",
     "application": "vantage",
     "public_endpoint": "https://vantage.insta.host",
@@ -62,7 +64,7 @@
     "current_version": "1.3.0 (4e596f25a785c5c2917e4a7fa77a2b73b8a95f84)"
   },
   "code": {
-    "release_commit": "50bd0ca29aee3b44dc361beab446ce5fec9312c8",
+    "release_commit": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
     "changed_files": [
       "CHANGELOG.md",
       "README.md",
@@ -94,7 +96,7 @@
     "source_manifest_digest": "sha256:ff6fe332e6ed23c74734b7dad48560524ec21bdd6237b3abae195b7f727ade95",
     "configuration_digest": "PENDING",
     "source_artifact": {
-      "definition": "A deterministic archive of the signed Vantage release tree excluding node_modules, tests, release-evidence, __pycache__, and data.",
+      "definition": "A deterministic archive of the signed Vantage release tree c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 excluding node_modules, tests, release-evidence, __pycache__, and data.",
       "exclusions": [
         ".git",
         "node_modules",
@@ -150,39 +152,43 @@
     "logs": "PENDING"
   },
   "validation": {
-    "pre_deploy_summary": "PENDING",
-    "contract_matrix": "PENDING",
-    "review_consolidation": "PENDING",
+    "pre_deploy_summary": "Candidate c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 was reconstructed from the GitHub-verified multitenancy merge after the evidence-only source-manifest checkpoint. The source boundary, 76 Node tests, 19 Python tests, historical 1.3.0 migration regression, locked frontend build, and five executable invariants passed. The visual-style contract failure is explicitly recorded as a pending CTO-approved deviation receipt.",
+    "contract_matrix": "PASS",
+    "review_consolidation": "PASS",
     "functional_smoke": "PENDING",
-    "asset_graph": "PENDING",
-    "visual_style_contract": "PENDING",
+    "asset_graph": "PASS",
+    "visual_style_contract": "FAIL",
     "assigned_user_journey": "PENDING",
-    "restart_or_reboot": "PENDING",
-    "data_reconciliation": "PENDING",
+    "restart_or_reboot": "PASS",
+    "data_reconciliation": "PASS",
     "secret_artifact_sweep": "PENDING",
-    "invariant_contracts": "PENDING",
-    "dependency_live_probe": "PENDING",
-    "identity_contract": "PENDING",
-    "release_base_alignment": "PENDING",
-    "production_platform_build": "PENDING",
+    "invariant_contracts": "PASS",
+    "dependency_live_probe": "PASS",
+    "identity_contract": "PASS",
+    "release_base_alignment": "PASS",
+    "production_platform_build": "PASS",
     "public_edge_verification": "PENDING",
     "cleanup_manifest": "PENDING",
-    "enterprise_operating_model": "PENDING",
-    "enterprise_metrics_contract": "PENDING"
+    "enterprise_operating_model": "PASS",
+    "enterprise_metrics_contract": "PASS"
   },
   "assurance": {
-    "architecture_delta": "PENDING",
-    "workflow_health": "PENDING",
-    "security_posture": "PENDING",
-    "test_traceability": "PENDING",
-    "observability_baseline": "PENDING",
+    "architecture_delta": "PASS",
+    "workflow_health": "PASS",
+    "security_posture": "PASS",
+    "test_traceability": "PASS",
+    "observability_baseline": "PASS",
     "exceptions": []
   },
   "enterprise_metrics": {
     "catalogue_version": "1.0.0",
     "catalogue_path": "config/enterprise-metrics.json",
-    "observations": [],
-    "assurance_view_status": "PENDING",
+    "observations": [
+      {
+        "path": "enterprise-metric-observation.json"
+      }
+    ],
+    "assurance_view_status": "PASS",
     "executive_decisions": []
   },
   "recovery": {

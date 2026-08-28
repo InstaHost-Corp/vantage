@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "release_id": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+  "metric_id": "ai_automation_scope_compliance",
+  "definition_version": 1,
+  "observed_at": "2026-08-28T09:00:00+00:00",
+  "value": 1.0,
+  "numerator_value": 1,
+  "denominator_value": 1,
+  "resolvable": true,
+  "gate_result": "PASS",
+  "provenance": [
+    {
+      "source": "release-evidence.json",
+      "reference": "code.release_commit,applicability.ai_or_automation"
+    },
+    {
+      "source": "ENTERPRISE_DECISION.json",
+      "reference": "candidate,ai_governance.external_model_routing"
+    }
+  ],
+  "computed_by": "metricsctl.py"
+}

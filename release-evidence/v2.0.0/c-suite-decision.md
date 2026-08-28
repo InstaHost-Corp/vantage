@@ -1,6 +1,6 @@
 # Enterprise decision: vantage-2.0.0
 
-- Candidate: `PENDING`
+- Candidate: `c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63`
 - Materiality: **T1 HIGH**
 
 ## Decision requested
@@ -59,7 +59,7 @@ Proceed only after every applicable authenticated specialist and mandatory relea
 {
   "schema_version": "1.0",
   "release_id": "vantage-2.0.0",
-  "candidate": "PENDING",
+  "candidate": "c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
   "source_evidence": "release-evidence.json",
   "materiality": "T1 HIGH",
   "materiality_reason": "L3 STATEFUL_SECURITY; activated flags: business_rules, data_migration, external_gate, identity, secrets_or_sensitive_data, ui_or_content",
@@ -180,8 +180,8 @@ Proceed only after every applicable authenticated specialist and mandatory relea
   ],
   "c_suite_packet": {
     "required": true,
-    "status": "DRAFT",
-    "path": "enterprise/vantage-2.0.0-c-suite-decision.md"
+    "status": "READY",
+    "path": "c-suite-decision.md"
   },
   "ai_governance": {
     "applicable": false,
