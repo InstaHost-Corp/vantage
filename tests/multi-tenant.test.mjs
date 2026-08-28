@@ -116,6 +116,11 @@ test('PROD-1: production signup creates an isolated tenant with admin owner', as
   assert.equal(me.user.email, 'alice@acme-corp.example');
   assert.ok(me.company);
   assert.equal(me.company.name, 'Acme Corp');
+
+  const dashboard = await api(PROD, body.token)('/api/dashboard').then((r) => r.json());
+  assert.equal(dashboard.overall_readiness, 0,
+    'an unevaluated tenant must not report readiness before it has control data');
+  assert.ok(dashboard.frameworks.every((framework) => framework.readiness === 0));
 });
 
 test('PROD-2: production signup creates a second isolated tenant', async () => {

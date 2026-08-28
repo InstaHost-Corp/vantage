@@ -128,7 +128,9 @@ export function runTests({ actor = 'Vantage Agent', testIds = null, tenantId = 1
     }
     const failing = results.filter((r) => !r.passed).length;
     const passing = results.length - failing;
-    const status = failing > 0 ? 'failing' : 'ok';
+    // An empty population is not evidence that a control passes. Keep it
+    // pending until the tenant has data the rule can actually evaluate.
+    const status = results.length === 0 ? 'pending' : failing > 0 ? 'failing' : 'ok';
 
     let deadline = test.deadline;
     if (status === 'failing') {
@@ -158,7 +160,8 @@ export function controlStatuses(tenantId = 1) {
     SELECT c.id,
       COUNT(t.id) AS total,
       SUM(CASE WHEN t.status = 'failing' THEN 1 ELSE 0 END) AS failing,
-      SUM(CASE WHEN t.status = 'disabled' THEN 1 ELSE 0 END) AS disabled
+      SUM(CASE WHEN t.status = 'disabled' THEN 1 ELSE 0 END) AS disabled,
+      SUM(CASE WHEN t.status = 'ok' THEN 1 ELSE 0 END) AS passing
     FROM controls c LEFT JOIN tests t ON t.control_id = c.id AND t.tenant_id = c.tenant_id
     WHERE c.tenant_id = ?
     GROUP BY c.id`, tenantId);
@@ -166,7 +169,7 @@ export function controlStatuses(tenantId = 1) {
   for (const r of rows) {
     const active = (r.total || 0) - (r.disabled || 0);
     let status = 'no_tests';
-    if (active > 0) status = r.failing > 0 ? 'failing' : 'passing';
+    if (active > 0) status = r.failing > 0 ? 'failing' : r.passing > 0 ? 'passing' : 'no_tests';
     map.set(r.id, { status, tests: r.total || 0, failing: r.failing || 0 });
   }
   return map;
@@ -190,13 +193,14 @@ export function frameworkReadiness(frameworkId, tenantId = 1) {
     let reqStatus = 'complete';
     if (controlList.length === 0) reqStatus = 'unmapped';
     else if (failCount > 0) reqStatus = 'at_risk';
-    else if (untested === controlList.length) reqStatus = 'in_progress';
+    else if (untested > 0) reqStatus = 'in_progress';
     return { ...r, controls: controlList, control_count: controlList.length, failing: failCount, status: reqStatus };
   });
   const complete = detail.filter((d) => d.status === 'complete').length;
   const mapped = new Set(links.map((l) => l.control_id));
   const failingControls = [...mapped].filter((id) => statuses.get(id)?.status === 'failing');
-  const readiness = mapped.size ? Math.round(((mapped.size - failingControls.length) / mapped.size) * 100) : 0;
+  const passingControls = [...mapped].filter((id) => statuses.get(id)?.status === 'passing');
+  const readiness = mapped.size ? Math.round((passingControls.length / mapped.size) * 100) : 0;
   return {
     readiness,
     requirements: detail,
@@ -205,7 +209,7 @@ export function frameworkReadiness(frameworkId, tenantId = 1) {
     at_risk: detail.filter((d) => d.status === 'at_risk').length,
     controls_total: mapped.size,
     controls_failing: failingControls.length,
-    controls_ok: mapped.size - failingControls.length,
+    controls_ok: passingControls.length,
   };
 }
 

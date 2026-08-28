@@ -95,8 +95,8 @@ if (skipBuild) {
     const mapped = new Set(all(
       `SELECT DISTINCT cr.control_id AS id FROM control_requirements cr
        JOIN requirements r ON r.id = cr.requirement_id WHERE r.framework_id = ?`, f.id).map((r) => r.id));
-    const failing = [...mapped].filter((id) => statuses.get(id)?.status === 'failing').length;
-    const expected = mapped.size ? Math.round(((mapped.size - failing) / mapped.size) * 100) : 0;
+    const passing = [...mapped].filter((id) => statuses.get(id)?.status === 'passing').length;
+    const expected = mapped.size ? Math.round((passing / mapped.size) * 100) : 0;
     if (expected !== reported.readiness || mapped.size !== reported.controls_total) {
       mismatches.push(`${f.short_name}: published ${reported.readiness}%/${reported.controls_total} vs recomputed ${expected}%/${mapped.size}`);
     }
