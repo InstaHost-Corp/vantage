@@ -29,13 +29,12 @@ export function validateRuntimeConfig(env = process.env) {
   const errors = [];
   const mode = env.VANTAGE_ENV;
   const production = mode === 'production';
-  const nodeProduction = env.NODE_ENV === 'production';
 
   if (mode && mode !== 'production' && mode !== 'demo') {
     errors.push('VANTAGE_ENV must be either production or demo');
   }
-  if (nodeProduction && !production && !(mode === 'demo' && boolEnv(env.VANTAGE_DEMO_MODE))) {
-    errors.push('production deployments require VANTAGE_ENV=production; demos must explicitly set VANTAGE_ENV=demo and VANTAGE_DEMO_MODE=1');
+  if (!production && !(mode === 'demo' && boolEnv(env.VANTAGE_DEMO_MODE))) {
+    errors.push('set VANTAGE_ENV=production, or explicitly set VANTAGE_ENV=demo and VANTAGE_DEMO_MODE=1');
   }
   if (!production) return { ok: errors.length === 0, errors };
 

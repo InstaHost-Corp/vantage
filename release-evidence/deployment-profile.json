@@ -73,9 +73,9 @@
    "ssh nas1 'midclt call -j app.redeploy vantage'"
   ],
   "rollback": [
-   "ssh nas1 \"midclt call -j app.update <payload pinning /mnt/TailsPool/vantage/releases/a624d802a7a63b1117a8dd5177877af215b72e97 and the 1.1.0 environment>\"",
-   "ssh nas1 \"midclt call zfs.rollback '{\\\"id\\\":\\\"TailsPool/vantage@pre-1.2.0\\\"}'\"",
-   "python3 scripts/publishctl.py regate   # close the open endpoint, independent of the application version"
+   "Stop the workload before restoring the newly captured TailsPool/vantage@pre-2.0.0 recursive snapshot, so the old application cannot write the incompatible multi-tenant schema.",
+   "Restore TailsPool/vantage@pre-2.0.0, then update the application to the retained 1.3.0 release directory /mnt/TailsPool/vantage/releases/4e596f25a785c5c2917e4a7fa77a2b73b8a95f84 with its explicit VANTAGE_ENV=demo and VANTAGE_DEMO_MODE=1 configuration.",
+   "Confirm /healthz reports 1.3.0 and release_sha 4e596f25a785c5c2917e4a7fa77a2b73b8a95f84 before reopening the public endpoint."
   ]
  },
  "policies": {

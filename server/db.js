@@ -188,7 +188,7 @@ if (needsMigration) {
       'questionnaires', 'questionnaire_items', 'activity',
     ];
     for (const t of simpleAlter) {
-      db.exec(`ALTER TABLE ${t} ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 1`);
+      db.exec(`ALTER TABLE ${t} ADD COLUMN tenant_id INTEGER NOT NULL DEFAULT 1 REFERENCES tenants(id)`);
     }
 
     // Existing bearer tokens grant access to the legacy shared workspace but

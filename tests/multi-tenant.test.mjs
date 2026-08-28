@@ -38,6 +38,8 @@ async function bootServer(port, workdir, env = {}, serverRoot = root) {
       VANTAGE_DB: join(workdir, 'test.db'),
       VANTAGE_SCAN_MINUTES: '600',
       APP_VERSION: '2.0.0',
+      VANTAGE_ENV: 'demo',
+      VANTAGE_DEMO_MODE: '1',
       ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -293,7 +295,7 @@ test('PROD-10: production has no default public Trust Center', async () => {
 });
 
 test('PROD-11: production startup configuration fails closed before SQLite opens', () => {
-  const missingMode = validateRuntimeConfig({ NODE_ENV: 'production' });
+  const missingMode = validateRuntimeConfig({});
   assert.equal(missingMode.ok, false);
   assert.match(missingMode.errors.join('\n'), /VANTAGE_ENV=production/);
 
@@ -371,6 +373,14 @@ test('MIGRATION: a real 1.3.0 database upgrades atomically and invalidates legac
     assert.equal(legacyUser.name, 'Default Tenant', 'the default tenant must be quarantined');
     assert.equal(migratedDb.prepare('PRAGMA foreign_key_check').all().length, 0,
       'the migrated database must have no foreign-key violations');
+    const customerTables = migratedDb.prepare(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ('tenants', 'sqlite_sequence', 'readiness_probe')",
+    ).all().map((row) => row.name);
+    for (const table of customerTables) {
+      const foreignKeys = migratedDb.prepare(`PRAGMA foreign_key_list(${table})`).all();
+      assert.ok(foreignKeys.some((key) => key.from === 'tenant_id' && key.table === 'tenants'),
+        `${table} must retain its tenant foreign key after migration`);
+    }
     migratedDb.close();
   } finally {
     await stopServer(legacyChild);
