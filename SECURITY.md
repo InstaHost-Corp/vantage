@@ -5,22 +5,24 @@
 `https://vantage.insta.host` is a shared demonstration with access restricted
 while the project's governance and outside-work position are reviewed:
 
-* Authorized visitors use the same demonstration accounts and the published
-  password `vantage123`. Those credentials protect no real data.
+* Visitors can use the demonstration accounts with the published password
+  `vantage123`, or create a normal contributor account with self-service
+  signup. Those credentials protect no real data.
 * All data is fictional. There is no real company, no real personnel and no
   real customer data in it.
 * The workspace is shared. Anything you change is visible to every other
   visitor, and the whole tenant is restored to its seeded baseline **daily**.
-* **It does not save credentials.** The sign-in page pre-fills the published
+* **It does not save sign-in attempts.** The sign-in page pre-fills the published
   demonstration account and asks your browser not to save or autofill anything
   against this origin. Your session token lives in `sessionStorage`, so it is
   gone when you close the tab. Nothing you type into the sign-in form is
   written to the database or the logs, and the abuse throttle keys on a digest
-  rather than on the address you typed.
+  rather than on the address you typed. Self-service signup stores the supplied
+  name and email plus a salted password hash so the account can be used.
 * Do not put real, personal or confidential information into it. Anything you
   type into the demonstration should be treated as shared and disposable.
-* The one form that asks for your identity — the Trust Center document request
-  — **discards it**. In shared-demo mode your name, email and company
+* The Trust Center document request form **discards your identity**. In
+  shared-demo mode your name, email and company
   are not stored; the queue records an anonymous demonstration request instead.
   Nothing is emailed, and no document is sent.
 
@@ -62,5 +64,6 @@ npm run setup && npm start
 
 A self-hosted instance defaults to the safe posture: no public-demo banner and
 **no scheduled data reset**. Before exposing one to a network, change the
-seeded passwords in `server/seed.js`, and put your own identity gate in front
-of it if the data stops being fictional.
+seeded passwords in `server/seed.js`, review whether public signup is
+appropriate, and put your own identity gate in front of it if the data stops
+being fictional.
