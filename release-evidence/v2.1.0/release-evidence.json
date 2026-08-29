@@ -321,9 +321,9 @@
   },
   "publication": {
     "repository_uses_github": true,
-    "tag": "",
-    "github_release": "",
-    "release_notes": "RELEASE_NOTES.md",
+    "tag": "v2.1.0",
+    "github_release": "https://github.com/InstaHost-Corp/vantage/releases/tag/v2.1.0",
+    "release_notes": "RELEASE_NOTES.md (frozen candidate content); full deployment evidence appendix published in GitHub Release notes at https://github.com/InstaHost-Corp/vantage/releases/tag/v2.1.0",
     "cto_publish_fallback": null
   },
   "incident": null,
@@ -341,8 +341,8 @@
     "approval_retries": 0,
     "external_wait_minutes": 0,
     "avoidable_delays": [],
-    "process_improvements": [],
-    "learning_record": ""
+    "process_improvements": "Appended sanitized learning record vantage-2.1.0 via learnctl.py documenting that recovery.rollback_validation and validation.* fields must be finalized before the freeze checkpoint to avoid repeated re-freeze/receipt-reissue cycles; recommendation finalize-recovery-and-validation-before-freeze proposed for governed batch review.",
+    "learning_record": "release-learning-backlog.jsonl entry release_id=vantage-2.1.0 appended via learnctl.py append on 2026-08-29T22:15:00+00:00"
   },
   "state_history": [
     {
