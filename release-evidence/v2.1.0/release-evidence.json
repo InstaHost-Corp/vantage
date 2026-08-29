@@ -77,15 +77,15 @@
       "attestation": {
         "attestation_source": "GITHUB_SIGNED_COMMIT",
         "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/2ae1ac93151882a4287cf3268fb8e22d8edeff38/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b29ef4f3747c1083f6dd084da8e4e32dd22ea843/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
         "repository": "InstaHost-Corp/instahost",
         "commit_sha": "b29ef4f3747c1083f6dd084da8e4e32dd22ea843",
         "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
         "github_actor": "phamid",
         "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKDJhZTFhYzkzMTUxODgyYTQyODdjZjMyNjhmYjhlMjJkOGVkZWZmMzg",
+        "github_node_id": "C_kwDOTJJMyNoAKGIyOWVmNGYzNzQ3YzEwODNmNmRkMDg0ZGE4ZTRlMzJkZDIyZWE4NDM",
         "signature_reason": "valid",
-        "response_sha256": "1f41eb3a2d0d8458b2971181e1fcb3408613cea9f50bf6fad2e0bb3f28f3f59b"
+        "response_sha256": "c707fbeeb778977934c5e2e185499ccb902634fa1ef80a866c0ef2f4b289e1d7"
       }
     }
   },
@@ -287,15 +287,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/9c34ff72d44c2d5ac385e217c2af1bc467420736/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b29ef4f3747c1083f6dd084da8e4e32dd22ea843/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
           "commit_sha": "b29ef4f3747c1083f6dd084da8e4e32dd22ea843",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKDljMzRmZjcyZDQ0YzJkNWFjMzg1ZTIxN2MyYWYxYmM0Njc0MjA3MzY",
+          "github_node_id": "C_kwDOTJJMyNoAKGIyOWVmNGYzNzQ3YzEwODNmNmRkMDg0ZGE4ZTRlMzJkZDIyZWE4NDM",
           "signature_reason": "valid",
-          "response_sha256": "09dd8f5d7a4b40ef7b8c779af7e5241057b8e782451744e230b3c15ebf1463ca"
+          "response_sha256": "0518bd77143914e2c92cb27a238c8a4c4f0fac9adafcd5977cb0b94b3529b394"
         }
       }
     ]
