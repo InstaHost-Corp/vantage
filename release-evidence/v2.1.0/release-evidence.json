@@ -51,7 +51,7 @@
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
       "reviewer_role": "CTO",
-      "decided_at": "2026-08-30T08:00:00+00:00",
+      "decided_at": "2026-08-29T21:55:00+00:00",
       "rationale": "As the authenticated CTO and sole human review authority, Patrick Hamid authorizes the Vantage 2.1.0 candidate to use the controller's narrowly defined solo-authority route for the verified, content-frozen evidence checkpoint. This authority changes who supplies the human gate decisions; it does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls. 78/78 Node tests pass, the Vite production build succeeds, all 5 repository-owned invariant checks pass, and the pre-freeze contract matrix (schema 1.2, including a live TrueNAS dependency probe with a negative control and a bounded-resource check) validates PASS.",
       "residual_risk": "Human-gate separation is reduced because one authenticated CTO supplies the approved decisions after all configured independent review sources were attempted. The release remains blocked if any mandatory technical, migration, security, recovery, or live-verification control fails. The pre-existing visual-style contract gap is carried separately as a time-bound, CTO-approved deviation, not waived by this authorization.",
       "review_attempts": [
@@ -77,15 +77,15 @@
       "attestation": {
         "attestation_source": "GITHUB_SIGNED_COMMIT",
         "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b29ef4f3747c1083f6dd084da8e4e32dd22ea843/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/ce8a6663b50f09c61b42c86ee36acf1b568b89f3/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
         "repository": "InstaHost-Corp/instahost",
-        "commit_sha": "b29ef4f3747c1083f6dd084da8e4e32dd22ea843",
+        "commit_sha": "ce8a6663b50f09c61b42c86ee36acf1b568b89f3",
         "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
         "github_actor": "phamid",
         "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKGIyOWVmNGYzNzQ3YzEwODNmNmRkMDg0ZGE4ZTRlMzJkZDIyZWE4NDM",
+        "github_node_id": "C_kwDOTJJMyNoAKGNlOGE2NjYzYjUwZjA5YzYxYjQyYzg2ZWUzNmFjZjFiNTY4Yjg5ZjM",
         "signature_reason": "valid",
-        "response_sha256": "c707fbeeb778977934c5e2e185499ccb902634fa1ef80a866c0ef2f4b289e1d7"
+        "response_sha256": "c954b4685400da37ea9f241d367caa866f9b0666769187c696630c864f3b2964"
       }
     }
   },
@@ -277,7 +277,7 @@
         "approver_role": "CTO",
         "approver_name": "Patrick Hamid",
         "approver": "phamid",
-        "approved_at": "2026-08-30T08:00:00+00:00",
+        "approved_at": "2026-08-29T21:55:00+00:00",
         "owner": "Patrick Hamid",
         "reason": "Vantage's UI does not yet implement the InstaHost Clawpilot visual-token/theme contract (canonical dark-theme tokens, estate font stacks, control/card radii, technical grid spacing). This is a pre-existing condition carried over from the 2.0.0 release, not something introduced by the 2.1.0 tenant-service-configuration change, and remediating it is a separate, larger UI workstream.",
         "alternate_evidence": "release-evidence/v2.1.0/pre-freeze-contract-matrix.json records the passing functional and security invariant checks for this candidate; stylectl.py output showing the exact 0/1 surface failure is retained in session evidence.",
@@ -287,15 +287,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b29ef4f3747c1083f6dd084da8e4e32dd22ea843/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/ce8a6663b50f09c61b42c86ee36acf1b568b89f3/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "b29ef4f3747c1083f6dd084da8e4e32dd22ea843",
+          "commit_sha": "ce8a6663b50f09c61b42c86ee36acf1b568b89f3",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKGIyOWVmNGYzNzQ3YzEwODNmNmRkMDg0ZGE4ZTRlMzJkZDIyZWE4NDM",
+          "github_node_id": "C_kwDOTJJMyNoAKGNlOGE2NjYzYjUwZjA5YzYxYjQyYzg2ZWUzNmFjZjFiNTY4Yjg5ZjM",
           "signature_reason": "valid",
-          "response_sha256": "0518bd77143914e2c92cb27a238c8a4c4f0fac9adafcd5977cb0b94b3529b394"
+          "response_sha256": "381cda1e8f1729ddd0d9350adc6f16d46f7e2f3f8e963ab33a9dbcb0b40becc6"
         }
       }
     ]
