@@ -3,13 +3,14 @@ import { Plug } from 'lucide-react';
 import { post, useApi } from '../api.js';
 import { Button, Card, Drawer, Loading, PageHeader, Pill, useToast } from '../ui.jsx';
 
-export default function Integrations() {
+export default function Integrations({ user }) {
   const [version, setVersion] = useState(0);
   const { data, loading } = useApi('/integrations', [version]);
   const [busy, setBusy] = useState(null);
   const [configuring, setConfiguring] = useState(null);
   const [account, setAccount] = useState('');
   const toast = useToast();
+  const isAdmin = user?.role === 'admin';
 
   if (loading || !data) return <Loading label="Loading integrations" />;
 
@@ -49,7 +50,7 @@ export default function Integrations() {
 
       <div className="mb-5 grid gap-4 sm:grid-cols-3">
         <Card className="px-5 py-4"><p className="text-xs uppercase tracking-wide text-ink-500">Configured</p><p className="mt-1 text-2xl font-semibold tabular-nums">{configured.length}</p></Card>
-        <Card className="px-5 py-4"><p className="text-xs uppercase tracking-wide text-ink-500">Resources monitored</p><p className="mt-1 text-2xl font-semibold tabular-nums">{data.reduce((a, i) => a + i.resource_count, 0)}</p></Card>
+        <Card className="px-5 py-4"><p className="text-xs uppercase tracking-wide text-ink-500">Workspace resource records</p><p className="mt-1 text-2xl font-semibold tabular-nums">{data.reduce((a, i) => a + i.resource_count, 0)}</p></Card>
         <Card className="px-5 py-4"><p className="text-xs uppercase tracking-wide text-ink-500">Tests powered</p><p className="mt-1 text-2xl font-semibold tabular-nums">{data.reduce((a, i) => a + i.test_count, 0)}</p></Card>
       </div>
 
@@ -80,15 +81,11 @@ export default function Integrations() {
               <span><strong className="text-ink-900">{i.test_count}</strong> tests</span>
               <span>No automated collection</span>
             </div>
-            <p className="mt-2 truncate font-mono text-[11px] text-ink-500">Account reference: {i.account}</p>
-            <div className="mt-4 flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => openConfiguration(i)}>
-                Edit reference
-              </Button>
-              <Button variant="ghost" size="sm" loading={busy === `${i.slug}-disconnect`} onClick={() => act(i, 'disconnect', `${i.name} disconnected`)}>
-                Remove
-              </Button>
-            </div>
+            {isAdmin && <p className="mt-2 truncate font-mono text-[11px] text-ink-500">Account reference: {i.account}</p>}
+            {isAdmin && <div className="mt-4 flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => openConfiguration(i)}>Edit reference</Button>
+              <Button variant="ghost" size="sm" loading={busy === `${i.slug}-disconnect`} onClick={() => act(i, 'disconnect', `${i.name} reference removed`)}>Remove</Button>
+            </div>}
           </Card>
         ))}
       </div>
@@ -104,16 +101,14 @@ export default function Integrations() {
                   <p className="truncate text-sm font-medium">{i.name}</p>
                   <p className="line-clamp-2 text-xs text-ink-500">{i.description}</p>
                 </div>
-                <Button size="sm" onClick={() => openConfiguration(i)}>
-                  <Plug size={13} /> Configure
-                </Button>
+                {isAdmin && <Button size="sm" onClick={() => openConfiguration(i)}><Plug size={13} /> Configure</Button>}
               </Card>
             ))}
           </div>
         </div>
       ))}
 
-      <Drawer open={!!configuring} onClose={() => setConfiguring(null)} title={`Configure ${configuring?.name || ''}`} subtitle="Workspace service reference">
+      {isAdmin && <Drawer open={!!configuring} onClose={() => setConfiguring(null)} title={`Configure ${configuring?.name || ''}`} subtitle="Workspace service reference">
         <form onSubmit={saveConfiguration} className="space-y-5">
           <p className="text-sm text-ink-600">Enter a non-secret account, tenant, or organisation reference. Do not enter an API key, password, access token, callback URL, or other credential.</p>
           <label className="block">
@@ -126,7 +121,7 @@ export default function Integrations() {
             <Button type="submit" loading={busy === `${configuring?.slug}-connect`}>Save configuration</Button>
           </div>
         </form>
-      </Drawer>
+      </Drawer>}
     </div>
   );
 }

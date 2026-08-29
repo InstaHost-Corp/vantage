@@ -83,7 +83,7 @@ const integrations = [
   ['snyk', 'Snyk', 'Vulnerability management', 'Workspace reference for vulnerability-management records.', 'available', null],
   ['cloudflare', 'Cloudflare', 'Network & CDN', 'Workspace reference for network and CDN records.', 'available', null],
   ['vantage-agent', 'Vantage Agent', 'Endpoint agent', 'Workspace reference for endpoint posture records.', 'configured', '19 installs'],
-  ['slack', 'Slack', 'Collaboration', 'Workspace reference for collaboration records.', 'configured', 'northwind.slack.com'],
+  ['slack', 'Slack', 'Collaboration', 'Workspace reference for collaboration records.', 'configured', 'Northwind Slack'],
   ['1password', '1Password', 'Secrets management', 'Workspace reference for secrets-management records.', 'available', null],
   ['stripe', 'Stripe', 'Payments', 'Workspace reference for payments records.', 'available', null],
   ['bamboohr', 'BambooHR', 'HR information system', 'Alternative HRIS source for personnel records.', 'available', null],

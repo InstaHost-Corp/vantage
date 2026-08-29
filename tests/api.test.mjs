@@ -122,6 +122,12 @@ test('integration configuration is admin-only, bounded, and does not simulate co
   });
   assert.equal(invalid.status, 400);
 
+  const segmentedCredential = await api('/api/integrations/github/connect', {
+    method: 'POST',
+    body: JSON.stringify({ account: 'glpat-12345678901234567890' }),
+  });
+  assert.equal(segmentedCredential.status, 400);
+
   for (const account of ['https://github.example/workspace', 'github_pat_abcdefghijklmnopqrstuvwxyz', 'Bearer example-value', `Account\u0085Reference`]) {
     const rejected = await api('/api/integrations/github/connect', {
       method: 'POST',

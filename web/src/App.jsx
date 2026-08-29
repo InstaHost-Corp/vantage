@@ -226,7 +226,7 @@ function Shell() {
             <Route path="/devices" element={<Devices />} />
             <Route path="/vendors" element={<Vendors />} />
             <Route path="/risks" element={<Risks />} />
-            <Route path="/integrations" element={<Integrations />} />
+            <Route path="/integrations" element={<Integrations user={me.user} />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/audits" element={<Audits />} />
             <Route path="/audits/:id" element={<AuditDetail />} />

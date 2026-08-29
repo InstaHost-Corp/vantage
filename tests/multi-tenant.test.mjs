@@ -411,6 +411,12 @@ test('MIGRATION: a real 1.3.0 database upgrades atomically and invalidates legac
     assert.equal(legacyLogin.status, 200);
     await legacyLogin.json();
     await stopServer(legacyChild);
+    const { DatabaseSync } = await import('node:sqlite');
+    const legacyDb = new DatabaseSync(join(migrationDir, 'test.db'));
+    legacyDb.prepare("UPDATE integrations SET account = ?, status = 'configured' WHERE slug = 'github'")
+      .run('glpat-12345678901234567890');
+    legacyDb.prepare("INSERT INTO activity (type, actor, message, created_at) VALUES ('integration', 'Vantage', 'Synced 62 resources from Amazon Web Services', datetime('now'))").run();
+    legacyDb.close();
 
     migratedChild = await bootServer(migratedPort, migrationDir, {
       VANTAGE_ENV: 'production',
@@ -420,7 +426,6 @@ test('MIGRATION: a real 1.3.0 database upgrades atomically and invalidates legac
     });
     await stopServer(migratedChild);
     await new Promise((resolve) => setTimeout(resolve, 100));
-    const { DatabaseSync } = await import('node:sqlite');
     const migratedDb = new DatabaseSync(join(migrationDir, 'test.db'));
     assert.equal(migratedDb.prepare('SELECT COUNT(*) AS n FROM sessions').get().n, 0,
       'all pre-migration bearer sessions must be invalidated');
@@ -433,6 +438,11 @@ test('MIGRATION: a real 1.3.0 database upgrades atomically and invalidates legac
     assert.equal(legacyUser.name, 'Default Tenant', 'the default tenant must be quarantined');
     assert.equal(migratedDb.prepare('PRAGMA foreign_key_check').all().length, 0,
       'the migrated database must have no foreign-key violations');
+    const sanitizedIntegration = migratedDb.prepare("SELECT account, status FROM integrations WHERE slug = 'github'").get();
+    assert.equal(sanitizedIntegration.account, null, 'unsafe legacy references must be cleared during startup migration');
+    assert.equal(sanitizedIntegration.status, 'available', 'unsafe legacy references must be reset during startup migration');
+    assert.equal(migratedDb.prepare("SELECT COUNT(*) AS n FROM activity WHERE type = 'integration' AND message LIKE 'Synced % resources from %'").get().n, 0,
+      'legacy activity must not retain false live-sync claims');
     const customerTables = migratedDb.prepare(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ('tenants', 'sqlite_sequence', 'readiness_probe')",
     ).all().map((row) => row.name);

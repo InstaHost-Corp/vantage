@@ -8,6 +8,7 @@ import {
   readinessDetailAllowed, sanitizeTrustRequest, securityHeaders, sweepExpired, throttleKeyFor,
 } from './public-mode.js';
 import { isProduction, validateRuntimeConfig } from './runtime.js';
+import { normalizeServiceReference } from './service-reference.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dist = join(__dirname, '..', 'web', 'dist');
@@ -164,7 +165,6 @@ const SIGNUP_MIN_PASSWORD_LENGTH = 12;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const CONTROL_CHARS_RE = /\p{C}/u;
 const CONNECTION_ACCOUNT_MAX_LENGTH = 80;
-const CONNECTION_ACCOUNT_RE = /^(?!.*(?:github_pat|gh[opsu]_|sk_|xox|akia|eyj|sv=|\b(?:api[- ]?key|access[- ]?token|bearer|password|secret|token)\b))(?!.*(?:^|[ -])[\p{L}\p{N}]{24,}(?:$|[ -]))[\p{L}\p{N}][\p{L}\p{N} ()-]{0,78}$/iu;
 
 function publicUser(user) {
   return user ? { id: user.id, email: user.email, name: user.name, role: user.role, title: user.title } : null;
@@ -838,10 +838,7 @@ app.get('/api/integrations', (req, res) => {
 });
 
 function validateConnectionAccount(value) {
-  if (typeof value !== 'string') return null;
-  const account = value.normalize('NFKC').trim().replace(/\s+/g, ' ');
-  if (account.length < 2 || account.length > CONNECTION_ACCOUNT_MAX_LENGTH || CONTROL_CHARS_RE.test(account) || !CONNECTION_ACCOUNT_RE.test(account)) return null;
-  return account;
+  return normalizeServiceReference(value);
 }
 
 app.post('/api/integrations/:slug/:action', requireAdmin, (req, res) => {
