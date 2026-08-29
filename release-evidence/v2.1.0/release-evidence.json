@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "DEPLOYING",
+  "state": "DEPLOYED",
   "outcome": "DEPLOYED_NOT_PUBLISHED",
   "release": {
     "id": "vantage-2.1.0",
@@ -219,19 +219,21 @@
     }
   },
   "deployment": {
-    "started_at": "",
-    "completed_at": "",
-    "job_ids": [],
-    "migration_result": null,
-    "stability_policy": "",
-    "stability_result": ""
+    "started_at": "2026-08-29T21:48:10+00:00",
+    "completed_at": "2026-08-29T21:48:30+00:00",
+    "job_ids": [
+      "4091"
+    ],
+    "migration_result": "PASS: 2.1.0 is additive to the 2.0.0 tenant-scoped schema (new tenant-scoped service-connection reference columns on the existing integrations table); application startup completed with no data loss, and live /readyz reported database, schema_seeded, and database_writable all ok immediately after the update.",
+    "stability_policy": "SHORT",
+    "stability_result": "PASS: service remained healthy and ready through post-deployment verification, including a live tenant-isolation functional smoke test (two production tenants, one connected then disconnected a service reference, isolation confirmed); TrueNAS job 4091 remains SUCCESS."
   },
   "runtime": {
-    "configured_identity": "",
-    "active_identity": "",
-    "health": "",
-    "readiness": "",
-    "logs": ""
+    "configured_identity": "TrueNAS app.update job 4091 applied compose config-hash 0f6d6507bcedda17fe455ed6d01c1a7f18d32b1b4b15641b6abe21107a67597d: node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03; /app source d50cbe01066d3a8332bf8ec518213cb3f3023753 read-only; /data writable; session secret mounted read-only at /run/secrets/vantage-session-secret.",
+    "active_identity": "TrueNAS job 4091 result reported one running Vantage container (id 5d688b0347438ee0d74e9fe8fb9b9a853c8acf87fa46be502d97ce914b0127e5) using the pinned node:24-slim digest, read-only /app mount from /mnt/TailsPool/vantage/releases/d50cbe01066d3a8332bf8ec518213cb3f3023753, writable /data mount, and read-only session-secret mount.",
+    "health": "PASS: origin /healthz returned Vantage 2.1.0, release_sha d50cbe01066d3a8332bf8ec518213cb3f3023753, and source_digest sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902.",
+    "readiness": "PASS: origin /readyz returned ready=true with database, schema_seeded, monitoring_engine, database_writable, and frontend_build checks all ok.",
+    "logs": "PASS: TrueNAS job 4091 completed SUCCESS and reported the Vantage container running."
   },
   "validation": {
     "pre_deploy_summary": "Signed candidate d50cbe01066d3a8332bf8ec518213cb3f3023753 (PR #14/#15 web-flow merges over Vantage 2.0.0 c8f0549) adds tenant-scoped, human-readable service-reference labels ('connect your own services'): a shared server/service-reference.js validator/normalizer rejects any credential-shaped value (tokens, URLs, secrets) on both the API write path and legacy-data startup cleanup; admin-only mutation with member-visible read access; and legacy 'integration'/'integration_sync' rows are redacted on migration. 78/78 Node tests pass (including new segmented-credential-rejection and legacy integration_sync migration-redaction regression tests), the Vite production build succeeds, and all 5 repository-owned invariant checks in scripts/verify-invariants.mjs pass. Independent code review returned APPROVE and independent QA returned PASS on this exact commit.",
@@ -309,7 +311,7 @@
   },
   "recovery": {
     "pre_release_snapshot": "/Users/patrickhamid/release-candidates/vantage-2.1.0-release/release-evidence/v2.1.0/pre-2.1.0-snapshot.json; TrueNAS recursive snapshot TailsPool/vantage@pre-2.1.0 created 2026-08-30T07:39:32+00:00 and verified present before deployment.",
-    "post_release_snapshot": "",
+    "post_release_snapshot": "TrueNAS recursive snapshot TailsPool/vantage@post-2.1.0 (createtxg 2993932) was created after live verification and zfs.snapshot.query returned exactly one snapshot with that id.",
     "last_known_good": "Vantage 2.0.0 (c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63) with TailsPool/vantage@post-2.0.0 verified present",
     "rollback_command": "Stop the workload, restore TailsPool/vantage@pre-2.1.0 recursive snapshot if data reversion is required, then update the TrueNAS app to release directory /mnt/TailsPool/vantage/releases/c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 with APP_VERSION=2.0.0; confirm /healthz reports 2.0.0 and release_sha c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 before reopening the public endpoint.",
     "rollback_validation": "PASS",
@@ -387,6 +389,13 @@
       "from": "GO_DEPLOY",
       "to": "DEPLOYING",
       "at": "2026-08-29T21:47:47.456071+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "DEPLOYING",
+      "to": "DEPLOYED",
+      "at": "2026-08-29T21:51:43.434809+00:00",
       "actor": "release-manager",
       "reason": ""
     }
