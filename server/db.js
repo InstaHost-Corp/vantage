@@ -560,7 +560,7 @@ for (const integration of db.prepare('SELECT id, account FROM integrations WHERE
   }
 }
 db.exec(`UPDATE activity SET message = 'Configured a workspace service reference'
-  WHERE type = 'integration' AND (
+  WHERE type IN ('integration', 'integration_sync') AND (
     message LIKE 'Configured % for %'
     OR message LIKE 'Synced % resources from %'
     OR message LIKE 'Connected %'

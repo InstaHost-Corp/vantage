@@ -415,7 +415,7 @@ test('MIGRATION: a real 1.3.0 database upgrades atomically and invalidates legac
     const legacyDb = new DatabaseSync(join(migrationDir, 'test.db'));
     legacyDb.prepare("UPDATE integrations SET account = ?, status = 'configured' WHERE slug = 'github'")
       .run('glpat-12345678901234567890');
-    legacyDb.prepare("INSERT INTO activity (type, actor, message, created_at) VALUES ('integration', 'Vantage', 'Synced 62 resources from Amazon Web Services', datetime('now'))").run();
+    legacyDb.prepare("INSERT INTO activity (type, actor, message, created_at) VALUES ('integration_sync', 'Vantage', 'Synced 62 resources from Amazon Web Services', datetime('now'))").run();
     legacyDb.close();
 
     migratedChild = await bootServer(migratedPort, migrationDir, {
@@ -441,7 +441,7 @@ test('MIGRATION: a real 1.3.0 database upgrades atomically and invalidates legac
     const sanitizedIntegration = migratedDb.prepare("SELECT account, status FROM integrations WHERE slug = 'github'").get();
     assert.equal(sanitizedIntegration.account, null, 'unsafe legacy references must be cleared during startup migration');
     assert.equal(sanitizedIntegration.status, 'available', 'unsafe legacy references must be reset during startup migration');
-    assert.equal(migratedDb.prepare("SELECT COUNT(*) AS n FROM activity WHERE type = 'integration' AND message LIKE 'Synced % resources from %'").get().n, 0,
+    assert.equal(migratedDb.prepare("SELECT COUNT(*) AS n FROM activity WHERE type = 'integration_sync' AND message LIKE 'Synced % resources from %'").get().n, 0,
       'legacy activity must not retain false live-sync claims');
     const customerTables = migratedDb.prepare(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ('tenants', 'sqlite_sequence', 'readiness_probe')",
