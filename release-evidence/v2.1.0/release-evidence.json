@@ -44,9 +44,9 @@
     "cto_solo_authority": {
       "release_id": "vantage-2.1.0",
       "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
-      "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
-      "evidence_bundle_sha256": "sha256:5015aa032afa1fcfbb4cd99da8b4e466b559dc755d3801a9d1ab581a2c98a9de",
-      "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
+      "evidence_checkpoint": "b3682e8c25ad4bb8a8b123affadafd98d834052a",
+      "evidence_bundle_sha256": "sha256:1aba936899060f34045431e096ea7e11a84ebcd5dade85ff3317a78759696fb4",
+      "frozen_projection_sha256": "sha256:4fea22623dda4eaf7644bf7c238fabdbcbf04588518f28d87da8f5f50996cf4c",
       "implementation_actor_id": "9080454",
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
@@ -77,15 +77,15 @@
       "attestation": {
         "attestation_source": "GITHUB_SIGNED_COMMIT",
         "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/02b087749de6893f022c4ffb0492a531cf9957d5/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/2ae1ac93151882a4287cf3268fb8e22d8edeff38/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
         "repository": "InstaHost-Corp/instahost",
-        "commit_sha": "02b087749de6893f022c4ffb0492a531cf9957d5",
+        "commit_sha": "2ae1ac93151882a4287cf3268fb8e22d8edeff38",
         "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
         "github_actor": "phamid",
         "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKDAyYjA4Nzc0OWRlNjg5M2YwMjJjNGZmYjA0OTJhNTMxY2Y5OTU3ZDU",
+        "github_node_id": "C_kwDOTJJMyNoAKDJhZTFhYzkzMTUxODgyYTQyODdjZjMyNjhmYjhlMjJkOGVkZWZmMzg",
         "signature_reason": "valid",
-        "response_sha256": "e1930d2c365a9261d8084e78dc856ebf80737f89b202756598b09d1d69950791"
+        "response_sha256": "1f41eb3a2d0d8458b2971181e1fcb3408613cea9f50bf6fad2e0bb3f28f3f59b"
       }
     }
   },
@@ -264,9 +264,9 @@
       {
         "release_id": "vantage-2.1.0",
         "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
-        "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
-        "evidence_bundle_sha256": "sha256:5015aa032afa1fcfbb4cd99da8b4e466b559dc755d3801a9d1ab581a2c98a9de",
-        "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
+        "evidence_checkpoint": "b3682e8c25ad4bb8a8b123affadafd98d834052a",
+        "evidence_bundle_sha256": "sha256:1aba936899060f34045431e096ea7e11a84ebcd5dade85ff3317a78759696fb4",
+        "frozen_projection_sha256": "sha256:4fea22623dda4eaf7644bf7c238fabdbcbf04588518f28d87da8f5f50996cf4c",
         "implementation_actor_id": "9080454",
         "check": "validation.visual_style_contract",
         "decision": "APPROVE_DEVIATION",
@@ -283,15 +283,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b495e466238a0a60711f9bd52a1b182a9fd52633/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/9c34ff72d44c2d5ac385e217c2af1bc467420736/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "b495e466238a0a60711f9bd52a1b182a9fd52633",
+          "commit_sha": "9c34ff72d44c2d5ac385e217c2af1bc467420736",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKGI0OTVlNDY2MjM4YTBhNjA3MTFmOWJkNTJhMWIxODJhOWZkNTI2MzM",
+          "github_node_id": "C_kwDOTJJMyNoAKDljMzRmZjcyZDQ0YzJkNWFjMzg1ZTIxN2MyYWYxYmM0Njc0MjA3MzY",
           "signature_reason": "valid",
-          "response_sha256": "666104fffae70675d23d6368815356d4f3055273d65e397158e5935b954347d2"
+          "response_sha256": "09dd8f5d7a4b40ef7b8c779af7e5241057b8e782451744e230b3c15ebf1463ca"
         }
       }
     ]
