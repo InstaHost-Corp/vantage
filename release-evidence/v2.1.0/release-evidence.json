@@ -38,9 +38,9 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "0da80aeb2e7fb47f18bd992ad20dba98883c83e5",
-    "evidence_bundle_sha256": "sha256:c1e99b58ce095044cb0f74ed1ee9d539d2d71a8571a5b95b5e80bf0527a88c75",
-    "frozen_projection_sha256": "sha256:fc07d95018ad8907338d5f522d33ec9c5821c665c74a72043df1468cdc9709d6",
+    "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
+    "evidence_bundle_sha256": "sha256:66a17b21151850c923dc521e6de2f220e62b7c1c93e6e80ced7752ac98eecf30",
+    "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
     "cto_solo_authority": null
   },
   "applicability": {
