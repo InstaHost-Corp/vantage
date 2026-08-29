@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "GO_PUBLISH",
-  "outcome": "DEPLOYED_NOT_PUBLISHED",
+  "state": "PUBLISHED",
+  "outcome": "RELEASED",
   "release": {
     "id": "vantage-2.0.0",
     "product": "Vantage",
@@ -317,7 +317,7 @@
   "publication": {
     "repository_uses_github": true,
     "tag": "v2.0.0",
-    "github_release": "PENDING",
+    "github_release": "https://github.com/InstaHost-Corp/vantage/releases/tag/v2.0.0",
     "release_notes": "RELEASE_NOTES.md",
     "cto_publish_fallback": null
   },
@@ -331,13 +331,16 @@
     "deploy_started_at": "PENDING",
     "deploy_completed_at": "PENDING",
     "live_qa_completed_at": "PENDING",
-    "published_at": "PENDING",
+    "published_at": "2026-08-29T00:03:53+00:00",
     "corrective_iterations": 4,
     "approval_retries": 1,
     "external_wait_minutes": 0,
     "avoidable_delays": [],
-    "process_improvements": [],
-    "learning_record": "PENDING"
+    "process_improvements": [
+      "Derive every GitHub receipt checkpoint, evidence-bundle digest, and frozen-projection digest through the release controller's exact Git tree representation before requesting the signed authority receipt.",
+      "Run the current framework migration and a target-state transition dry-run before producing live-evidence checkpoints, so literal schema token requirements are captured before the receipt cycle."
+    ],
+    "learning_record": "release-learning-backlog.jsonl#vantage-2.0.0"
   },
   "state_history": [
     {
@@ -409,6 +412,13 @@
       "at": "2026-08-28T23:44:42.483269+00:00",
       "actor": "release-manager",
       "reason": "Verified CTO authority receipt baa17378fcad2e06b2515a66c3f84f5258812a6a authorizes GO_PUBLISH after all mandatory production and live-QA controls passed."
+    },
+    {
+      "from": "GO_PUBLISH",
+      "to": "PUBLISHED",
+      "at": "2026-08-29T00:07:26.367695+00:00",
+      "actor": "release-manager",
+      "reason": "Vantage v2.0.0 annotated tag and GitHub Release are published; sanitized learning record is appended, insights projection refreshed, process improvements recorded, and production remains healthy."
     }
   ]
 }
