@@ -131,7 +131,7 @@ export default function TrustCenter() {
         <div className="mx-auto max-w-5xl px-6 py-14">
           <h2 className="text-xl font-semibold tracking-tight">Controls</h2>
           <p className="mt-1 text-sm text-ink-500">
-            Each control below is owned, documented and — where it can be — tested automatically against our live systems.
+            Each control below is owned, documented and assessed from the records in this workspace.
           </p>
           <div className="mt-5 space-y-2">
             {groups.map((group) => {

@@ -552,6 +552,14 @@ CREATE INDEX IF NOT EXISTS idx_activity_tenant ON activity(tenant_id);
 // provider authorization or collection capability exists. Preserve the
 // tenant-owned reference while making the capability state truthful.
 db.exec("UPDATE integrations SET status = 'configured', last_sync = NULL WHERE status = 'connected'");
+const SERVICE_REFERENCE_RE = /^(?!.*(?:github_pat|gh[opsu]_|sk_|xox|akia|eyj|sv=|\b(?:api[- ]?key|access[- ]?token|bearer|password|secret|token)\b))(?!.*(?:^|[ -])[\p{L}\p{N}]{24,}(?:$|[ -]))[\p{L}\p{N}][\p{L}\p{N} ()-]{0,78}$/iu;
+for (const integration of db.prepare('SELECT id, account FROM integrations WHERE account IS NOT NULL').all()) {
+  if (!SERVICE_REFERENCE_RE.test(integration.account)) {
+    db.prepare("UPDATE integrations SET account = NULL, status = 'available', connected_at = NULL, last_sync = NULL WHERE id = ?")
+      .run(integration.id);
+  }
+}
+db.exec("UPDATE activity SET message = 'Configured a workspace service reference' WHERE type = 'integration' AND message LIKE 'Configured % for %'");
 
 export const all = (sql, ...params) => db.prepare(sql).all(...params);
 export const get = (sql, ...params) => db.prepare(sql).get(...params);

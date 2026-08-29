@@ -45,7 +45,7 @@ export default function ControlDetail() {
           <Card>
             <div className="border-b border-slate-200 px-5 py-3">
               <h2 className="text-sm font-semibold">Automated tests</h2>
-              <p className="text-xs text-ink-500">Evidence is collected automatically every hour</p>
+              <p className="text-xs text-ink-500">Evidence is assessed from records in this workspace</p>
             </div>
             {data.tests_detail.length === 0 ? (
               <p className="px-5 py-8 text-center text-sm text-ink-500">This control is evidenced manually. Attach documents below.</p>

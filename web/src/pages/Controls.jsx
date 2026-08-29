@@ -29,7 +29,7 @@ export default function Controls() {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Controls"
-        description="Your single control set. Each control is mapped to the framework requirements it satisfies and tested continuously where automation is possible."
+        description="Your single control set. Each control is mapped to the framework requirements it satisfies and assessed from workspace records."
       />
 
       <div className="mb-5 grid gap-4 sm:grid-cols-3">

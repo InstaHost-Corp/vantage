@@ -42,7 +42,7 @@ export default function Personnel() {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Personnel"
-        description="Synced from your HR system. Vantage tracks onboarding, security training, policy acceptance and offboarding for every person."
+        description="Workspace personnel records for onboarding, security training, policy acceptance and offboarding."
       />
 
       <div className="mb-5 grid gap-4 sm:grid-cols-4">

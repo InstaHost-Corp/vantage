@@ -160,6 +160,9 @@ test('integration configuration is admin-only, bounded, and does not simulate co
     },
   });
   assert.equal((await contributor('/api/integrations/github/disconnect', { method: 'POST' })).status, 403);
+  const contributorIntegrations = await contributor('/api/integrations').then((r) => r.json());
+  assert.equal(contributorIntegrations.find((integration) => integration.slug === 'github').account, null,
+    'only tenant administrators may view a service account reference');
 
   const removed = await api('/api/integrations/github/disconnect', { method: 'POST' });
   assert.equal(removed.status, 200);

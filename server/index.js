@@ -163,8 +163,8 @@ const SIGNUP_LIMITS = { name: 120, email: 200, password: 1024 };
 const SIGNUP_MIN_PASSWORD_LENGTH = 12;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const CONTROL_CHARS_RE = /\p{C}/u;
-const CONNECTION_ACCOUNT_MAX_LENGTH = 160;
-const CONNECTION_CREDENTIAL_RE = /\b(?:api[-_ ]?key|access[-_ ]?token|bearer|password|secret|token)\b|(?:ghp|github_pat|sk|xox)[_-][A-Za-z0-9_-]+|AKIA[A-Z0-9]{16}|:\/\//i;
+const CONNECTION_ACCOUNT_MAX_LENGTH = 80;
+const CONNECTION_ACCOUNT_RE = /^(?!.*(?:github_pat|gh[opsu]_|sk_|xox|akia|eyj|sv=|\b(?:api[- ]?key|access[- ]?token|bearer|password|secret|token)\b))(?!.*(?:^|[ -])[\p{L}\p{N}]{24,}(?:$|[ -]))[\p{L}\p{N}][\p{L}\p{N} ()-]{0,78}$/iu;
 
 function publicUser(user) {
   return user ? { id: user.id, email: user.email, name: user.name, role: user.role, title: user.title } : null;
@@ -833,14 +833,14 @@ app.get('/api/integrations', (req, res) => {
   const byIntegration = Object.fromEntries(counts.map((c) => [c.integration, c.n]));
   const byTests = Object.fromEntries(testCounts.map((c) => [c.integration, c.n]));
   res.json(all('SELECT * FROM integrations WHERE tenant_id = ? ORDER BY status DESC, name', tid).map((i) => ({
-    ...i, resource_count: byIntegration[i.slug] || 0, test_count: byTests[i.slug] || 0,
+    ...i, account: req.user.role === 'admin' ? i.account : null, resource_count: byIntegration[i.slug] || 0, test_count: byTests[i.slug] || 0,
   })));
 });
 
 function validateConnectionAccount(value) {
   if (typeof value !== 'string') return null;
   const account = value.normalize('NFKC').trim().replace(/\s+/g, ' ');
-  if (account.length < 2 || account.length > CONNECTION_ACCOUNT_MAX_LENGTH || CONTROL_CHARS_RE.test(account) || CONNECTION_CREDENTIAL_RE.test(account)) return null;
+  if (account.length < 2 || account.length > CONNECTION_ACCOUNT_MAX_LENGTH || CONTROL_CHARS_RE.test(account) || !CONNECTION_ACCOUNT_RE.test(account)) return null;
   return account;
 }
 
