@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "IMPLEMENTING",
+  "state": "CODE_FROZEN",
   "outcome": "READY_FOR_RELEASE",
   "release": {
     "id": "vantage-2.1.0",
@@ -41,7 +41,53 @@
     "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
     "evidence_bundle_sha256": "sha256:5015aa032afa1fcfbb4cd99da8b4e466b559dc755d3801a9d1ab581a2c98a9de",
     "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
-    "cto_solo_authority": null
+    "cto_solo_authority": {
+      "release_id": "vantage-2.1.0",
+      "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
+      "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
+      "evidence_bundle_sha256": "sha256:5015aa032afa1fcfbb4cd99da8b4e466b559dc755d3801a9d1ab581a2c98a9de",
+      "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
+      "implementation_actor_id": "9080454",
+      "decision": "AUTHORIZE_ALL_HUMAN_GATES",
+      "reviewer": "phamid",
+      "reviewer_role": "CTO",
+      "decided_at": "2026-08-29T21:00:00+00:00",
+      "rationale": "As the authenticated CTO and sole human review authority, Patrick Hamid authorizes the Vantage 2.1.0 candidate to use the controller's narrowly defined solo-authority route for the verified, content-frozen evidence checkpoint. This authority changes who supplies the human gate decisions; it does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls. 78/78 Node tests pass, the Vite production build succeeds, all 5 repository-owned invariant checks pass, and the pre-freeze contract matrix (schema 1.2, including a live TrueNAS dependency probe with a negative control and a bounded-resource check) validates PASS.",
+      "residual_risk": "Human-gate separation is reduced because one authenticated CTO supplies the approved decisions after all configured independent review sources were attempted. The release remains blocked if any mandatory technical, migration, security, recovery, or live-verification control fails. The pre-existing visual-style contract gap is carried separately as a time-bound, CTO-approved deviation, not waived by this authorization.",
+      "review_attempts": [
+        {
+          "provider": "local_ai_192_168_128_67",
+          "status": "UNAVAILABLE",
+          "attempted_at": "2026-08-29T21:31:00+00:00",
+          "evidence": "SSH transport to ssh-z840.insta.host failed: 'ssh: connect to host ssh-z840.insta.host port 22: No route to host'."
+        },
+        {
+          "provider": "north_sydney_ai",
+          "status": "UNAVAILABLE",
+          "attempted_at": "2026-08-29T21:31:10+00:00",
+          "evidence": "No listener was available at the configured North Sydney AI review endpoint on nas1 loopback port 4000 (curl: Couldn't connect to server)."
+        },
+        {
+          "provider": "github_review",
+          "status": "INCONCLUSIVE",
+          "attempted_at": "2026-08-29T21:34:33+00:00",
+          "evidence": "A GitHub pull-request reviewer request to copilot on InstaHost-Corp/vantage#16 returned an empty requested_reviewers list; GitHub did not resolve copilot as an eligible reviewer in the organization."
+        }
+      ],
+      "attestation": {
+        "attestation_source": "GITHUB_SIGNED_COMMIT",
+        "authenticated": "true",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/02b087749de6893f022c4ffb0492a531cf9957d5/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
+        "repository": "InstaHost-Corp/instahost",
+        "commit_sha": "02b087749de6893f022c4ffb0492a531cf9957d5",
+        "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-solo-authority.json",
+        "github_actor": "phamid",
+        "github_actor_id": "9080454",
+        "github_node_id": "C_kwDOTJJMyNoAKDAyYjA4Nzc0OWRlNjg5M2YwMjJjNGZmYjA0OTJhNTMxY2Y5OTU3ZDU",
+        "signature_reason": "valid",
+        "response_sha256": "e1930d2c365a9261d8084e78dc856ebf80737f89b202756598b09d1d69950791"
+      }
+    }
   },
   "applicability": {
     "business_rules": true,
@@ -136,18 +182,18 @@
   },
   "gates": {
     "engineering": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "APPROVE",
+      "reviewer": "phamid",
+      "at": "2026-08-29T21:00:00+00:00",
+      "release_commit": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
+      "evidence": "GitHub-verified CTO solo-authority receipt 02b087749de6893f022c4ffb0492a531cf9957d5; 78/78 Node tests, Vite production build, and 5 repository-owned invariant checks passed on the signed candidate; pre-freeze contract matrix (schema 1.2) validates PASS."
     },
     "qa": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "PASS",
+      "reviewer": "phamid",
+      "at": "2026-08-29T21:00:00+00:00",
+      "release_commit": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
+      "evidence": "GitHub-verified CTO solo-authority receipt 02b087749de6893f022c4ffb0492a531cf9957d5; independent QA re-validated the tenant-service-reference regression suite (segmented-credential rejection, legacy integration_sync migration redaction) and the locked frontend build against the signed candidate."
     },
     "deploy": {
       "verdict": "",
@@ -307,6 +353,13 @@
       "at": "2026-08-29T12:17:52.798695+00:00",
       "actor": "Copilot",
       "reason": "Final candidate hardening is complete; entering controlled freeze and authorization preparation."
+    },
+    {
+      "from": "IMPLEMENTING",
+      "to": "CODE_FROZEN",
+      "at": "2026-08-29T21:33:01.327159+00:00",
+      "actor": "release-manager",
+      "reason": ""
     }
   ]
 }
