@@ -21,16 +21,6 @@ All notable changes to Vantage are documented here. This project follows
   timestamps are cleared.
 - Only tenant administrators can add, update, or remove a service reference.
 
-### Deployed
-
-- Deployed to production `https://vantage.insta.host/` 2026-08-29 as release
-  commit `d50cbe01066d3a8332bf8ec518213cb3f3023753` (tag `v2.1.0`), TrueNAS
-  `app.update` job `4091`. Health/readiness verified live at `2.1.0`; a live
-  two-tenant functional smoke test confirmed the new service-configuration
-  feature is tenant-isolated. Pre/post snapshots
-  `TailsPool/vantage@pre-2.1.0` / `TailsPool/vantage@post-2.1.0`. Full
-  evidence in `release-evidence/v2.1.0/release-evidence.json`.
-
 ## [2.0.0] - 2026-08-28
 
 ### Breaking changes
