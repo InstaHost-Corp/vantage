@@ -69,26 +69,26 @@ const offboarded = [
 ];
 
 const integrations = [
-  ['aws', 'Amazon Web Services', 'Cloud infrastructure', 'Continuously inventories IAM, S3, EC2, RDS, VPC, KMS and CloudTrail configuration.', 'connected', 'northwind-prod (4471-8820-1123)'],
-  ['github', 'GitHub', 'Version control', 'Monitors repository protection rules, code scanning, secret scanning and organisation membership.', 'connected', 'northwind-systems'],
-  ['okta', 'Okta', 'Identity provider', 'Syncs users, group membership, MFA factors, sign-on policies and application assignments.', 'connected', 'northwind.okta.com'],
-  ['mdm', 'Kandji MDM', 'Device management', 'Reports endpoint encryption, screen lock, OS version and agent health.', 'connected', 'Northwind (312 seats)'],
+  ['aws', 'Amazon Web Services', 'Cloud infrastructure', 'Workspace reference for cloud infrastructure records.', 'configured', 'northwind-prod (4471-8820-1123)'],
+  ['github', 'GitHub', 'Version control', 'Workspace reference for version-control records.', 'configured', 'northwind-systems'],
+  ['okta', 'Okta', 'Identity provider', 'Workspace reference for identity records.', 'configured', 'northwind.okta.com'],
+  ['mdm', 'Kandji MDM', 'Device management', 'Workspace reference for device-management records.', 'configured', 'Northwind (312 seats)'],
   ['hris', 'Rippling', 'HR information system', 'Source of truth for personnel, employment status, start and end dates.', 'configured', 'Northwind Systems'],
-  ['gcp', 'Google Cloud Platform', 'Cloud infrastructure', 'Inventories projects, IAM bindings, buckets and Cloud SQL instances.', 'available', null],
-  ['azure', 'Microsoft Azure', 'Cloud infrastructure', 'Inventories subscriptions, storage accounts, network security groups and Entra ID.', 'available', null],
-  ['gworkspace', 'Google Workspace', 'Productivity', 'Monitors user accounts, 2-step verification and admin roles.', 'connected', 'northwind.io'],
-  ['datadog', 'Datadog', 'Monitoring', 'Verifies monitors, alert routing and log retention configuration.', 'connected', 'northwind'],
-  ['pagerduty', 'PagerDuty', 'Incident response', 'Verifies on-call schedules and escalation policies exist for production services.', 'connected', 'northwind'],
-  ['jira', 'Jira', 'Ticketing', 'Links change tickets and remediation tasks to controls.', 'connected', 'northwind.atlassian.net'],
-  ['snyk', 'Snyk', 'Vulnerability management', 'Imports dependency and container vulnerability findings with SLA tracking.', 'available', null],
-  ['cloudflare', 'Cloudflare', 'Network & CDN', 'Checks WAF, TLS configuration and DDoS protection settings.', 'available', null],
-  ['vantage-agent', 'Vantage Agent', 'Endpoint agent', 'Lightweight agent reporting endpoint posture for unmanaged and BYOD machines.', 'connected', '19 installs'],
-  ['slack', 'Slack', 'Collaboration', 'Delivers control failure alerts and policy acceptance reminders.', 'connected', 'northwind.slack.com'],
-  ['1password', '1Password', 'Secrets management', 'Verifies vault membership, master password policy and shared item hygiene.', 'available', null],
-  ['stripe', 'Stripe', 'Payments', 'Monitors API key hygiene and account access for the payments environment.', 'available', null],
+  ['gcp', 'Google Cloud Platform', 'Cloud infrastructure', 'Workspace reference for cloud infrastructure records.', 'available', null],
+  ['azure', 'Microsoft Azure', 'Cloud infrastructure', 'Workspace reference for cloud infrastructure records.', 'available', null],
+  ['gworkspace', 'Google Workspace', 'Productivity', 'Workspace reference for productivity records.', 'configured', 'northwind.io'],
+  ['datadog', 'Datadog', 'Monitoring', 'Workspace reference for monitoring records.', 'configured', 'northwind'],
+  ['pagerduty', 'PagerDuty', 'Incident response', 'Workspace reference for incident-response records.', 'configured', 'northwind'],
+  ['jira', 'Jira', 'Ticketing', 'Workspace reference for ticketing records.', 'configured', 'northwind.atlassian.net'],
+  ['snyk', 'Snyk', 'Vulnerability management', 'Workspace reference for vulnerability-management records.', 'available', null],
+  ['cloudflare', 'Cloudflare', 'Network & CDN', 'Workspace reference for network and CDN records.', 'available', null],
+  ['vantage-agent', 'Vantage Agent', 'Endpoint agent', 'Workspace reference for endpoint posture records.', 'configured', '19 installs'],
+  ['slack', 'Slack', 'Collaboration', 'Workspace reference for collaboration records.', 'configured', 'northwind.slack.com'],
+  ['1password', '1Password', 'Secrets management', 'Workspace reference for secrets-management records.', 'available', null],
+  ['stripe', 'Stripe', 'Payments', 'Workspace reference for payments records.', 'available', null],
   ['bamboohr', 'BambooHR', 'HR information system', 'Alternative HRIS source for personnel records.', 'available', null],
-  ['linear', 'Linear', 'Ticketing', 'Links product change records to change management controls.', 'available', null],
-  ['vercel', 'Vercel', 'Hosting', 'Checks project environment variable scoping and team membership.', 'available', null],
+  ['linear', 'Linear', 'Ticketing', 'Workspace reference for ticketing records.', 'available', null],
+  ['vercel', 'Vercel', 'Hosting', 'Workspace reference for hosting records.', 'available', null],
 ];
 
 const R = (integration, type, external_id, name, region, owner, metadata) =>
@@ -567,7 +567,7 @@ function seedTables() {
 
   // Activity feed
   const activity = [
-    ['integration_sync', 'Vantage Agent', 'Synced 62 resources from Amazon Web Services', -0.02],
+    ['integration', 'Vantage', 'Loaded 62 fictional Amazon Web Services resource records', -0.02],
     ['policy_accepted', 'Amara Diallo', 'Accepted "Responsible AI Usage Policy" v2.1', -0.4],
     ['personnel', 'Rippling', 'Sara Lindqvist added as an active employee', -9],
     ['vendor', 'Marcus Bell', 'Completed the security review for Anthropic', -25],

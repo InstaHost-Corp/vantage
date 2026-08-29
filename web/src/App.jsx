@@ -132,7 +132,7 @@ function Topbar({ lastRun, onScan, scanning, onOpenNav }) {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
         </span>
-        <span className="truncate"><span className="hidden sm:inline">Continuous monitoring active · </span>last scan {timeAgo(lastRun)}</span>
+        <span className="truncate"><span className="hidden sm:inline">Workspace assessment · </span>last scan {timeAgo(lastRun)}</span>
       </div>
       <div className="flex items-center gap-2">
         <a href="/trust" target="_blank" rel="noreferrer" className="hidden items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-slate-50 sm:inline-flex">

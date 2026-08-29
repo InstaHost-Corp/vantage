@@ -91,7 +91,7 @@ export default function TrustCenter() {
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {[
-              [`${posture.controls_verified}/${posture.controls_monitored}`, 'controls verified by continuous monitoring'],
+              [`${posture.controls_verified}/${posture.controls_monitored}`, 'controls verified by workspace assessment'],
               [`${groups.reduce((a, g) => a + g.items.length, 0)}`, 'documented controls in the programme'],
               [`${subprocessors.length}`, 'sub-processors disclosed publicly'],
             ].map(([value, label]) => (

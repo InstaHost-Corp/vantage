@@ -508,9 +508,9 @@ export const tests = [
 // Integration catalogue: [slug, name, category, description].
 // Used by tenant.js to seed the available integrations for a new tenant.
 export const integrationCatalog = [
-  ['aws', 'Amazon Web Services', 'Cloud infrastructure', 'Continuously inventories IAM, S3, EC2, RDS, VPC, KMS and CloudTrail configuration.'],
-  ['github', 'GitHub', 'Version control', 'Monitors repository protection rules, code scanning, secret scanning and organisation membership.'],
-  ['okta', 'Okta', 'Identity provider', 'Syncs users, group membership, MFA factors, sign-on policies and application assignments.'],
+  ['aws', 'Amazon Web Services', 'Cloud infrastructure', 'Workspace reference for cloud infrastructure records.'],
+  ['github', 'GitHub', 'Version control', 'Workspace reference for version-control records.'],
+  ['okta', 'Okta', 'Identity provider', 'Workspace reference for identity records.'],
   ['mdm', 'Kandji MDM', 'Device management', 'Reports endpoint encryption, screen lock, OS version and agent health.'],
   ['hris', 'Rippling', 'HR information system', 'Source of truth for personnel, employment status, start and end dates.'],
   ['gcp', 'Google Cloud Platform', 'Cloud infrastructure', 'Inventories projects, IAM bindings, buckets and Cloud SQL instances.'],

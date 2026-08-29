@@ -18,7 +18,7 @@ export default function Dashboard() {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Compliance overview"
-        description="Live posture across every enabled framework, computed from continuous tests against your connected systems."
+        description="Workspace posture across enabled frameworks, computed from the records available in Vantage."
         actions={<Link to="/monitoring?status=failing"><Button variant="secondary" size="md"><Activity size={15} /> View failing tests</Button></Link>}
       />
 
@@ -171,7 +171,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-brand-600"><Boxes size={18} /></span>
           <div>
-            <p className="text-sm font-semibold">{data.monitored_resources} resources under continuous monitoring</p>
+            <p className="text-sm font-semibold">{data.monitored_resources} workspace resource records</p>
             <p className="text-xs text-ink-500">Last scan {timeAgo(data.last_run)} · {data.integrations.configured} of {data.integrations.total} service references configured</p>
           </div>
         </div>
