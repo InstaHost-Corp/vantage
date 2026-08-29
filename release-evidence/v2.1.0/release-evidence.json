@@ -26,7 +26,7 @@
     "accountable_delivery_owner": "Patrick Hamid"
   },
   "visual_style": {
-    "candidate": "5fdb69bc42c65feffb767712af3c849cfb2df8c6",
+    "candidate": "ae76f2490c06b35331f8e19970354f22cab3618a",
     "result": "PENDING",
     "surfaces": [
       "web/dist/index.html"
@@ -64,11 +64,11 @@
     "current_version": "2.0.0 (c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63)"
   },
   "code": {
-    "release_commit": "5fdb69bc42c65feffb767712af3c849cfb2df8c6",
+    "release_commit": "ae76f2490c06b35331f8e19970354f22cab3618a",
     "changed_files": [],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
-    "source_digest": "sha256:dd6787e951cb47e8c12cb1f29be2d8e1a5bfe863ab1f7ae1b9c74445319b23ad",
+    "source_digest": "sha256:08084f1b5b6bccad8d69369553ae42b44fb899810837e098513820af69f1fd90",
     "configuration_digest": "PENDING",
     "source_artifact": {
       "definition": "Git ls-tree blob manifest of the deployable Vantage source boundary excluding .git, node_modules, tests, release-evidence, __pycache__, and data.",
@@ -217,6 +217,13 @@
       "at": "2026-08-29T11:45:00+00:00",
       "actor": "Copilot",
       "reason": "Corrective candidate replaced after independent review findings were remediated."
+    },
+    {
+      "from": "BASELINED",
+      "to": "BASELINED",
+      "at": "2026-08-29T12:05:00+00:00",
+      "actor": "Copilot",
+      "reason": "Final security corrective candidate supersedes the prior review candidate."
     }
   ]
 }

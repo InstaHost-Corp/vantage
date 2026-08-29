@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "release_id": "vantage-2.1.0",
-  "candidate": "5fdb69bc42c65feffb767712af3c849cfb2df8c6",
+  "candidate": "ae76f2490c06b35331f8e19970354f22cab3618a",
   "source_evidence": "release-evidence.json",
   "materiality": "T1 HIGH",
   "materiality_reason": "L3 STATEFUL_SECURITY; activated flags: business_rules, data_migration, external_gate, identity, secrets_or_sensitive_data, ui_or_content",
