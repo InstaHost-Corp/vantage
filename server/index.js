@@ -162,8 +162,9 @@ const SESSION_DAYS = Number(process.env.VANTAGE_SESSION_DAYS || 14);
 const SIGNUP_LIMITS = { name: 120, email: 200, password: 1024 };
 const SIGNUP_MIN_PASSWORD_LENGTH = 12;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const CONTROL_CHARS_RE = /[\u0000-\u001f\u007f]/;
+const CONTROL_CHARS_RE = /\p{C}/u;
 const CONNECTION_ACCOUNT_MAX_LENGTH = 160;
+const CONNECTION_CREDENTIAL_RE = /\b(?:api[-_ ]?key|access[-_ ]?token|bearer|password|secret|token)\b|(?:ghp|github_pat|sk|xox)[_-][A-Za-z0-9_-]+|AKIA[A-Z0-9]{16}|:\/\//i;
 
 function publicUser(user) {
   return user ? { id: user.id, email: user.email, name: user.name, role: user.role, title: user.title } : null;
@@ -839,7 +840,7 @@ app.get('/api/integrations', (req, res) => {
 function validateConnectionAccount(value) {
   if (typeof value !== 'string') return null;
   const account = value.normalize('NFKC').trim().replace(/\s+/g, ' ');
-  if (account.length < 2 || account.length > CONNECTION_ACCOUNT_MAX_LENGTH || CONTROL_CHARS_RE.test(account)) return null;
+  if (account.length < 2 || account.length > CONNECTION_ACCOUNT_MAX_LENGTH || CONTROL_CHARS_RE.test(account) || CONNECTION_CREDENTIAL_RE.test(account)) return null;
   return account;
 }
 
@@ -851,11 +852,11 @@ app.post('/api/integrations/:slug/:action', requireAdmin, (req, res) => {
   if (req.params.action === 'connect') {
     const account = validateConnectionAccount(req.body?.account);
     if (!account) {
-      return res.status(400).json({ error: `Connection reference must be 2-${CONNECTION_ACCOUNT_MAX_LENGTH} characters and cannot contain control characters` });
+      return res.status(400).json({ error: `Connection reference must be 2-${CONNECTION_ACCOUNT_MAX_LENGTH} characters, without credentials or URLs` });
     }
     run("UPDATE integrations SET status = 'configured', connected_at = ?, last_sync = NULL, account = ? WHERE id = ? AND tenant_id = ?",
       now, account, i.id, tid);
-    logActivity('integration', req.user.name, `Configured ${i.name} for ${account}`, tid);
+    logActivity('integration', req.user.name, `Configured the ${i.name} service reference`, tid);
   } else if (req.params.action === 'disconnect') {
     run("UPDATE integrations SET status = 'available', account = NULL, connected_at = NULL, last_sync = NULL WHERE id = ? AND tenant_id = ?", i.id, tid);
     logActivity('integration', req.user.name, `Removed the ${i.name} configuration`, tid);

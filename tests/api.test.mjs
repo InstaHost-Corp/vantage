@@ -122,6 +122,14 @@ test('integration configuration is admin-only, bounded, and does not simulate co
   });
   assert.equal(invalid.status, 400);
 
+  for (const account of ['https://github.example/workspace', 'github_pat_abcdefghijklmnopqrstuvwxyz', 'Bearer example-value', `Account\u0085Reference`]) {
+    const rejected = await api('/api/integrations/github/connect', {
+      method: 'POST',
+      body: JSON.stringify({ account }),
+    });
+    assert.equal(rejected.status, 400, `credential or URL-shaped reference was accepted: ${account}`);
+  }
+
   const configured = await api('/api/integrations/github/connect', {
     method: 'POST',
     body: JSON.stringify({ account: 'Northwind Engineering' }),
@@ -155,6 +163,8 @@ test('integration configuration is admin-only, bounded, and does not simulate co
 
   const removed = await api('/api/integrations/github/disconnect', { method: 'POST' });
   assert.equal(removed.status, 200);
+  assert.ok(!(JSON.stringify(await api('/api/activity').then((r) => r.json()))).includes('Northwind Engineering'),
+    'account references must not be copied into audit activity');
   const after = await api('/api/integrations').then((r) => r.json());
   const afterGithub = after.find((integration) => integration.slug === 'github');
   assert.equal(afterGithub.status, 'available');
