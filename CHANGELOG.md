@@ -3,6 +3,24 @@
 All notable changes to Vantage are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## [2.1.0] - 2026-08-28
+
+### Added
+
+- Tenant administrators can configure a workspace-owned account reference for
+  services in the integration catalogue. References are tenant-scoped and are
+  removed on disconnect.
+
+### Changed
+
+- Integration configuration is explicitly documentation-only: Vantage does not
+  accept credentials, call external providers, collect data, or update
+  compliance status from these records.
+- Removed the simulated connection and sync behavior. Existing simulated
+  connections become configured references at startup and their stale sync
+  timestamps are cleared.
+- Only tenant administrators can add, update, or remove a service reference.
+
 ## [2.0.0] - 2026-08-28
 
 ### Breaking changes

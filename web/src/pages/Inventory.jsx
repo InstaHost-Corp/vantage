@@ -19,7 +19,7 @@ export default function Inventory() {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Inventory"
-        description="Every resource discovered by your connected integrations, with the configuration attributes evaluated by your tests."
+        description="Workspace inventory records and their configuration attributes evaluated by your tests."
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-3">

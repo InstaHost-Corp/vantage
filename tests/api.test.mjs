@@ -110,6 +110,58 @@ test('a bad password is rejected and a good one issues a session', async () => {
   token = body.token;
 });
 
+test('integration configuration is admin-only, bounded, and does not simulate collection', async () => {
+  const before = await api('/api/integrations').then((r) => r.json());
+  const github = before.find((integration) => integration.slug === 'github');
+  assert.ok(github);
+  assert.equal(github.status, 'configured');
+
+  const invalid = await api('/api/integrations/github/connect', {
+    method: 'POST',
+    body: JSON.stringify({ account: 'x' }),
+  });
+  assert.equal(invalid.status, 400);
+
+  const configured = await api('/api/integrations/github/connect', {
+    method: 'POST',
+    body: JSON.stringify({ account: 'Northwind Engineering' }),
+  });
+  assert.equal(configured.status, 200);
+  const configuredBody = await configured.json();
+  assert.equal(configuredBody.integration.status, 'configured');
+  assert.equal(configuredBody.integration.account, 'Northwind Engineering');
+  assert.equal(configuredBody.integration.last_sync, null);
+  for (const field of ['token', 'password', 'password_hash', 'secret', 'api_key', 'access_token']) {
+    assert.equal(Object.hasOwn(configuredBody.integration, field), false, `response exposed ${field}`);
+  }
+
+  const sync = await api('/api/integrations/github/sync', { method: 'POST' });
+  assert.equal(sync.status, 409);
+
+  const contributorSignup = await fetch(`${BASE}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.199' },
+    body: JSON.stringify({ name: 'Integration Contributor', email: 'integration-contributor@example.com', password: 'CorrectHorse42!' }),
+  }).then((r) => r.json());
+  const contributor = (path, options = {}) => fetch(`${BASE}${path}`, {
+    ...options,
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${contributorSignup.token}`,
+      ...(options.headers || {}),
+    },
+  });
+  assert.equal((await contributor('/api/integrations/github/disconnect', { method: 'POST' })).status, 403);
+
+  const removed = await api('/api/integrations/github/disconnect', { method: 'POST' });
+  assert.equal(removed.status, 200);
+  const after = await api('/api/integrations').then((r) => r.json());
+  const afterGithub = after.find((integration) => integration.slug === 'github');
+  assert.equal(afterGithub.status, 'available');
+  assert.equal(afterGithub.account, null);
+  assert.equal(afterGithub.last_sync, null);
+});
+
 test('anonymous signup creates a normal signed-in account', async () => {
   const password = 'CorrectHorse42!';
   const res = await fetch(`${BASE}/api/auth/signup`, {

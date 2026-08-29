@@ -14,7 +14,7 @@ const dist = join(__dirname, '..', 'web', 'dist');
 
 export const RELEASE = {
   service: 'vantage',
-  version: process.env.APP_VERSION || '2.0.0',
+  version: process.env.APP_VERSION || '2.1.0',
   release_sha: process.env.RELEASE_SHA || 'unversioned',
   source_digest: process.env.SOURCE_DIGEST || 'unrecorded',
   node: process.version,
@@ -71,6 +71,9 @@ app.use(jsonBody({ limit: 256_000 }));
 // In production mode, do NOT seed demo data.
 if (!PRODUCTION) {
   seed();
+  // Demo data is seeded after db.js has normalised persisted integrations.
+  // Normalise it here too so a fresh demo never claims live collection.
+  run("UPDATE integrations SET status = 'configured', last_sync = NULL WHERE status = 'connected'");
 }
 
 const resetSchedule = PRODUCTION
@@ -160,6 +163,7 @@ const SIGNUP_LIMITS = { name: 120, email: 200, password: 1024 };
 const SIGNUP_MIN_PASSWORD_LENGTH = 12;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const CONTROL_CHARS_RE = /[\u0000-\u001f\u007f]/;
+const CONNECTION_ACCOUNT_MAX_LENGTH = 160;
 
 function publicUser(user) {
   return user ? { id: user.id, email: user.email, name: user.name, role: user.role, title: user.title } : null;
@@ -537,7 +541,7 @@ app.get('/api/dashboard', (req, res) => {
       SUM(CASE WHEN risk_level = 'high' THEN 1 ELSE 0 END) AS high_risk FROM vendors WHERE tenant_id = ? AND status='active'`, tid),
     risks: get(`SELECT COUNT(*) AS total, SUM(CASE WHEN status='open' THEN 1 ELSE 0 END) AS open,
       SUM(CASE WHEN due_date < date('now') AND status='open' THEN 1 ELSE 0 END) AS overdue FROM risks WHERE tenant_id = ?`, tid),
-    integrations: get("SELECT COUNT(*) AS total, SUM(CASE WHEN status='connected' THEN 1 ELSE 0 END) AS connected FROM integrations WHERE tenant_id = ?", tid),
+    integrations: get("SELECT COUNT(*) AS total, SUM(CASE WHEN status='configured' THEN 1 ELSE 0 END) AS configured FROM integrations WHERE tenant_id = ?", tid),
     monitored_resources: get('SELECT COUNT(*) AS n FROM resources WHERE tenant_id = ?', tid).n,
     audit: (() => {
       const audit = get("SELECT a.*, f.short_name FROM audits a JOIN frameworks f ON f.id = a.framework_id AND f.tenant_id = a.tenant_id WHERE a.tenant_id = ? AND a.status != 'complete' ORDER BY a.period_end LIMIT 1", tid);
@@ -832,23 +836,31 @@ app.get('/api/integrations', (req, res) => {
   })));
 });
 
-app.post('/api/integrations/:slug/:action', (req, res) => {
+function validateConnectionAccount(value) {
+  if (typeof value !== 'string') return null;
+  const account = value.normalize('NFKC').trim().replace(/\s+/g, ' ');
+  if (account.length < 2 || account.length > CONNECTION_ACCOUNT_MAX_LENGTH || CONTROL_CHARS_RE.test(account)) return null;
+  return account;
+}
+
+app.post('/api/integrations/:slug/:action', requireAdmin, (req, res) => {
   const tid = req.user.tenant_id;
   const i = get('SELECT * FROM integrations WHERE tenant_id = ? AND slug = ?', tid, req.params.slug);
   if (!i) return res.status(404).json({ error: 'Integration not found' });
   const now = new Date().toISOString();
   if (req.params.action === 'connect') {
-    run("UPDATE integrations SET status = 'connected', connected_at = ?, last_sync = ?, account = COALESCE(account, ?) WHERE id = ? AND tenant_id = ?",
-      now, now, `${setting('company', null, tid)?.domain || 'demo'} (${i.slug})`, i.id, tid);
-    logActivity('integration', req.user.name, `Connected the ${i.name} integration`, tid);
+    const account = validateConnectionAccount(req.body?.account);
+    if (!account) {
+      return res.status(400).json({ error: `Connection reference must be 2-${CONNECTION_ACCOUNT_MAX_LENGTH} characters and cannot contain control characters` });
+    }
+    run("UPDATE integrations SET status = 'configured', connected_at = ?, last_sync = NULL, account = ? WHERE id = ? AND tenant_id = ?",
+      now, account, i.id, tid);
+    logActivity('integration', req.user.name, `Configured ${i.name} for ${account}`, tid);
   } else if (req.params.action === 'disconnect') {
-    run("UPDATE integrations SET status = 'available', connected_at = NULL, last_sync = NULL WHERE id = ? AND tenant_id = ?", i.id, tid);
-    logActivity('integration', req.user.name, `Disconnected the ${i.name} integration`, tid);
+    run("UPDATE integrations SET status = 'available', account = NULL, connected_at = NULL, last_sync = NULL WHERE id = ? AND tenant_id = ?", i.id, tid);
+    logActivity('integration', req.user.name, `Removed the ${i.name} configuration`, tid);
   } else if (req.params.action === 'sync') {
-    run('UPDATE integrations SET last_sync = ? WHERE id = ? AND tenant_id = ?', now, i.id, tid);
-    const n = get('SELECT COUNT(*) AS n FROM resources WHERE tenant_id = ? AND integration = ?', tid, i.slug).n;
-    logActivity('integration_sync', req.user.name, `Synced ${n} resources from ${i.name}`, tid);
-    runTests({ actor: req.user.name, tenantId: tid });
+    return res.status(409).json({ error: 'Automatic collection is not available for configured services' });
   } else {
     return res.status(400).json({ error: 'Unknown action' });
   }

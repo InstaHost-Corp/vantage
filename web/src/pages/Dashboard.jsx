@@ -66,7 +66,7 @@ export default function Dashboard() {
             ))}
           </div>
           <p className="mt-4 text-xs text-ink-500">
-            Monitoring {data.monitored_resources} resources across {data.integrations.connected} connected integrations.
+            Showing {data.monitored_resources} workspace resources and {data.integrations.configured} configured service references.
           </p>
         </Card>
       </div>
@@ -172,7 +172,7 @@ export default function Dashboard() {
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-brand-600"><Boxes size={18} /></span>
           <div>
             <p className="text-sm font-semibold">{data.monitored_resources} resources under continuous monitoring</p>
-            <p className="text-xs text-ink-500">Last scan {timeAgo(data.last_run)} · {data.integrations.connected} of {data.integrations.total} integrations connected</p>
+            <p className="text-xs text-ink-500">Last scan {timeAgo(data.last_run)} · {data.integrations.configured} of {data.integrations.total} service references configured</p>
           </div>
         </div>
         <div className="flex gap-2">
