@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "CODE_FROZEN",
+  "state": "ENGINEERING_APPROVED",
   "outcome": "READY_FOR_RELEASE",
   "release": {
     "id": "vantage-2.1.0",
@@ -358,6 +358,13 @@
       "from": "IMPLEMENTING",
       "to": "CODE_FROZEN",
       "at": "2026-08-29T21:33:01.327159+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "CODE_FROZEN",
+      "to": "ENGINEERING_APPROVED",
+      "at": "2026-08-29T21:38:07.509465+00:00",
       "actor": "release-manager",
       "reason": ""
     }
