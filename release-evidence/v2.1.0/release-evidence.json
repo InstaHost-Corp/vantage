@@ -216,16 +216,16 @@
       {
         "release_id": "vantage-2.1.0",
         "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
-        "evidence_checkpoint": "0da80aeb2e7fb47f18bd992ad20dba98883c83e5",
-        "evidence_bundle_sha256": "sha256:c1e99b58ce095044cb0f74ed1ee9d539d2d71a8571a5b95b5e80bf0527a88c75",
-        "frozen_projection_sha256": "sha256:fc07d95018ad8907338d5f522d33ec9c5821c665c74a72043df1468cdc9709d6",
+        "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
+        "evidence_bundle_sha256": "sha256:66a17b21151850c923dc521e6de2f220e62b7c1c93e6e80ced7752ac98eecf30",
+        "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
         "implementation_actor_id": "9080454",
         "check": "validation.visual_style_contract",
         "decision": "APPROVE_DEVIATION",
         "approver_role": "CTO",
         "approver_name": "Patrick Hamid",
         "approver": "phamid",
-        "approved_at": "2026-08-29T21:00:00+00:00",
+        "approved_at": "2026-08-29T00:00:00+00:00",
         "owner": "Patrick Hamid",
         "reason": "Vantage's UI does not yet implement the InstaHost Clawpilot visual-token/theme contract (canonical dark-theme tokens, estate font stacks, control/card radii, technical grid spacing). This is a pre-existing condition carried over from the 2.0.0 release, not something introduced by the 2.1.0 tenant-service-configuration change, and remediating it is a separate, larger UI workstream.",
         "alternate_evidence": "release-evidence/v2.1.0/pre-freeze-contract-matrix.json records the passing functional and security invariant checks for this candidate; stylectl.py output showing the exact 0/1 surface failure is retained in session evidence.",
@@ -235,15 +235,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/0e9e502842d66e8524b8cfabfa95d9563e2b476b/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/7d1738f13f45f6f7d6fb20a2e274f7026478dbce/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "0e9e502842d66e8524b8cfabfa95d9563e2b476b",
+          "commit_sha": "7d1738f13f45f6f7d6fb20a2e274f7026478dbce",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKDBlOWU1MDI4NDJkNjZlODUyNGI4Y2ZhYmZhOTVkOTU2M2UyYjQ3NmI",
+          "github_node_id": "C_kwDOTJJMyNoAKDdkMTczOGYxM2Y0NWY2ZjdkNmZiMjBhMmUyNzRmNzAyNjQ3OGRiY2U",
           "signature_reason": "valid",
-          "response_sha256": "f17771bf519a13eff9a7d5f1ce8672a181b83599c56b85707fd860b83d58a6ad"
+          "response_sha256": "ebb1fcc81740fb6b142a4cf872c5ed9e44fcf9b8a7ee04259784dbf59e12d139"
         }
       }
     ]
