@@ -38,8 +38,8 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "9a432514b217fba28e274dd817b54baa32ce2f0a",
-    "evidence_bundle_sha256": "sha256:f56979915bb53edf1ed1ce68bcefd78f8e997679ed8b554ed53f2dba0443cd7d",
+    "evidence_checkpoint": "dd7b8a09afd9716d8ff14561b69f6e743b0e1269",
+    "evidence_bundle_sha256": "sha256:108946813ad7ff351bf9fb50c83f20941fc538cf92cffc92601ade7a3a0913c8",
     "frozen_projection_sha256": "sha256:52a3ff734b68e351219282228466bb2c2e203b1cd258f17030b16f7fd3929ef7",
     "cto_solo_authority": {
       "release_id": "vantage-2.1.0",
