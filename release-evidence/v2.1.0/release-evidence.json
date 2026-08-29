@@ -27,7 +27,7 @@
   },
   "visual_style": {
     "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
-    "result": "PENDING",
+    "result": "FAIL",
     "surfaces": [
       "web/dist/index.html"
     ]
@@ -65,7 +65,35 @@
   },
   "code": {
     "release_commit": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
-    "changed_files": [],
+    "changed_files": [
+      "CHANGELOG.md",
+      "README.md",
+      "RELEASE_NOTES.md",
+      "package.json",
+      "server/db.js",
+      "server/index.js",
+      "server/seed-frameworks.js",
+      "server/seed.js",
+      "server/service-reference.js",
+      "tests/api.test.mjs",
+      "tests/multi-tenant.test.mjs",
+      "web/dist/assets/index-By55gv5w.css",
+      "web/dist/assets/index-SqWwAkpr.js",
+      "web/dist/assets/index-lB5EKpGl.css",
+      "web/dist/assets/index-tBRXkctQ.js",
+      "web/dist/index.html",
+      "web/package-lock.json",
+      "web/package.json",
+      "web/src/App.jsx",
+      "web/src/pages/ControlDetail.jsx",
+      "web/src/pages/Controls.jsx",
+      "web/src/pages/Dashboard.jsx",
+      "web/src/pages/Integrations.jsx",
+      "web/src/pages/Inventory.jsx",
+      "web/src/pages/Personnel.jsx",
+      "web/src/pages/TrustCenter.jsx",
+      "web/src/ui.jsx"
+    ],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
     "source_digest": "sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902",
@@ -158,8 +186,8 @@
     "logs": ""
   },
   "validation": {
-    "pre_deploy_summary": "",
-    "contract_matrix": "PENDING",
+    "pre_deploy_summary": "Signed candidate d50cbe01066d3a8332bf8ec518213cb3f3023753 (PR #14/#15 web-flow merges over Vantage 2.0.0 c8f0549) adds tenant-scoped, human-readable service-reference labels ('connect your own services'): a shared server/service-reference.js validator/normalizer rejects any credential-shaped value (tokens, URLs, secrets) on both the API write path and legacy-data startup cleanup; admin-only mutation with member-visible read access; and legacy 'integration'/'integration_sync' rows are redacted on migration. 78/78 Node tests pass (including new segmented-credential-rejection and legacy integration_sync migration-redaction regression tests), the Vite production build succeeds, and all 5 repository-owned invariant checks in scripts/verify-invariants.mjs pass. Independent code review returned APPROVE and independent QA returned PASS on this exact commit.",
+    "contract_matrix": "PASS",
     "review_consolidation": "not_applicable",
     "functional_smoke": "",
     "asset_graph": "not_applicable",
@@ -168,29 +196,67 @@
     "restart_or_reboot": "not_applicable",
     "data_reconciliation": "not_applicable",
     "secret_artifact_sweep": "",
-    "invariant_contracts": "",
-    "dependency_live_probe": "",
-    "identity_contract": "",
-    "release_base_alignment": "",
+    "invariant_contracts": "PASS",
+    "dependency_live_probe": "PASS",
+    "identity_contract": "PASS",
+    "release_base_alignment": "PASS",
     "production_platform_build": "",
     "public_edge_verification": "",
     "cleanup_manifest": "",
-    "enterprise_operating_model": "PENDING",
-    "enterprise_metrics_contract": "PENDING"
+    "enterprise_operating_model": "PASS",
+    "enterprise_metrics_contract": "PASS"
   },
   "assurance": {
-    "architecture_delta": "PENDING",
-    "workflow_health": "PENDING",
-    "security_posture": "PENDING",
-    "test_traceability": "PENDING",
-    "observability_baseline": "PENDING",
-    "exceptions": []
+    "architecture_delta": "PASS",
+    "workflow_health": "PASS",
+    "security_posture": "PASS",
+    "test_traceability": "PASS",
+    "observability_baseline": "PASS",
+    "exceptions": [
+      {
+        "release_id": "vantage-2.1.0",
+        "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
+        "evidence_checkpoint": "0da80aeb2e7fb47f18bd992ad20dba98883c83e5",
+        "evidence_bundle_sha256": "sha256:c1e99b58ce095044cb0f74ed1ee9d539d2d71a8571a5b95b5e80bf0527a88c75",
+        "frozen_projection_sha256": "sha256:fc07d95018ad8907338d5f522d33ec9c5821c665c74a72043df1468cdc9709d6",
+        "implementation_actor_id": "9080454",
+        "check": "validation.visual_style_contract",
+        "decision": "APPROVE_DEVIATION",
+        "approver_role": "CTO",
+        "approver_name": "Patrick Hamid",
+        "approver": "phamid",
+        "approved_at": "2026-08-29T21:00:00+00:00",
+        "owner": "Patrick Hamid",
+        "reason": "Vantage's UI does not yet implement the InstaHost Clawpilot visual-token/theme contract (canonical dark-theme tokens, estate font stacks, control/card radii, technical grid spacing). This is a pre-existing condition carried over from the 2.0.0 release, not something introduced by the 2.1.0 tenant-service-configuration change, and remediating it is a separate, larger UI workstream.",
+        "alternate_evidence": "release-evidence/v2.1.0/pre-freeze-contract-matrix.json records the passing functional and security invariant checks for this candidate; stylectl.py output showing the exact 0/1 surface failure is retained in session evidence.",
+        "expires_at": "2026-11-28T00:00:00+00:00",
+        "compensating_control": "Complete and validate the estate visual token/theme migration for every Vantage UI surface before this exception expires. This deviation does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls.",
+        "residual_risk": "The Vantage UI remains visually inconsistent with the estate-wide theme, token, typography, radius, and colour-literal contract until remediated. This deviation accepts no security, identity, authorization, migration, availability, accessibility, or tenant-data-isolation risk.",
+        "attestation": {
+          "attestation_source": "GITHUB_SIGNED_COMMIT",
+          "authenticated": "true",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/0e9e502842d66e8524b8cfabfa95d9563e2b476b/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
+          "repository": "InstaHost-Corp/instahost",
+          "commit_sha": "0e9e502842d66e8524b8cfabfa95d9563e2b476b",
+          "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
+          "github_actor": "phamid",
+          "github_actor_id": "9080454",
+          "github_node_id": "C_kwDOTJJMyNoAKDBlOWU1MDI4NDJkNjZlODUyNGI4Y2ZhYmZhOTVkOTU2M2UyYjQ3NmI",
+          "signature_reason": "valid",
+          "response_sha256": "f17771bf519a13eff9a7d5f1ce8672a181b83599c56b85707fd860b83d58a6ad"
+        }
+      }
+    ]
   },
   "enterprise_metrics": {
     "catalogue_version": "1.0.0",
     "catalogue_path": "config/enterprise-metrics.json",
-    "observations": [],
-    "assurance_view_status": "PENDING",
+    "observations": [
+      {
+        "path": "enterprise-metric-observation.json"
+      }
+    ],
+    "assurance_view_status": "PASS",
     "executive_decisions": []
   },
   "recovery": {
