@@ -26,7 +26,7 @@
     "accountable_delivery_owner": "Patrick Hamid"
   },
   "visual_style": {
-    "candidate": "1d00c5158aed5c8d08be93413614451816d561fc",
+    "candidate": "80217f39586183cd1d04cb7a7ce7fb14ba0d5de1",
     "result": "PENDING",
     "surfaces": [
       "web/dist/index.html"
@@ -64,11 +64,11 @@
     "current_version": "2.0.0 (c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63)"
   },
   "code": {
-    "release_commit": "1d00c5158aed5c8d08be93413614451816d561fc",
+    "release_commit": "80217f39586183cd1d04cb7a7ce7fb14ba0d5de1",
     "changed_files": [],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
-    "source_digest": "sha256:f420cdc23c259d89c757c5405b3a0d09a479d14e8340c2f387ae572e556eb2ef",
+    "source_digest": "sha256:c58a110263536d7a04ac9b86595ab5408a25c9c77f72ed762925fd517fbc4041",
     "configuration_digest": "PENDING",
     "source_artifact": {
       "definition": "Git ls-tree blob manifest of the deployable Vantage source boundary excluding .git, node_modules, tests, release-evidence, __pycache__, and data.",
