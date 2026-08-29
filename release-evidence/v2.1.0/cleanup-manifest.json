@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0",
+  "release_id": "vantage-2.1.0",
+  "created_objects": [
+    {
+      "id": "release-source-d50cbe0",
+      "location": "/mnt/TailsPool/vantage/releases/d50cbe01066d3a8332bf8ec518213cb3f3023753",
+      "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/d50cbe01066d3a8332bf8ec518213cb3f3023753\"",
+      "temporary": false,
+      "retain": true,
+      "retention_reason": "The running release artifact for 2.1.0, bind-mounted read-only at /app.",
+      "created_for": "Immutable release source",
+      "host": "nas1.insta.host",
+      "scope": "file"
+    },
+    {
+      "id": "release-source-c8f0549",
+      "location": "/mnt/TailsPool/vantage/releases/c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63",
+      "removal_command": "ssh nas1 \"rm -rf /mnt/TailsPool/vantage/releases/c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63\"",
+      "temporary": false,
+      "retain": true,
+      "retention_reason": "Superseded by 2.1.0 but retained deliberately: it is the tested rollback target, and app.update can pin back to it without a rebuild. Remove only after the release after this one.",
+      "created_for": "Immutable release source for 2.0.0",
+      "host": "nas1.insta.host",
+      "scope": "file"
+    },
+    {
+      "id": "zfs-snapshot-pre-2.1.0",
+      "location": "TailsPool/vantage@pre-2.1.0",
+      "removal_command": "ssh nas1 \"midclt call zfs.snapshot.delete '{\\\"id\\\":\\\"TailsPool/vantage@pre-2.1.0\\\"}'\"",
+      "temporary": false,
+      "retain": true,
+      "retention_reason": "Pre-release recovery point for 2.1.0; retained until the next release supersedes it.",
+      "created_for": "Rollback point",
+      "host": "nas1.insta.host",
+      "scope": "snapshot"
+    },
+    {
+      "id": "zfs-snapshot-post-2.1.0",
+      "location": "TailsPool/vantage@post-2.1.0",
+      "removal_command": "ssh nas1 \"midclt call zfs.snapshot.delete '{\\\"id\\\":\\\"TailsPool/vantage@post-2.1.0\\\"}'\"",
+      "temporary": false,
+      "retain": true,
+      "retention_reason": "Post-release state for comparison and recovery.",
+      "created_for": "Post-release recovery point",
+      "host": "nas1.insta.host",
+      "scope": "snapshot"
+    },
+    {
+      "id": "smoke-test-tenants-2.1.0",
+      "location": "Production Vantage tenants 'Release Smoke A/B <ts>' (tenant_id 7 and 8), users id 12/13",
+      "removal_command": "No admin tenant-delete API exists in this release; would require direct SQLite DELETE on /mnt/TailsPool/vantage/data/vantage.db",
+      "temporary": true,
+      "retain": true,
+      "retention_reason": "Live functional smoke-test tenants used to prove tenant-isolation of the new service-connection feature (connect/disconnect a service reference, verified cross-tenant isolation). No admin self-service tenant deletion exists yet (same limitation as the 2.0.0 release), so these are retained as harmless synthetic workspaces with no real data, matching established precedent from the 2.0.0 smoke test.",
+      "created_for": "Live tenant-isolation functional verification",
+      "host": "vantage.insta.host production database",
+      "scope": "identity_user"
+    },
+    {
+      "id": "release-worktree-2.1.0",
+      "location": "/Users/patrickhamid/release-candidates/vantage-2.1.0-release (workstation)",
+      "removal_command": "N/A - this is the implementation/publication checkout for the release and remains as the durable local record",
+      "temporary": false,
+      "retain": true,
+      "retention_reason": "Local implementation checkout tracking origin/main; not a disposable artifact.",
+      "created_for": "Implementation and release-evidence authoring",
+      "host": "workstation",
+      "scope": "file"
+    },
+    {
+      "id": "instahost-cto-receipt-clone",
+      "location": "/tmp/instahost-deviation-clone (workstation)",
+      "removal_command": "rm -rf /tmp/instahost-deviation-clone",
+      "temporary": true,
+      "expires_at": "2026-08-30T23:59:59+00:00",
+      "retain": false,
+      "retention_reason": "Clean external clone used only to merge CTO deviation and solo-authority receipts via PR without touching the dirty main instahost working tree.",
+      "created_for": "GitHub-signed CTO receipt commits",
+      "host": "workstation",
+      "scope": "file",
+      "removed": true,
+      "absence_verified": true,
+      "absence_evidence": "rm -rf /tmp/instahost-deviation-clone; ls /tmp/instahost-deviation-clone reports No such file or directory"
+    },
+    {
+      "id": "source-archive-2.1.0",
+      "location": "/tmp/vantage-2.1.0-source (workstation)",
+      "removal_command": "rm -rf /tmp/vantage-2.1.0-source",
+      "temporary": true,
+      "retain": false,
+      "retention_reason": "Deterministic git-archive of the candidate commit used to rsync the exact release source to nas1.",
+      "created_for": "Deployment source staging",
+      "host": "workstation",
+      "scope": "file",
+      "removed": true,
+      "absence_verified": true,
+      "absence_evidence": "ls /tmp/vantage-2.1.0-source reports 'No such file or directory'",
+      "expires_at": "2026-08-30T23:59:59+00:00"
+    },
+    {
+      "id": "deploy-harness-2.1.0",
+      "location": "/tmp/vantage-2.1.0-compose.json, /tmp/vantage-2.1.0-compose-compact.json (workstation); /tmp/vantage-2.1.0-compose.json (nas1)",
+      "removal_command": "rm -f /tmp/vantage-2.1.0-compose*.json; ssh nas1 'rm -f /tmp/vantage-2.1.0-compose.json'",
+      "temporary": true,
+      "retain": false,
+      "retention_reason": "Rendered compose payload used only to call app.update.",
+      "created_for": "Deployment",
+      "host": "workstation and nas1",
+      "scope": "file",
+      "removed": true,
+      "absence_verified": true,
+      "absence_evidence": "ls of each path returns 'No such file or directory' on both hosts",
+      "expires_at": "2026-08-30T23:59:59+00:00"
+    }
+  ],
+  "deletions": [],
+  "retention_actions": [],
+  "resume_contract": {
+    "reconciliation_identity": "vantage-2.1.0-release",
+    "state_location": "release-evidence/v2.1.0/release-evidence.json committed to the repository after each stage",
+    "state_is_durable": true,
+    "rollback_artifacts_unique": true,
+    "retained_snapshots_verified": true,
+    "resumable_stages": [
+      "code-frozen",
+      "engineering-approved",
+      "qa-passed",
+      "go-deploy",
+      "deploying",
+      "deployed",
+      "live-qa",
+      "publish"
+    ],
+    "notes": "Each stage verified by re-reading live TrueNAS/application state via midclt/curl rather than a local marker."
+  },
+  "image_references": [
+    {
+      "image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "temporary_holder": "none - unchanged pinned image already running in production since 2.0.0",
+      "production_consumer": "vantage custom application on nas1",
+      "consumer_references_image": true,
+      "retention_verified_after_cleanup": true
+    }
+  ],
+  "temporary_forwards": []
+}

@@ -1,0 +1,62 @@
+{
+ "schema_version": "1.0",
+ "release_id": "vantage-2.1.0",
+ "hosts": [
+  {
+   "hostname": "vantage.insta.host",
+   "serves": ["static_asset", "api"],
+   "statement": "vantage.insta.host is served publicly with no identity gate, unchanged from 2.0.0. Every SPA client route, content-hashed static asset, health/readiness endpoint, and the public trust/config APIs answer 200 to an anonymous request, while every authenticated API path answers 401. 2.1.0 changes only the tenant-service-connection admin workflow behind authentication; the public edge topology is otherwise unchanged.",
+   "dns": {
+    "intended_exposure": "public",
+    "authorities": [
+     {"kind": "authoritative", "resolver": "pete.ns.cloudflare.com / edna.ns.cloudflare.com", "observed_result": "CNAME vantage.insta.host -> 40cd9ce8-5c37-4b72-afe4-698c57cd8b65.cfargotunnel.com, proxied=true; unchanged by this release"},
+     {"kind": "public", "resolver": "1.1.1.1", "observed_result": "172.67.159.176, 104.21.14.146 - Cloudflare proxy addresses only"},
+     {"kind": "public", "resolver": "8.8.8.8", "observed_result": "172.67.159.176, 104.21.14.146 - agrees with 1.1.1.1"},
+     {"kind": "public", "resolver": "9.9.9.9", "observed_result": "104.21.14.146, 172.67.159.176 - agrees with the other public resolvers"},
+     {"kind": "operator_client", "resolver": "workstation default resolver", "observed_result": "104.21.14.146, 172.67.159.176 - converged, no stale cache"},
+     {"kind": "private", "resolver": "none - the estate publishes no private zone for insta.host", "observed_result": "No private authority can answer for this name; the origin 192.168.100.116 is never published"},
+     {"kind": "container", "resolver": "docker embedded DNS on network ix-vantage_default", "observed_result": "Resolves only the compose service name inside the bridge network; it cannot answer for vantage.insta.host"},
+     {"kind": "directory", "resolver": "none - no Active Directory zone serves insta.host", "observed_result": "Not applicable to this estate"}
+    ]
+   },
+   "certificate": {
+    "source": "Cloudflare universal certificate, issued by Google Trust Services CN=WE1",
+    "covering_name": "*.insta.host",
+    "verify_result": "subject=/CN=insta.host, issuer=Google Trust Services CN=WE1; TLS handshake succeeds and curl reports HTTP/2 200 for https://vantage.insta.host/. Validity 2026-07-04 to 2026-10-02.",
+    "note": "vantage.insta.host adds exactly one label to insta.host, so it falls inside the single-label scope of the wildcard."
+   },
+   "probes": [
+    {"kind": "page", "path": "/", "path_namespace": "/", "observed_status": "200", "observed_origin": "vantage on nas1 via the instahost-nas1 tunnel", "note": "SPA document served anonymously"},
+    {"kind": "api", "path": "/healthz", "path_namespace": "/", "observed_status": "200", "observed_origin": "vantage on nas1", "note": "Reports version 2.1.0 and release_sha d50cbe01066d3a8332bf8ec518213cb3f3023753"},
+    {"kind": "api", "path": "/readyz", "path_namespace": "/", "observed_status": "200", "observed_origin": "vantage on nas1", "note": "ready=true with database, schema_seeded, monitoring_engine, database_writable, frontend_build all ok"},
+    {"kind": "api", "path": "/api/public/config", "path_namespace": "/api/public", "observed_status": "200", "observed_origin": "vantage on nas1", "note": "production=true, requires_company=true, version 2.1.0"},
+    {"kind": "api", "path": "/api/dashboard", "path_namespace": "/api", "observed_status": "401", "observed_origin": "vantage on nas1", "note": "NEGATIVE CONTROL: authenticated API path still requires a session"},
+    {"kind": "static_asset", "path": "/assets/index-SqWwAkpr.js", "path_namespace": "/assets", "observed_status": "200", "observed_origin": "vantage on nas1", "note": "content-type text/javascript; cache-control public, max-age=31536000, immutable"},
+    {"kind": "static_asset", "path": "/assets/index-By55gv5w.css", "path_namespace": "/assets", "observed_status": "200", "observed_origin": "vantage on nas1", "note": "content-type text/css; cache-control public, max-age=31536000, immutable"},
+    {"kind": "negative_control", "path": "https://foundry.insta.host/", "path_namespace": "outside the boundary", "observed_status": "404", "observed_origin": "a different estate service on the same zone", "note": "A sibling hostname on the same Cloudflare zone and tunnel answers differently, so a 200 from vantage.insta.host is that service answering rather than a blanket zone-level response"}
+   ],
+   "artifacts": [
+    {
+     "name": "SPA application bundle",
+     "source_page": "https://vantage.insta.host/",
+     "literal_href": "/assets/index-SqWwAkpr.js",
+     "requested_unmodified": true,
+     "observed_status": "200",
+     "cache_strategy": "version_keyed",
+     "cache_justification": "Vite emits content-hashed filenames referenced from index.html; this release changed the bundle name from index-aXtiTyVG.js to index-SqWwAkpr.js, so the superseded name is no longer referenced and no purge is required.",
+     "verification_command": "curl -s https://vantage.insta.host/ | grep -oE '/assets/index-[A-Za-z0-9_-]+\\.js' | head -1 | xargs -I{} curl -sI https://vantage.insta.host{}"
+    },
+    {
+     "name": "SPA stylesheet",
+     "source_page": "https://vantage.insta.host/",
+     "literal_href": "/assets/index-By55gv5w.css",
+     "requested_unmodified": true,
+     "observed_status": "200",
+     "cache_strategy": "version_keyed",
+     "cache_justification": "Content-hashed by the same build; served immutable under /assets/.",
+     "verification_command": "curl -sI https://vantage.insta.host/assets/index-By55gv5w.css"
+    }
+   ]
+  }
+ ]
+}
