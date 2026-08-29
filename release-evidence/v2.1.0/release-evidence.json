@@ -39,7 +39,7 @@
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
     "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
-    "evidence_bundle_sha256": "sha256:66a17b21151850c923dc521e6de2f220e62b7c1c93e6e80ced7752ac98eecf30",
+    "evidence_bundle_sha256": "sha256:5015aa032afa1fcfbb4cd99da8b4e466b559dc755d3801a9d1ab581a2c98a9de",
     "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
     "cto_solo_authority": null
   },
@@ -218,7 +218,7 @@
         "release_id": "vantage-2.1.0",
         "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
         "evidence_checkpoint": "9319c7381f3ef54815d4eaf63a7e527ade3ef7bf",
-        "evidence_bundle_sha256": "sha256:66a17b21151850c923dc521e6de2f220e62b7c1c93e6e80ced7752ac98eecf30",
+        "evidence_bundle_sha256": "sha256:5015aa032afa1fcfbb4cd99da8b4e466b559dc755d3801a9d1ab581a2c98a9de",
         "frozen_projection_sha256": "sha256:27c05d34b188b673bcb5e8a1f97d0876d1a32bc2e6ea0428feb8634a276ff5bf",
         "implementation_actor_id": "9080454",
         "check": "validation.visual_style_contract",
@@ -236,15 +236,15 @@
         "attestation": {
           "attestation_source": "GITHUB_SIGNED_COMMIT",
           "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/7d1738f13f45f6f7d6fb20a2e274f7026478dbce/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/b495e466238a0a60711f9bd52a1b182a9fd52633/skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "7d1738f13f45f6f7d6fb20a2e274f7026478dbce",
+          "commit_sha": "b495e466238a0a60711f9bd52a1b182a9fd52633",
           "path": "skills/instahost-release-manager/state/evidence/vantage-2.1.0/cto-visual-style-deviation.json",
           "github_actor": "phamid",
           "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKDdkMTczOGYxM2Y0NWY2ZjdkNmZiMjBhMmUyNzRmNzAyNjQ3OGRiY2U",
+          "github_node_id": "C_kwDOTJJMyNoAKGI0OTVlNDY2MjM4YTBhNjA3MTFmOWJkNTJhMWIxODJhOWZkNTI2MzM",
           "signature_reason": "valid",
-          "response_sha256": "ebb1fcc81740fb6b142a4cf872c5ed9e44fcf9b8a7ee04259784dbf59e12d139"
+          "response_sha256": "666104fffae70675d23d6368815356d4f3055273d65e397158e5935b954347d2"
         }
       }
     ]
