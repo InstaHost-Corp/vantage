@@ -196,11 +196,11 @@
       "evidence": "GitHub-verified CTO solo-authority receipt 02b087749de6893f022c4ffb0492a531cf9957d5; independent QA re-validated the tenant-service-reference regression suite (segmented-credential rejection, legacy integration_sync migration redaction) and the locked frontend build against the signed candidate."
     },
     "deploy": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "GO_DEPLOY",
+      "reviewer": "phamid",
+      "at": "2026-08-30T07:45:00+00:00",
+      "release_commit": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
+      "evidence": "GitHub-verified CTO solo-authority receipt 02b087749de6893f022c4ffb0492a531cf9957d5; live Vantage 2.0.0 health/readiness and TailsPool capacity (74.2% used, below the 75% safety threshold) were revalidated immediately before deployment; TailsPool/vantage@pre-2.1.0 was created and verified."
     },
     "live_qa": {
       "verdict": "",
@@ -247,7 +247,7 @@
     "dependency_live_probe": "PASS",
     "identity_contract": "PASS",
     "release_base_alignment": "PASS",
-    "production_platform_build": "",
+    "production_platform_build": "PASS",
     "public_edge_verification": "",
     "cleanup_manifest": "",
     "enterprise_operating_model": "PASS",
@@ -307,11 +307,11 @@
     "executive_decisions": []
   },
   "recovery": {
-    "pre_release_snapshot": "",
+    "pre_release_snapshot": "/Users/patrickhamid/release-candidates/vantage-2.1.0-release/release-evidence/v2.1.0/pre-2.1.0-snapshot.json; TrueNAS recursive snapshot TailsPool/vantage@pre-2.1.0 created 2026-08-30T07:39:32+00:00 and verified present before deployment.",
     "post_release_snapshot": "",
     "last_known_good": "Vantage 2.0.0 (c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63) with TailsPool/vantage@post-2.0.0 verified present",
-    "rollback_command": "Update the TrueNAS custom app to the retained Vantage 2.0.0 source directory and, only if data restoration is necessary, restore the pre-2.1.0 recursive snapshot after stopping the workload.",
-    "rollback_validation": "PENDING",
+    "rollback_command": "Stop the workload, restore TailsPool/vantage@pre-2.1.0 recursive snapshot if data reversion is required, then update the TrueNAS app to release directory /mnt/TailsPool/vantage/releases/c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 with APP_VERSION=2.0.0; confirm /healthz reports 2.0.0 and release_sha c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63 before reopening the public endpoint.",
+    "rollback_validation": "PASS",
     "rollback_limitations": "Rollback restores the pre-2.1.0 simulated integration status labels; it does not contact an external provider."
   },
   "publication": {
