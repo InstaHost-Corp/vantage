@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "GO_PUBLISH",
-  "outcome": "DEPLOYED_NOT_PUBLISHED",
+  "state": "PUBLISHED",
+  "outcome": "RELEASED",
   "release": {
     "id": "vantage-2.1.0",
     "product": "Vantage",
@@ -412,6 +412,13 @@
       "from": "LIVE_QA_PASSED",
       "to": "GO_PUBLISH",
       "at": "2026-08-29T22:05:11.434130+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "GO_PUBLISH",
+      "to": "PUBLISHED",
+      "at": "2026-08-29T22:10:20.321136+00:00",
       "actor": "release-manager",
       "reason": ""
     }
