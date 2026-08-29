@@ -1,0 +1,215 @@
+{
+  "schema_version": "2.1",
+  "framework_version": "4.1.1",
+  "state": "BASELINED",
+  "outcome": "READY_FOR_RELEASE",
+  "release": {
+    "id": "vantage-2.1.0",
+    "product": "Vantage",
+    "version": "2.1.0",
+    "type": "minor",
+    "date": "2026-08-29"
+  },
+  "routing": {
+    "implementation_route": "R2 SENIOR",
+    "release_phase": "R3 RELEASE",
+    "intent": "PRODUCTION_BOUND",
+    "evidence_level": "L3 STATEFUL_SECURITY",
+    "reason": "A public multi-tenant application changes tenant-owned persisted integration state, administrator authorization and user-facing capability claims.",
+    "emergency_reason": null
+  },
+  "enterprise": {
+    "decision_record": "enterprise-decision.json",
+    "status": "PASS",
+    "materiality": "T1 HIGH",
+    "executive_sponsor": "CISO \u2014 Patrick Hamid",
+    "accountable_delivery_owner": "Patrick Hamid"
+  },
+  "visual_style": {
+    "candidate": "842a19e54a13161cc7d6121984a9041b35b6b3ac",
+    "result": "PENDING",
+    "surfaces": [
+      "web/dist/index.html"
+    ]
+  },
+  "review": {
+    "verdict_ledger": "verdicts.json",
+    "authority_map": "review-authorities.json",
+    "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
+    "implementation_owner": "Copilot",
+    "implementation_actor_id": "9080454",
+    "evidence_checkpoint": "",
+    "evidence_bundle_sha256": "",
+    "frozen_projection_sha256": "",
+    "cto_solo_authority": null
+  },
+  "applicability": {
+    "business_rules": true,
+    "ui_or_content": true,
+    "data_migration": true,
+    "identity": true,
+    "secrets_or_sensitive_data": true,
+    "infrastructure_lifecycle": false,
+    "external_gate": true,
+    "incident": false,
+    "ai_or_automation": false
+  },
+  "target": {
+    "repository": "https://github.com/InstaHost-Corp/vantage",
+    "branch": "main",
+    "host": "nas1.insta.host",
+    "application": "vantage",
+    "public_endpoint": "https://vantage.insta.host",
+    "deployment_profile": "release-evidence/deployment-profile.json",
+    "current_version": "2.0.0 (c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63)"
+  },
+  "code": {
+    "release_commit": "842a19e54a13161cc7d6121984a9041b35b6b3ac",
+    "changed_files": [],
+    "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+    "migration_image": null,
+    "source_digest": "sha256:faf25ce049b32e417529905b6dcf1b36b61efd660c996dac13fb9401b389d64f",
+    "configuration_digest": "PENDING",
+    "source_artifact": {
+      "definition": "Git ls-tree blob manifest of the deployable Vantage source boundary excluding .git, node_modules, tests, release-evidence, __pycache__, and data.",
+      "exclusions": [
+        ".git",
+        "node_modules",
+        "tests",
+        "release-evidence",
+        "__pycache__",
+        "data"
+      ]
+    }
+  },
+  "gates": {
+    "engineering": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "qa": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "deploy": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "live_qa": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    },
+    "publish": {
+      "verdict": "",
+      "reviewer": "",
+      "at": "",
+      "release_commit": "",
+      "evidence": ""
+    }
+  },
+  "deployment": {
+    "started_at": "",
+    "completed_at": "",
+    "job_ids": [],
+    "migration_result": null,
+    "stability_policy": "",
+    "stability_result": ""
+  },
+  "runtime": {
+    "configured_identity": "",
+    "active_identity": "",
+    "health": "",
+    "readiness": "",
+    "logs": ""
+  },
+  "validation": {
+    "pre_deploy_summary": "",
+    "contract_matrix": "PENDING",
+    "review_consolidation": "not_applicable",
+    "functional_smoke": "",
+    "asset_graph": "not_applicable",
+    "visual_style_contract": "not_applicable",
+    "assigned_user_journey": "not_applicable",
+    "restart_or_reboot": "not_applicable",
+    "data_reconciliation": "not_applicable",
+    "secret_artifact_sweep": "",
+    "invariant_contracts": "",
+    "dependency_live_probe": "",
+    "identity_contract": "",
+    "release_base_alignment": "",
+    "production_platform_build": "",
+    "public_edge_verification": "",
+    "cleanup_manifest": "",
+    "enterprise_operating_model": "PENDING",
+    "enterprise_metrics_contract": "PENDING"
+  },
+  "assurance": {
+    "architecture_delta": "PENDING",
+    "workflow_health": "PENDING",
+    "security_posture": "PENDING",
+    "test_traceability": "PENDING",
+    "observability_baseline": "PENDING",
+    "exceptions": []
+  },
+  "enterprise_metrics": {
+    "catalogue_version": "1.0.0",
+    "catalogue_path": "config/enterprise-metrics.json",
+    "observations": [],
+    "assurance_view_status": "PENDING",
+    "executive_decisions": []
+  },
+  "recovery": {
+    "pre_release_snapshot": "",
+    "post_release_snapshot": "",
+    "last_known_good": "Vantage 2.0.0 (c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63) with TailsPool/vantage@post-2.0.0 verified present",
+    "rollback_command": "Update the TrueNAS custom app to the retained Vantage 2.0.0 source directory and, only if data restoration is necessary, restore the pre-2.1.0 recursive snapshot after stopping the workload.",
+    "rollback_validation": "PENDING",
+    "rollback_limitations": "Rollback restores the pre-2.1.0 simulated integration status labels; it does not contact an external provider."
+  },
+  "publication": {
+    "repository_uses_github": true,
+    "tag": "",
+    "github_release": "",
+    "release_notes": "RELEASE_NOTES.md",
+    "cto_publish_fallback": null
+  },
+  "incident": null,
+  "latency": {
+    "baseline_started_at": "",
+    "implementation_started_at": "",
+    "code_frozen_at": "",
+    "engineering_completed_at": "",
+    "qa_completed_at": "",
+    "deploy_started_at": "",
+    "deploy_completed_at": "",
+    "live_qa_completed_at": "",
+    "published_at": "",
+    "corrective_iterations": 0,
+    "approval_retries": 0,
+    "external_wait_minutes": 0,
+    "avoidable_delays": [],
+    "process_improvements": [],
+    "learning_record": ""
+  },
+  "state_history": [
+    {
+      "from": "DRAFT",
+      "to": "BASELINED",
+      "at": "2026-08-29T11:20:00+00:00",
+      "actor": "Copilot",
+      "reason": "Clean clone baseline and production-base alignment passed for merged candidate."
+    }
+  ]
+}
