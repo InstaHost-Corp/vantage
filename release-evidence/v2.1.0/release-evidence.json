@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "BASELINED",
+  "state": "IMPLEMENTING",
   "outcome": "READY_FOR_RELEASE",
   "release": {
     "id": "vantage-2.1.0",
@@ -210,6 +210,13 @@
       "at": "2026-08-29T11:20:00+00:00",
       "actor": "Copilot",
       "reason": "Clean clone baseline and production-base alignment passed for merged candidate."
+    },
+    {
+      "from": "BASELINED",
+      "to": "IMPLEMENTING",
+      "at": "2026-08-29T12:17:52.798695+00:00",
+      "actor": "Copilot",
+      "reason": "Final candidate hardening is complete; entering controlled freeze and authorization preparation."
     }
   ]
 }
