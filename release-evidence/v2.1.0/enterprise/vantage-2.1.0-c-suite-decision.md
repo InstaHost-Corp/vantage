@@ -1,6 +1,6 @@
 # Enterprise decision: vantage-2.1.0
 
-- Candidate: `80217f39586183cd1d04cb7a7ce7fb14ba0d5de1`
+- Candidate: `d50cbe01066d3a8332bf8ec518213cb3f3023753`
 - Materiality: **T1 HIGH**
 
 ## Decision requested
@@ -59,7 +59,7 @@ Proceed only after every applicable authenticated specialist and mandatory relea
 {
   "schema_version": "1.0",
   "release_id": "vantage-2.1.0",
-  "candidate": "80217f39586183cd1d04cb7a7ce7fb14ba0d5de1",
+  "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
   "source_evidence": "release-evidence.json",
   "materiality": "T1 HIGH",
   "materiality_reason": "L3 STATEFUL_SECURITY; activated flags: business_rules, data_migration, external_gate, identity, secrets_or_sensitive_data, ui_or_content",

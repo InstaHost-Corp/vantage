@@ -26,7 +26,7 @@
     "accountable_delivery_owner": "Patrick Hamid"
   },
   "visual_style": {
-    "candidate": "80217f39586183cd1d04cb7a7ce7fb14ba0d5de1",
+    "candidate": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
     "result": "PENDING",
     "surfaces": [
       "web/dist/index.html"
@@ -64,14 +64,15 @@
     "current_version": "2.0.0 (c8f0549ec9b5e4cb8ccf381083c5b9c1d6027a63)"
   },
   "code": {
-    "release_commit": "80217f39586183cd1d04cb7a7ce7fb14ba0d5de1",
+    "release_commit": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
     "changed_files": [],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
-    "source_digest": "sha256:c58a110263536d7a04ac9b86595ab5408a25c9c77f72ed762925fd517fbc4041",
+    "source_digest": "sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902",
+    "source_manifest_digest": "sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902",
     "configuration_digest": "PENDING",
     "source_artifact": {
-      "definition": "Git ls-tree blob manifest of the deployable Vantage source boundary excluding .git, node_modules, tests, release-evidence, __pycache__, and data.",
+      "definition": "Git ls-tree blob manifest of the deployable Vantage source boundary: root application/documentation files, scripts, server, and web. It excludes node_modules, tests, release-evidence, __pycache__, and data.",
       "exclusions": [
         ".git",
         "node_modules",
@@ -79,6 +80,28 @@
         "release-evidence",
         "__pycache__",
         "data"
+      ],
+      "candidate_paths": [
+        ".gitignore",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        "LICENSE",
+        "PROJECT_NOTICE.md",
+        "PROVENANCE.md",
+        "README.md",
+        "RELEASE_NOTES.md",
+        "SECURITY.md",
+        "package.json",
+        "scripts",
+        "server",
+        "web"
+      ],
+      "manifest": "source-manifest.json",
+      "working_tree_source_digest": "sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902",
+      "digest": "sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902",
+      "post_freeze_operational_paths": [
+        "release-evidence/v2.1.0/release-evidence.json",
+        "release-evidence/v2.1.0/verdicts.json"
       ]
     }
   },
