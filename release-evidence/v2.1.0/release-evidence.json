@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "DEPLOYED",
+  "state": "LIVE_QA_PASSED",
   "outcome": "DEPLOYED_NOT_PUBLISHED",
   "release": {
     "id": "vantage-2.1.0",
@@ -213,11 +213,11 @@
       "evidence": "GitHub-verified CTO solo-authority receipt 02b087749de6893f022c4ffb0492a531cf9957d5; live production health/readiness confirm Vantage 2.1.0 running; edge manifest and cleanup manifest both validate PASS; a two-tenant functional smoke test proved the new connect-your-own-services feature is correctly tenant-isolated."
     },
     "publish": {
-      "verdict": "",
-      "reviewer": "",
-      "at": "",
-      "release_commit": "",
-      "evidence": ""
+      "verdict": "GO_PUBLISH",
+      "reviewer": "phamid",
+      "at": "2026-08-29T22:10:00+00:00",
+      "release_commit": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
+      "evidence": "CTO solo-authority receipt covers publish gate; DEPLOYED and LIVE_QA_PASSED both verified live with passing evidence; cleanup manifest PASS; edge verification PASS; no outstanding mandatory gate failures."
     }
   },
   "deployment": {
@@ -398,6 +398,13 @@
       "from": "DEPLOYING",
       "to": "DEPLOYED",
       "at": "2026-08-29T21:51:43.434809+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "DEPLOYED",
+      "to": "LIVE_QA_PASSED",
+      "at": "2026-08-29T22:04:50.402903+00:00",
       "actor": "release-manager",
       "reason": ""
     }
