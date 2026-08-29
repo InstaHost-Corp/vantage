@@ -129,7 +129,8 @@
       "digest": "sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902",
       "post_freeze_operational_paths": [
         "release-evidence/v2.1.0/release-evidence.json",
-        "release-evidence/v2.1.0/verdicts.json"
+        "release-evidence/v2.1.0/verdicts.json",
+        "release-evidence/v2.1.0/config/enterprise-metrics.json"
       ]
     }
   },
