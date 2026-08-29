@@ -548,6 +548,11 @@ CREATE INDEX IF NOT EXISTS idx_tests_tenant ON tests(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_activity_tenant ON activity(tenant_id);
 `);
 
+// Prior releases presented the seeded catalogue as connected although no
+// provider authorization or collection capability exists. Preserve the
+// tenant-owned reference while making the capability state truthful.
+db.exec("UPDATE integrations SET status = 'configured', last_sync = NULL WHERE status = 'connected'");
+
 export const all = (sql, ...params) => db.prepare(sql).all(...params);
 export const get = (sql, ...params) => db.prepare(sql).get(...params);
 export const run = (sql, ...params) => db.prepare(sql).run(...params);

@@ -260,7 +260,7 @@ putting an instance on a network or using non-fictional data.
 | Engagement preparation | Evidence requests, supporting evidence and assurance-engagement workflows |
 | Questionnaires | Draft answers from fictional controls and policies, with human-review flags |
 | Trust Centre | A sandbox security profile generated from fictional monitoring data |
-| Integrations | Simulated connector records; no external API calls |
+| Integrations | Tenant-scoped service configuration references; no external API calls or credential storage |
 
 ## Architecture
 

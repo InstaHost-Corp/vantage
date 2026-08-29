@@ -87,6 +87,7 @@ const STATUS_STYLES = {
   complete: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'Complete'],
   approved: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'Approved'],
   connected: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'Connected'],
+  configured: ['bg-blue-50 text-blue-700 ring-blue-600/20', 'Configured'],
   active: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'Active'],
   accepted: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'Accepted'],
   answered: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'Answered'],

@@ -73,7 +73,7 @@ const integrations = [
   ['github', 'GitHub', 'Version control', 'Monitors repository protection rules, code scanning, secret scanning and organisation membership.', 'connected', 'northwind-systems'],
   ['okta', 'Okta', 'Identity provider', 'Syncs users, group membership, MFA factors, sign-on policies and application assignments.', 'connected', 'northwind.okta.com'],
   ['mdm', 'Kandji MDM', 'Device management', 'Reports endpoint encryption, screen lock, OS version and agent health.', 'connected', 'Northwind (312 seats)'],
-  ['hris', 'Rippling', 'HR information system', 'Source of truth for personnel, employment status, start and end dates.', 'connected', 'Northwind Systems'],
+  ['hris', 'Rippling', 'HR information system', 'Source of truth for personnel, employment status, start and end dates.', 'configured', 'Northwind Systems'],
   ['gcp', 'Google Cloud Platform', 'Cloud infrastructure', 'Inventories projects, IAM bindings, buckets and Cloud SQL instances.', 'available', null],
   ['azure', 'Microsoft Azure', 'Cloud infrastructure', 'Inventories subscriptions, storage accounts, network security groups and Entra ID.', 'available', null],
   ['gworkspace', 'Google Workspace', 'Productivity', 'Monitors user accounts, 2-step verification and admin roles.', 'connected', 'northwind.io'],
@@ -367,8 +367,8 @@ function seedTables() {
   for (const [slug, name, category, description, status, account] of integrations) {
     run('INSERT INTO integrations (tenant_id, slug, name, category, description, status, account, connected_at, last_sync) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       T, slug, name, category, description, status, account,
-      status === 'connected' ? iso(-Math.floor(Math.random() * 300) - 30) : null,
-      status === 'connected' ? iso(-0.02) : null);
+      status === 'configured' ? iso(-Math.floor(Math.random() * 300) - 30) : null,
+      null);
   }
   for (const r of resources) {
     run('INSERT INTO resources (tenant_id, integration, type, external_id, name, region, owner, metadata, discovered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',

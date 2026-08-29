@@ -217,6 +217,36 @@ test('PROD-3: two tenants cannot see each other\'s data', async () => {
   assert.ok(!bobActorEmails.includes('alice@acme-corp.example'), 'Bob\'s activity must not contain Alice');
 });
 
+test('PROD-3a: tenant service configuration remains isolated', async () => {
+  const aliceLogin = await fetch(`${PROD}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'alice@acme-corp.example', password: 'SecurePassword42!' }),
+  }).then((r) => r.json());
+  const bobLogin = await fetch(`${PROD}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'bob@widgets-inc.example', password: 'AnotherSecure42!' }),
+  }).then((r) => r.json());
+  const alice = api(PROD, aliceLogin.token);
+  const bob = api(PROD, bobLogin.token);
+
+  const configured = await alice('/api/integrations/github/connect', {
+    method: 'POST',
+    body: JSON.stringify({ account: 'Acme Engineering' }),
+  });
+  assert.equal(configured.status, 200);
+
+  const bobGitHub = (await bob('/api/integrations').then((r) => r.json())).find((i) => i.slug === 'github');
+  assert.equal(bobGitHub.status, 'available');
+  assert.equal(bobGitHub.account, null);
+
+  assert.equal((await bob('/api/integrations/github/disconnect', { method: 'POST' })).status, 200);
+  const aliceGitHub = (await alice('/api/integrations').then((r) => r.json())).find((i) => i.slug === 'github');
+  assert.equal(aliceGitHub.status, 'configured');
+  assert.equal(aliceGitHub.account, 'Acme Engineering');
+});
+
 test('PROD-4: tenant A cannot update tenant B\'s records', async () => {
   const aliceLogin = await fetch(`${PROD}/api/auth/login`, {
     method: 'POST',
