@@ -8,6 +8,7 @@ import {
 import { getToken, setToken, get, post } from './api.js';
 import { Avatar, Button, Loading, cx, timeAgo, useToast } from './ui.jsx';
 
+import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -252,6 +253,7 @@ export default function App() {
       <Route path="/login" element={authed ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/signup" element={authed ? <Navigate to="/" replace /> : <Signup />} />
       <Route path="/trust" element={<TrustCenter />} />
+      <Route path="/" element={authed ? <Shell /> : <Home />} />
       <Route path="/*" element={authed ? <Shell /> : <Navigate to="/login" replace />} />
     </Routes>
   );

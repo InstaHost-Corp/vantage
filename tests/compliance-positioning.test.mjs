@@ -19,6 +19,7 @@ test('personal-project boundaries stay explicit', () => {
     read('server/index.js'),
     read('server/public-mode.js'),
     read('web/src/App.jsx'),
+    read('web/src/pages/Home.jsx'),
     read('web/src/pages/Login.jsx'),
     read('web/src/pages/TrustCenter.jsx'),
   ].join('\n');

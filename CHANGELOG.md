@@ -3,6 +3,27 @@
 All notable changes to Vantage are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## [2.2.0] - 2026-08-29
+
+### Added
+
+- A public marketing landing page is now shown at `/` to unauthenticated
+  visitors, replacing the previous immediate redirect to `/login`. It explains
+  what Vantage does, summarizes the capability areas (frameworks, controls,
+  monitoring, policies, personnel/devices, vendors/risk, audit preparation,
+  questionnaires, Trust Center, workspace integrations, asset inventory, risk
+  register), and states that Vantage is free, MIT-licensed and open source
+  with a link to the public repository and a copy of the self-host command
+  (`git clone` / `npm run setup` / `npm start`).
+- The Vantage logo on the Login and Signup pages now links back to the new
+  landing page.
+
+### Changed
+
+- `/login` and `/signup` remain dedicated authentication pages; they are
+  unchanged apart from the added link back to `/`. Authenticated visitors
+  still see the existing dashboard at `/`.
+
 ## [2.1.0] - 2026-08-28
 
 ### Added

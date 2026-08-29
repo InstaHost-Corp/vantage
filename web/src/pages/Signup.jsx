@@ -46,10 +46,10 @@ export default function Signup() {
     <div className="grid min-h-full lg:grid-cols-2">
       <div className="flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center gap-2.5">
+          <Link to="/" className="mb-8 flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white"><ShieldCheck size={20} /></span>
             <span className="text-lg font-semibold tracking-tight">Vantage</span>
-          </div>
+          </Link>
           <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
           <p className="mt-1 text-sm text-ink-500">
             Sign up with your name, email and a password of at least {MIN_PASSWORD} characters.

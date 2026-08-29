@@ -15,7 +15,7 @@ const dist = join(__dirname, '..', 'web', 'dist');
 
 export const RELEASE = {
   service: 'vantage',
-  version: process.env.APP_VERSION || '2.1.0',
+  version: process.env.APP_VERSION || '2.2.0',
   release_sha: process.env.RELEASE_SHA || 'unversioned',
   source_digest: process.env.SOURCE_DIGEST || 'unrecorded',
   node: process.version,

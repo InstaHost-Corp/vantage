@@ -1,51 +1,45 @@
-# Vantage 2.1.0 — workspace service configuration
+# Vantage 2.2.0 — public landing page
 
 | | |
 |---|---|
-| **Release** | 2.1.0 |
-| **Type** | Minor — tenant-scoped service configuration |
+| **Release** | 2.2.0 |
+| **Type** | Minor — new pre-auth marketing landing page |
 | **Repository** | `InstaHost-Corp/vantage` |
 | **Publication model** | Public GitHub repository; free hosted demonstration |
 
 ## What changed
 
-- **Workspace service configuration**: tenant administrators can associate a
-  service from the Vantage catalogue with a tenant-owned account reference.
-  Every read and change remains scoped to the administrator's tenant.
-- **Truthful capability status**: a configured reference does not establish an
-  external connection. Vantage does not accept or retain API keys, passwords,
-  access tokens, callback URLs, or other credentials; it makes no provider
-  calls and does not collect data or alter readiness from this configuration.
-- **Existing simulated connections** become configured references at startup
-  and their stale sync timestamps are cleared.
+- **New landing page** at `/` for unauthenticated visitors, replacing the
+  previous immediate redirect to `/login`. It explains what Vantage is, lists
+  its capability areas, and states that it is free, MIT-licensed and open
+  source with a link to the public GitHub repository and a copy of the
+  self-host command (`git clone` / `npm run setup` / `npm start`).
+- The Vantage logo on `/login` and `/signup` now links back to `/`.
+- Authenticated visitors are unaffected: `/` continues to render the existing
+  dashboard for a signed-in session.
 
 ## Security and data
 
-- Bearer token authentication is inherently CSRF-immune (documented in the
-  public config endpoint).
-- Signup and login are rate-limited per client IP.
-- Duplicate email returns a generic error that does not enumerate tenants.
-- Production mode requires a random session secret of at least 32 characters,
-  supplied through a read-only `VANTAGE_SESSION_SECRET_FILE` mount. An inline
-  `VANTAGE_SESSION_SECRET` is for local development only and must not be
-  recorded in deployment configuration.
-- Admin actions (demo reset, policy approval, settings, framework toggle)
-  require the `admin` role within the caller's tenant.
+- No new server routes, no new data collected, no schema or migration change.
+  The landing page renders static marketing copy plus the pre-existing public
+  `/api/public/config` endpoint (service name, version, source URL, signup
+  policy) that was already exposed to unauthenticated callers.
+- Content was checked against the existing `compliance-positioning` test,
+  which fails the build if prohibited overclaiming language (for example
+  "audit-ready evidence" or "live data from your connected systems") appears
+  in any public-facing source file; `web/src/pages/Home.jsx` was added to the
+  scanned file set.
 
 ## Migration
 
-1. Back up `data/vantage.db` before upgrading.
-2. Start the new version. Existing simulated connection states are converted
-   to configured references without contacting any external provider.
-3. If rollback is needed, restore the backup and redeploy the prior release.
+None. This is a stateless, presentation-only change; no database migration or
+backfill is required.
 
 ## Rollback
 
-- Restore the pre-2.1 database backup and redeploy the previous release.
+- Redeploy the previous release (2.1.0). No data changes to revert.
 
 ## Known limitations
 
-- Provider-specific OAuth/API-token connections and automated data collection
-  are not implemented. A future provider integration must add a documented
-  read-only authorization contract, secret handling, revocation and live
-  provider validation before it can collect customer data.
+- The landing page content is static per deployment; there is no CMS or
+  per-tenant customization of the marketing copy.
