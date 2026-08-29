@@ -177,7 +177,9 @@
         "release-evidence/v2.1.0/release-evidence.json",
         "release-evidence/v2.1.0/verdicts.json",
         "release-evidence/v2.1.0/config/enterprise-metrics.json",
-        "release-evidence/v2.1.0/pre-2.1.0-snapshot.json"
+        "release-evidence/v2.1.0/pre-2.1.0-snapshot.json",
+        "release-evidence/v2.1.0/edge-verification.json",
+        "release-evidence/v2.1.0/cleanup-manifest.json"
       ]
     }
   },
