@@ -210,20 +210,6 @@
       "at": "2026-08-29T11:20:00+00:00",
       "actor": "Copilot",
       "reason": "Clean clone baseline and production-base alignment passed for merged candidate."
-    },
-    {
-      "from": "BASELINED",
-      "to": "BASELINED",
-      "at": "2026-08-29T11:45:00+00:00",
-      "actor": "Copilot",
-      "reason": "Corrective candidate replaced after independent review findings were remediated."
-    },
-    {
-      "from": "BASELINED",
-      "to": "BASELINED",
-      "at": "2026-08-29T12:05:00+00:00",
-      "actor": "Copilot",
-      "reason": "Final security corrective candidate supersedes the prior review candidate."
     }
   ]
 }
