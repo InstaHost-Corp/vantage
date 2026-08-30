@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "release_id": "vantage-2.2.0",
+  "source_digest": "7023534abaf0b25596e66af1ba92fbfdbc75064c0ed60ad96923e5dfcfc41c2b",
+  "definition": "Git ls-tree blob manifest of the deployable Vantage source boundary: .gitignore; root application/documentation files; scripts; server; and web. It excludes node_modules, tests, release-evidence, __pycache__, and data.",
+  "candidate_paths": [
+    ".gitignore",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "PROJECT_NOTICE.md",
+    "PROVENANCE.md",
+    "README.md",
+    "RELEASE_NOTES.md",
+    "SECURITY.md",
+    "package.json",
+    "scripts",
+    "server",
+    "web"
+  ],
+  "exclusions": [
+    ".git",
+    "node_modules",
+    "tests",
+    "release-evidence",
+    "__pycache__",
+    "data"
+  ]
+}

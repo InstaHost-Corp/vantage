@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "release_id": "vantage-2.2.0",
+  "candidate": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+  "source_evidence": "release-evidence.json",
+  "materiality": "T2 STANDARD",
+  "materiality_reason": "L2 APPLICATION; activated flags: ui_or_content",
+  "executive_sponsor": {
+    "role": "CPO",
+    "name": "Patrick Hamid"
+  },
+  "business_owner": "Patrick Hamid",
+  "delivery_owner": "Patrick Hamid",
+  "implementation_owner": "Copilot",
+  "communications_owner": "Patrick Hamid",
+  "accountable_functions": [
+    "Architecture",
+    "Engineering",
+    "Independent QA",
+    "Platform",
+    "Product"
+  ],
+  "responsible_functions": [
+    "Architecture",
+    "Design and UX",
+    "Engineering",
+    "Independent QA",
+    "Operations",
+    "Platform",
+    "Product"
+  ],
+  "consulted_functions": [],
+  "informed_functions": [],
+  "governance_boards": [
+    "CHANGE_ADVISORY_BOARD",
+    "ENTERPRISE_ARCHITECTURE_BOARD"
+  ],
+  "decisions": [
+    {
+      "id": "architecture",
+      "decision_right": "Technical direction and standards",
+      "accountable_function": "Architecture",
+      "responsible_functions": [
+        "Architecture"
+      ],
+      "evidence": "release-evidence:vantage-2.2.0"
+    },
+    {
+      "id": "engineering",
+      "decision_right": "Implementation quality",
+      "accountable_function": "Engineering",
+      "responsible_functions": [
+        "Engineering"
+      ],
+      "evidence": "release-evidence:vantage-2.2.0"
+    },
+    {
+      "id": "independent-qa",
+      "decision_right": "Independent assurance",
+      "accountable_function": "Independent QA",
+      "responsible_functions": [
+        "Independent QA"
+      ],
+      "evidence": "release-evidence:vantage-2.2.0"
+    },
+    {
+      "id": "platform",
+      "decision_right": "Production safety and recoverability",
+      "accountable_function": "Platform",
+      "responsible_functions": [
+        "Platform"
+      ],
+      "evidence": "release-evidence:vantage-2.2.0"
+    },
+    {
+      "id": "product",
+      "decision_right": "Outcome and customer value",
+      "accountable_function": "Product",
+      "responsible_functions": [
+        "Product"
+      ],
+      "evidence": "release-evidence:vantage-2.2.0"
+    }
+  ],
+  "c_suite_packet": {
+    "required": false,
+    "status": "NOT_REQUIRED",
+    "path": ""
+  },
+  "ai_governance": {
+    "applicable": false,
+    "oversight": "NOT_APPLICABLE",
+    "authenticated_review_receipts_required": false,
+    "external_model_routing": "OUT_OF_SCOPE",
+    "human_escalation": ""
+  },
+  "routing_budget": {
+    "max_total_agents": 8,
+    "max_concurrent_agents": 3,
+    "consolidated_leads": []
+  }
+}

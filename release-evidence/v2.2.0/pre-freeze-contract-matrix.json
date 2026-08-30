@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "release_id": "vantage-2.2.0",
+  "invariant_review": "none_applicable",
+  "invariant_review_justification": "This release adds a static pre-auth marketing page and one client-side routing change. It introduces no new aggregate, mirrored configuration, generated artifact, or denormalized summary; it reads only the pre-existing /api/public/config endpoint that was already exposed to unauthenticated callers and already covered by PROD-6 (tests/api.test.mjs).",
+  "contracts": [
+    {
+      "id": "node-runtime-version-parity",
+      "category": "other",
+      "authoritative_source": "Production TrueNAS compose configuration (node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03), as recorded in release-evidence/v2.1.0/release-evidence.json code.application_image",
+      "version": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
+      "validation_command": "docker run --rm -v \"$PWD\":/app -w /app node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 bash -c \"npm --prefix web install --no-audit --no-fund && npm run build && npm test\"",
+      "reject_conditions": [
+        "npm test reports any failing test",
+        "npm run build (vite build) exits non-zero",
+        "the container's node --version does not match the pinned production digest's reported version"
+      ],
+      "result": "PASS",
+      "evidence": "Ran the exact pinned production image node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03 against candidate 5fa79a447bce35357ebc0abf21b06383d3c90c11: node --version reported v24.19.0 (matches production); npm --prefix web install succeeded; npm run build (vite build) succeeded producing dist/assets/index-BLKPGdnP.js, dist/assets/index-Db0nSoFH.css, dist/index.html (identical content-hashed filenames to the local macOS build); npm test reported 78/78 passing, 0 failing."
+    },
+    {
+      "id": "public-config-endpoint-consumer-contract",
+      "category": "other",
+      "authoritative_source": "server/index.js /api/public/config route and server/public-mode.js publicModeConfig(); response shape unchanged by this release",
+      "version": "d50cbe01066d3a8332bf8ec518213cb3f3023753 (2.1.0, unchanged fields) -> 5fa79a447bce35357ebc0abf21b06383d3c90c11 (2.2.0)",
+      "validation_command": "node --test tests/api.test.mjs tests/public-mode.test.mjs",
+      "reject_conditions": [
+        "the response shape or field names of /api/public/config change",
+        "the new landing page reads a field /api/public/config does not expose",
+        "PROD-6 (production public config does not expose demo credentials) fails"
+      ],
+      "result": "PASS",
+      "evidence": "The new web/src/pages/Home.jsx consumes only source_url from /api/public/config, an existing field also consumed unchanged by web/src/pages/Login.jsx and Signup.jsx. No server route, response field, or shape changed in this release. tests/api.test.mjs and tests/public-mode.test.mjs (including PROD-6) pass with 0 failures in both the local macOS environment and the pinned node:24-slim production image."
+    }
+  ]
+}
