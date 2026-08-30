@@ -26,7 +26,7 @@
     "accountable_delivery_owner": "Patrick Hamid"
   },
   "visual_style": {
-    "candidate": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+    "candidate": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
     "result": "FAIL",
     "surfaces": [
       "web/dist/index.html"
