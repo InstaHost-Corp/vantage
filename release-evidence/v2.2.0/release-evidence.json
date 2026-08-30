@@ -38,9 +38,9 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "PENDING",
-    "evidence_bundle_sha256": "PENDING",
-    "frozen_projection_sha256": "PENDING"
+    "evidence_checkpoint": "2068464a20bb44b3cabfe9b97cd6bb1b28d0bf84",
+    "evidence_bundle_sha256": "sha256:f67e1f7ac1936f6c3e1c50ee4f571a0cc904e8d0203662df6f7a44ee5eebf9df",
+    "frozen_projection_sha256": "sha256:0c329fe6b342440f6f068c08012575a5736910e980a9c22fe12ffbeeb1cfcc3a"
   },
   "applicability": {
     "business_rules": false,
