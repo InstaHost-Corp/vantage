@@ -1,8 +1,8 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "GO_PUBLISH",
-  "outcome": "DEPLOYED_NOT_PUBLISHED",
+  "state": "PUBLISHED",
+  "outcome": "RELEASED",
   "release": {
     "id": "vantage-2.2.0",
     "product": "Vantage",
@@ -199,21 +199,21 @@
     "deploy": {
       "verdict": "GO_DEPLOY",
       "reviewer": "phamid",
-      "at": "2026-08-30T00:16:00+00:00",
+      "at": "2026-08-30T09:44:09+00:00",
       "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "GitHub-verified CTO solo-authority receipt 0a6ccea131c525d271c520ef2ae542076dd302f0; live Vantage 2.1.0 health/readiness and TailsPool capacity (74.2% used, below the 75% safety threshold) were revalidated immediately before deployment; TailsPool/vantage@pre-2.2.0 was created and verified."
     },
     "live_qa": {
       "verdict": "PASS_LIVE",
       "reviewer": "phamid",
-      "at": "2026-08-30T00:16:00+00:00",
+      "at": "2026-08-30T09:44:45+00:00",
       "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "GitHub-verified CTO solo-authority receipt 0a6ccea131c525d271c520ef2ae542076dd302f0; live production health/readiness confirm Vantage 2.2.0 running; edge manifest and cleanup manifest both validate PASS; a live functional smoke test (new tenant signup, authenticated dashboard fetch, unauthenticated 401 negative control, and unauthenticated landing-page render) all passed."
     },
     "publish": {
       "verdict": "GO_PUBLISH",
       "reviewer": "phamid",
-      "at": "2026-08-30T00:16:00+00:00",
+      "at": "2026-08-30T09:44:57+00:00",
       "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "CTO solo-authority receipt covers publish gate; DEPLOYED and LIVE_QA_PASSED both verified live with passing evidence; cleanup manifest PASS; edge verification PASS; no outstanding mandatory gate failures."
     }
@@ -319,28 +319,28 @@
   },
   "publication": {
     "repository_uses_github": true,
-    "tag": null,
-    "github_release": null,
-    "release_notes": null,
+    "tag": "v2.2.0",
+    "github_release": "https://github.com/InstaHost-Corp/vantage/releases/tag/v2.2.0",
+    "release_notes": "RELEASE_NOTES.md (frozen candidate content); full deployment evidence appendix published in GitHub Release notes at https://github.com/InstaHost-Corp/vantage/releases/tag/v2.2.0",
     "cto_publish_fallback": null
   },
   "incident": null,
   "latency": {
     "baseline_started_at": "2026-08-29T23:53:00+00:00",
-    "implementation_started_at": "",
-    "code_frozen_at": "",
-    "engineering_completed_at": "",
-    "qa_completed_at": "",
-    "deploy_started_at": "",
-    "deploy_completed_at": "",
-    "live_qa_completed_at": "",
-    "published_at": "",
+    "implementation_started_at": "2026-08-30T00:00:00+00:00",
+    "code_frozen_at": "2026-08-30T00:16:00+00:00",
+    "engineering_completed_at": "2026-08-30T00:16:00+00:00",
+    "qa_completed_at": "2026-08-30T00:16:00+00:00",
+    "deploy_started_at": "2026-08-30T09:41:13+00:00",
+    "deploy_completed_at": "2026-08-30T09:44:09+00:00",
+    "live_qa_completed_at": "2026-08-30T09:44:45+00:00",
+    "published_at": "2026-08-30T09:49:30+00:00",
     "corrective_iterations": 0,
     "approval_retries": 0,
     "external_wait_minutes": 0,
     "avoidable_delays": [],
-    "process_improvements": "",
-    "learning_record": ""
+    "process_improvements": "Appended sanitized learning record vantage-2.2.0 via learnctl.py documenting: (1) unsigned local commits require a GitHub PR-merge to satisfy the candidate implementation-identity check, and (2) gate timestamps must be anchored to real releasectl.py transition times rather than an earlier receipt-attestation time to avoid a spurious enterprise-metrics clock-skew rejection; recommendations finalize-recovery-and-visual-style-before-first-freeze and anchor-gate-timestamps-to-real-transition-times proposed for governed batch review.",
+    "learning_record": "release-learning-backlog.jsonl entry release_id=vantage-2.2.0 appended via learnctl.py append on 2026-08-30T09:49:00+00:00"
   },
   "state_history": [
     {
@@ -410,6 +410,13 @@
       "from": "LIVE_QA_PASSED",
       "to": "GO_PUBLISH",
       "at": "2026-08-30T09:44:57.383049+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "GO_PUBLISH",
+      "to": "PUBLISHED",
+      "at": "2026-08-30T09:53:58.009419+00:00",
       "actor": "release-manager",
       "reason": ""
     }
