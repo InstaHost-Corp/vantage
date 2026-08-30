@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "DEPLOYING",
+  "state": "GO_PUBLISH",
   "outcome": "DEPLOYED_NOT_PUBLISHED",
   "release": {
     "id": "vantage-2.2.0",
@@ -389,6 +389,27 @@
       "from": "GO_DEPLOY",
       "to": "DEPLOYING",
       "at": "2026-08-30T09:41:13.205015+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "DEPLOYING",
+      "to": "DEPLOYED",
+      "at": "2026-08-30T09:44:09.824408+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "DEPLOYED",
+      "to": "LIVE_QA_PASSED",
+      "at": "2026-08-30T09:44:45.715368+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "LIVE_QA_PASSED",
+      "to": "GO_PUBLISH",
+      "at": "2026-08-30T09:44:57.383049+00:00",
       "actor": "release-manager",
       "reason": ""
     }
