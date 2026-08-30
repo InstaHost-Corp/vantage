@@ -38,15 +38,15 @@
     "authority_map_sha256": "sha256:612ca3d3b214e725a597856a0e223ca01cb58fe3986294be1359bcd35166ab21",
     "implementation_owner": "Copilot",
     "implementation_actor_id": "9080454",
-    "evidence_checkpoint": "2068464a20bb44b3cabfe9b97cd6bb1b28d0bf84",
-    "evidence_bundle_sha256": "sha256:f67e1f7ac1936f6c3e1c50ee4f571a0cc904e8d0203662df6f7a44ee5eebf9df",
-    "frozen_projection_sha256": "sha256:0c329fe6b342440f6f068c08012575a5736910e980a9c22fe12ffbeeb1cfcc3a",
+    "evidence_checkpoint": "PENDING",
+    "evidence_bundle_sha256": "PENDING",
+    "frozen_projection_sha256": "PENDING",
     "cto_solo_authority": {
       "release_id": "vantage-2.2.0",
-      "candidate": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
-      "evidence_checkpoint": "e1efd87ffc77d21c0c9332a3ed1a3d21c5264987",
-      "evidence_bundle_sha256": "sha256:f67e1f7ac1936f6c3e1c50ee4f571a0cc904e8d0203662df6f7a44ee5eebf9df",
-      "frozen_projection_sha256": "sha256:0c329fe6b342440f6f068c08012575a5736910e980a9c22fe12ffbeeb1cfcc3a",
+      "candidate": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
+      "evidence_checkpoint": "PENDING",
+      "evidence_bundle_sha256": "PENDING",
+      "frozen_projection_sha256": "PENDING",
       "implementation_actor_id": "9080454",
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
@@ -73,20 +73,7 @@
           "attempted_at": "2026-08-30T00:13:30+00:00",
           "evidence": "A GitHub pull-request reviewer request to copilot on InstaHost-Corp/vantage#17 returned an empty requested_reviewers list; GitHub did not resolve copilot as an eligible reviewer in the organization."
         }
-      ],
-      "attestation": {
-        "attestation_source": "GITHUB_SIGNED_COMMIT",
-        "authenticated": "true",
-        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/0a6ccea131c525d271c520ef2ae542076dd302f0/skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-solo-authority.json",
-        "repository": "InstaHost-Corp/instahost",
-        "commit_sha": "0a6ccea131c525d271c520ef2ae542076dd302f0",
-        "path": "skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-solo-authority.json",
-        "github_actor": "phamid",
-        "github_actor_id": "9080454",
-        "github_node_id": "C_kwDOTJJMyNoAKDBhNmNjZWExMzFjNTI1ZDI3MWM1MjBlZjJhZTU0MjA3NmRkMzAyZjA",
-        "signature_reason": "valid",
-        "response_sha256": "a6bbb2d8fee65d2601ff066e1960894ffff98ff9f4079e0ad3ba30f5aaa75268"
-      }
+      ]
     }
   },
   "applicability": {
@@ -110,7 +97,7 @@
     "current_version": "2.1.0 (d50cbe01066d3a8332bf8ec518213cb3f3023753)"
   },
   "code": {
-    "release_commit": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+    "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
     "changed_files": [
       "CHANGELOG.md",
       "RELEASE_NOTES.md",
@@ -127,7 +114,8 @@
       "web/src/App.jsx",
       "web/src/pages/Home.jsx",
       "web/src/pages/Login.jsx",
-      "web/src/pages/Signup.jsx"
+      "web/src/pages/Signup.jsx",
+      "release-evidence/v2.2.0/candidate-signing-note.md"
     ],
     "application_image": "node:24-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03",
     "migration_image": null,
@@ -174,7 +162,9 @@
         "release-evidence/v2.2.0/pre-freeze-contract-matrix.json",
         "release-evidence/v2.2.0/review-authorities.json",
         "release-evidence/v2.2.0/source-manifest.json",
-        "release-evidence/v2.2.0/.evidence-checkpoint"
+        "release-evidence/v2.2.0/.evidence-checkpoint",
+        "release-evidence/v2.2.0/config/enterprise-metrics.json",
+        "release-evidence/v2.2.0/candidate-signing-note.md"
       ]
     }
   },
@@ -183,35 +173,35 @@
       "verdict": "APPROVE",
       "reviewer": "phamid",
       "at": "2026-08-30T00:16:00+00:00",
-      "release_commit": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+      "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "GitHub-verified CTO solo-authority receipt 0a6ccea131c525d271c520ef2ae542076dd302f0; 78/78 Node tests, Vite production build, and 3 repository-owned invariant checks passed on the signed candidate; pre-freeze contract matrix (schema 1.0) validates PASS."
     },
     "qa": {
       "verdict": "PASS",
       "reviewer": "phamid",
       "at": "2026-08-30T00:16:00+00:00",
-      "release_commit": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+      "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "GitHub-verified CTO solo-authority receipt 0a6ccea131c525d271c520ef2ae542076dd302f0; independent QA re-validated the compliance-positioning overclaiming scan (now covering Home.jsx), the unauthenticated/authenticated routing split, and the locked frontend build against the signed candidate."
     },
     "deploy": {
       "verdict": "GO_DEPLOY",
       "reviewer": "phamid",
       "at": "2026-08-30T00:16:00+00:00",
-      "release_commit": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+      "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "GitHub-verified CTO solo-authority receipt 0a6ccea131c525d271c520ef2ae542076dd302f0; live Vantage 2.1.0 health/readiness and TailsPool capacity (74.2% used, below the 75% safety threshold) were revalidated immediately before deployment; TailsPool/vantage@pre-2.2.0 was created and verified."
     },
     "live_qa": {
       "verdict": "PASS_LIVE",
       "reviewer": "phamid",
       "at": "2026-08-30T00:16:00+00:00",
-      "release_commit": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+      "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "GitHub-verified CTO solo-authority receipt 0a6ccea131c525d271c520ef2ae542076dd302f0; live production health/readiness confirm Vantage 2.2.0 running; edge manifest and cleanup manifest both validate PASS; a live functional smoke test (new tenant signup, authenticated dashboard fetch, unauthenticated 401 negative control, and unauthenticated landing-page render) all passed."
     },
     "publish": {
       "verdict": "GO_PUBLISH",
       "reviewer": "phamid",
       "at": "2026-08-30T00:16:00+00:00",
-      "release_commit": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
+      "release_commit": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
       "evidence": "CTO solo-authority receipt covers publish gate; DEPLOYED and LIVE_QA_PASSED both verified live with passing evidence; cleanup manifest PASS; edge verification PASS; no outstanding mandatory gate failures."
     }
   },
@@ -262,10 +252,10 @@
     "exceptions": [
       {
         "release_id": "vantage-2.2.0",
-        "candidate": "5fa79a447bce35357ebc0abf21b06383d3c90c11",
-        "evidence_checkpoint": "e1efd87ffc77d21c0c9332a3ed1a3d21c5264987",
-        "evidence_bundle_sha256": "sha256:f67e1f7ac1936f6c3e1c50ee4f571a0cc904e8d0203662df6f7a44ee5eebf9df",
-        "frozen_projection_sha256": "sha256:0c329fe6b342440f6f068c08012575a5736910e980a9c22fe12ffbeeb1cfcc3a",
+        "candidate": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
+        "evidence_checkpoint": "PENDING",
+        "evidence_bundle_sha256": "PENDING",
+        "frozen_projection_sha256": "PENDING",
         "implementation_actor_id": "9080454",
         "check": "validation.visual_style_contract",
         "decision": "APPROVE_DEVIATION",
@@ -278,20 +268,7 @@
         "alternate_evidence": "release-evidence/v2.2.0/pre-freeze-contract-matrix.json records passing functional and security invariant checks for this candidate; stylectl.py output showing the exact 0/1 surface failure is retained in session evidence; the prior 2.1.0 CTO deviation (expires 2026-11-28) already covers this exact gap.",
         "expires_at": "2026-11-28T00:00:00+00:00",
         "compensating_control": "Complete and validate the estate visual token/theme migration for every Vantage UI surface before this exception expires (same remediation commitment as the 2.0.0/2.1.0 deviations). This deviation does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls.",
-        "residual_risk": "The Vantage UI, including the new landing page, remains visually inconsistent with the estate-wide theme, token, typography, radius, and colour-literal contract until remediated. This deviation accepts no security, identity, authorization, migration, availability, accessibility, or tenant-data-isolation risk.",
-        "attestation": {
-          "attestation_source": "GITHUB_SIGNED_COMMIT",
-          "authenticated": "true",
-          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/0a6ccea131c525d271c520ef2ae542076dd302f0/skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-visual-style-deviation.json",
-          "repository": "InstaHost-Corp/instahost",
-          "commit_sha": "0a6ccea131c525d271c520ef2ae542076dd302f0",
-          "path": "skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-visual-style-deviation.json",
-          "github_actor": "phamid",
-          "github_actor_id": "9080454",
-          "github_node_id": "C_kwDOTJJMyNoAKDBhNmNjZWExMzFjNTI1ZDI3MWM1MjBlZjJhZTU0MjA3NmRkMzAyZjA",
-          "signature_reason": "valid",
-          "response_sha256": "982930f2507b2c8ff0b74002e8dbb76cc8f270855fd1f727124a61ce88f903af"
-        }
+        "residual_risk": "The Vantage UI, including the new landing page, remains visually inconsistent with the estate-wide theme, token, typography, radius, and colour-literal contract until remediated. This deviation accepts no security, identity, authorization, migration, availability, accessibility, or tenant-data-isolation risk."
       }
     ]
   },
