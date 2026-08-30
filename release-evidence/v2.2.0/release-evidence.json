@@ -44,15 +44,15 @@
     "cto_solo_authority": {
       "release_id": "vantage-2.2.0",
       "candidate": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
-      "evidence_checkpoint": "PENDING",
-      "evidence_bundle_sha256": "PENDING",
-      "frozen_projection_sha256": "PENDING",
+      "evidence_checkpoint": "f2c342badad20b9b4da048c0c8620829b53d8bdd",
+      "evidence_bundle_sha256": "sha256:3d51bddda8c3dd1fca908d59df5918255263f358b4aec85670cea686b024de45",
+      "frozen_projection_sha256": "sha256:196d1eedfb498748a06aa3e2032c63598e0aaaf56bcdadc37669ac7428d39b76",
       "implementation_actor_id": "9080454",
       "decision": "AUTHORIZE_ALL_HUMAN_GATES",
       "reviewer": "phamid",
       "reviewer_role": "CTO",
-      "decided_at": "2026-08-30T00:16:00+00:00",
-      "rationale": "As the authenticated CTO and sole human review authority, Patrick Hamid authorizes the Vantage 2.2.0 candidate to use the controller's narrowly defined solo-authority route for the verified, content-frozen evidence checkpoint. This authority changes who supplies the human gate decisions; it does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls. 78/78 Node tests pass (including the extended compliance-positioning overclaiming scan covering the new Home.jsx landing page), the Vite production build succeeds with identical output on the pinned production node:24-slim image, and the pre-freeze contract matrix (schema 1.0, covering Node version parity and the unchanged public-config consumer contract) validates PASS. Live deployment, functional smoke, public edge, and cleanup-manifest evidence were all gathered before this checkpoint was frozen.",
+      "decided_at": "2026-08-30T08:20:00+00:00",
+      "rationale": "As the authenticated CTO and sole human review authority, Patrick Hamid authorizes the Vantage 2.2.0 candidate to use the controller's narrowly defined solo-authority route for the verified, content-frozen evidence checkpoint. This authority changes who supplies the human gate decisions; it does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls. 78/78 Node tests pass (including the extended compliance-positioning overclaiming scan covering the new Home.jsx landing page), the Vite production build succeeds with identical output on the pinned production node:24-slim image, and the pre-freeze contract matrix (schema 1.0, covering Node version parity and the unchanged public-config consumer contract) validates PASS. Live deployment, functional smoke, public edge, and cleanup-manifest evidence were all gathered before this checkpoint was frozen. The candidate was rebound from 5fa79a447bce35357ebc0abf21b06383d3c90c11 to the GitHub-signed merge commit 1b93ae310021a9cd3353b043c6da7b7307bbefbb (identical application source; only an excluded release-evidence/ note was added) to satisfy the release-manager's implementation-identity signing requirement.",
       "residual_risk": "Human-gate separation is reduced because one authenticated CTO supplies the approved decisions after all configured independent review sources were attempted. The release remains blocked if any mandatory technical, security, recovery, or live-verification control fails. The pre-existing visual-style contract gap is carried separately as a time-bound, CTO-approved deviation, not waived by this authorization.",
       "review_attempts": [
         {
@@ -73,7 +73,20 @@
           "attempted_at": "2026-08-30T00:13:30+00:00",
           "evidence": "A GitHub pull-request reviewer request to copilot on InstaHost-Corp/vantage#17 returned an empty requested_reviewers list; GitHub did not resolve copilot as an eligible reviewer in the organization."
         }
-      ]
+      ],
+      "attestation": {
+        "attestation_source": "GITHUB_SIGNED_COMMIT",
+        "authenticated": "true",
+        "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/e228bda8e156365324c9baa0ebdbb89cdc590f4b/skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-solo-authority.json",
+        "repository": "InstaHost-Corp/instahost",
+        "commit_sha": "e228bda8e156365324c9baa0ebdbb89cdc590f4b",
+        "path": "skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-solo-authority.json",
+        "github_actor": "phamid",
+        "github_actor_id": "9080454",
+        "github_node_id": "C_kwDOTJJMyNoAKGUyMjhiZGE4ZTE1NjM2NTMyNGM5YmFhMGViZGJiODljZGM1OTBmNGI",
+        "signature_reason": "valid",
+        "response_sha256": "33935cf9ecb0d2fe618655843271137e55bd8c5d44919f444094a1e12517306f"
+      }
     }
   },
   "applicability": {
@@ -253,22 +266,35 @@
       {
         "release_id": "vantage-2.2.0",
         "candidate": "1b93ae310021a9cd3353b043c6da7b7307bbefbb",
-        "evidence_checkpoint": "PENDING",
-        "evidence_bundle_sha256": "PENDING",
-        "frozen_projection_sha256": "PENDING",
+        "evidence_checkpoint": "f2c342badad20b9b4da048c0c8620829b53d8bdd",
+        "evidence_bundle_sha256": "sha256:3d51bddda8c3dd1fca908d59df5918255263f358b4aec85670cea686b024de45",
+        "frozen_projection_sha256": "sha256:196d1eedfb498748a06aa3e2032c63598e0aaaf56bcdadc37669ac7428d39b76",
         "implementation_actor_id": "9080454",
         "check": "validation.visual_style_contract",
         "decision": "APPROVE_DEVIATION",
         "approver_role": "CTO",
         "approver_name": "Patrick Hamid",
         "approver": "phamid",
-        "approved_at": "2026-08-30T00:15:00+00:00",
+        "approved_at": "2026-08-30T08:20:00+00:00",
         "owner": "Patrick Hamid",
         "reason": "Vantage's UI does not yet implement the InstaHost Clawpilot visual-token/theme contract (canonical dark-theme tokens, estate font stacks, control/card radii, technical grid spacing). This is the same pre-existing condition carried over from the 2.0.0 and 2.1.0 releases (both already CTO-approved), not something introduced by the 2.2.0 pre-auth landing page, which reuses the identical existing design tokens already in place across the application. Remediating it is a separate, larger UI workstream.",
         "alternate_evidence": "release-evidence/v2.2.0/pre-freeze-contract-matrix.json records passing functional and security invariant checks for this candidate; stylectl.py output showing the exact 0/1 surface failure is retained in session evidence; the prior 2.1.0 CTO deviation (expires 2026-11-28) already covers this exact gap.",
         "expires_at": "2026-11-28T00:00:00+00:00",
         "compensating_control": "Complete and validate the estate visual token/theme migration for every Vantage UI surface before this exception expires (same remediation commitment as the 2.0.0/2.1.0 deviations). This deviation does not waive tests, migration integrity, tenant isolation, secret delivery, runtime identity, rollback, health, readiness, live verification, or publication controls.",
-        "residual_risk": "The Vantage UI, including the new landing page, remains visually inconsistent with the estate-wide theme, token, typography, radius, and colour-literal contract until remediated. This deviation accepts no security, identity, authorization, migration, availability, accessibility, or tenant-data-isolation risk."
+        "residual_risk": "The Vantage UI, including the new landing page, remains visually inconsistent with the InstaHost estate design system until the token migration is completed. No functional, security, or data-integrity risk is introduced or waived by this deviation.",
+        "attestation": {
+          "attestation_source": "GITHUB_SIGNED_COMMIT",
+          "authenticated": "true",
+          "receipt_url": "https://github.com/InstaHost-Corp/instahost/blob/e228bda8e156365324c9baa0ebdbb89cdc590f4b/skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-visual-style-deviation.json",
+          "repository": "InstaHost-Corp/instahost",
+          "commit_sha": "e228bda8e156365324c9baa0ebdbb89cdc590f4b",
+          "path": "skills/instahost-release-manager/state/evidence/vantage-2.2.0/cto-visual-style-deviation.json",
+          "github_actor": "phamid",
+          "github_actor_id": "9080454",
+          "github_node_id": "C_kwDOTJJMyNoAKGUyMjhiZGE4ZTE1NjM2NTMyNGM5YmFhMGViZGJiODljZGM1OTBmNGI",
+          "signature_reason": "valid",
+          "response_sha256": "0d2e31163959644c14a0eb5117f6e57c9d0d1d8a3d4aa2b75e0a07988de8c903"
+        }
       }
     ]
   },
