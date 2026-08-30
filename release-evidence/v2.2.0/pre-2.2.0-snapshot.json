@@ -1,0 +1,16 @@
+{
+  "dataset": "TailsPool/vantage",
+  "snapshot": "TailsPool/vantage@pre-2.2.0",
+  "recursive": true,
+  "created_via": "midclt call zfs.snapshot.create '{\"dataset\":\"TailsPool/vantage\",\"name\":\"pre-2.2.0\",\"recursive\":true}'",
+  "created_at": "2026-08-30T09:56:36+10:00",
+  "createtxg": "2995410",
+  "guid": "10220099704273509728",
+  "verified_via": "midclt call zfs.snapshot.query '[[\"id\",\"=\",\"TailsPool/vantage@pre-2.2.0\"]]' returned exactly one snapshot with this id and createtxg, re-verified 2026-08-30T08:35:00Z",
+  "pre_deploy_production_state": {
+    "version": "2.1.0",
+    "release_sha": "d50cbe01066d3a8332bf8ec518213cb3f3023753",
+    "source_digest": "sha256:b066cd636a89d2196f41cb5ce74b02cb833b3efcc497464da804ee9e3d4cd902",
+    "verified_via": "ssh nas1 'curl -s http://127.0.0.1:30002/healthz' before deployment, status ok"
+  }
+}

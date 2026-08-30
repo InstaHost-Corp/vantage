@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1",
   "framework_version": "4.1.1",
-  "state": "IMPLEMENTING",
+  "state": "QA_PASSED",
   "outcome": "REVIEWED",
   "release": {
     "id": "vantage-2.2.0",
@@ -310,7 +310,7 @@
     "executive_decisions": []
   },
   "recovery": {
-    "pre_release_snapshot": "TrueNAS recursive snapshot TailsPool/vantage@pre-2.2.0 (createtxg 2995410) created 2026-08-30T09:56:36+10:00 and verified present before deployment.",
+    "pre_release_snapshot": "/Users/patrickhamid/release-candidates/vantage-2.1.0-release/release-evidence/v2.2.0/pre-2.2.0-snapshot.json; TrueNAS recursive snapshot TailsPool/vantage@pre-2.2.0 (createtxg 2995410) created 2026-08-30T09:56:36+10:00 and verified present before deployment.",
     "post_release_snapshot": "TrueNAS recursive snapshot TailsPool/vantage@post-2.2.0 created 2026-08-30T09:59:xx+10:00 after live verification and confirmed present via zfs.snapshot.query.",
     "last_known_good": "Vantage 2.1.0 (d50cbe01066d3a8332bf8ec518213cb3f3023753) with TailsPool/vantage@post-2.1.0 verified present",
     "rollback_command": "Stop the workload, restore TailsPool/vantage@pre-2.2.0 recursive snapshot if data reversion is required, then update the TrueNAS app to release directory /mnt/TailsPool/vantage/releases/d50cbe01066d3a8332bf8ec518213cb3f3023753 with APP_VERSION=2.1.0; confirm /healthz reports 2.1.0 and release_sha d50cbe01066d3a8332bf8ec518213cb3f3023753 before reopening the public endpoint.",
@@ -354,6 +354,27 @@
       "from": "BASELINED",
       "to": "IMPLEMENTING",
       "at": "2026-08-30T01:45:32.662480+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "IMPLEMENTING",
+      "to": "CODE_FROZEN",
+      "at": "2026-08-30T08:31:44.942543+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "CODE_FROZEN",
+      "to": "ENGINEERING_APPROVED",
+      "at": "2026-08-30T08:34:56.175585+00:00",
+      "actor": "release-manager",
+      "reason": ""
+    },
+    {
+      "from": "ENGINEERING_APPROVED",
+      "to": "QA_PASSED",
+      "at": "2026-08-30T09:11:01.566473+00:00",
       "actor": "release-manager",
       "reason": ""
     }
